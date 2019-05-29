@@ -4,10 +4,9 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.jbpt.algo.tree.rpst.IRPSTNode;
 import org.jbpt.algo.tree.rpst.RPST;
-import org.jbpt.graph.DirectedEdge;
-import org.jbpt.hypergraph.abs.Vertex;
 import org.jbpt.pm.ControlFlow;
 import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
@@ -25,14 +24,9 @@ public class App {
 	public static void main(String[] args) {
 
 		try {
-			Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> set = BpmnParser
+			Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>,Set<Pair<FlowNode,FlowNode>>> set = BpmnParser
 					.collaborationParser("C:\\Users\\sara\\eclipse-workspace\\rpstTest\\bpmnfile\\2ucolseq.bpmn");
-			set.forEach(b -> {
-				System.out.println("MODEL" + b.getId());
-				b.getDataNodes().forEach(n -> {
-					System.out.println(n.getId() + " R: " + n.getReadingFlowNodes().toString() + " W: " + n.getWritingFlowNodes());
-				});
-			});
+			
 			
 			
 			CollaborativeAlg translationalg = new CollaborativeAlg(set);

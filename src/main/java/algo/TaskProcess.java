@@ -4,7 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import io.ExtendedNode;
-import spec.mcrl2obj.Action;
+import spec.mcrl2obj.*;
+import spec.mcrl2obj.Process;
 
 /*
  * It a process that represent a task in the bpmn model
@@ -16,13 +17,13 @@ import spec.mcrl2obj.Action;
 public class TaskProcess extends spec.mcrl2obj.Process {
 
 	private ExtendedNode extendednode;
-	private Set<Action> inputAction;
+	private Set<Process> inputAction;
 	private Set<Action> outputAction;
 	
 	public TaskProcess(Action a, ExtendedNode en) {
 		super(a);
 		this.extendednode = en;
-		this.inputAction = new HashSet<Action>();
+		this.inputAction = new HashSet<Process>();
 		this.outputAction = new HashSet<Action>();
 		// TODO Auto-generated constructor stub
 	}
@@ -36,7 +37,7 @@ public class TaskProcess extends spec.mcrl2obj.Process {
 		return this.extendednode;
 	}
 	
-	public void addInputAction(Action i) {
+	public void addInputAction(Process i) {
 		this.inputAction.add(i);
 	}
 	

@@ -9,12 +9,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.jbpt.pm.DataNode;
 import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.AlternativeGateway;
 import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
-import org.jbpt.pm.bpmn.BpmnMessageFlow;
 import org.jbpt.pm.bpmn.CatchingEvent;
 import org.jbpt.pm.bpmn.EndEvent;
 import org.jbpt.pm.bpmn.StartEvent;
@@ -29,7 +29,7 @@ import org.jsoup.select.Elements;
  */
 public class BpmnParser {
 
-	public static Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> collaborationParser(String s) throws IOException {
+	public static Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>,Set<Pair<FlowNode,FlowNode>>> collaborationParser(String s) throws IOException {
 		Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmnSet = new HashSet<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>();
 		Document doc = Jsoup.parse(new File(s), "UTF-8");
 
@@ -72,12 +72,38 @@ public class BpmnParser {
 				bpmn.addFlowNode(f);
 			}
 			datanodeSet.forEach(nfn -> bpmn.addNonFlowNode(nfn));
-			bpmnSet.add(bpmn);
-			defineControlFlow(bpmn, el.getElementsByTag("bpmn2:sequenceflow"));
-			defineMessageFlow(bpmn, el.getElementsByTag("bpmn2:messageflow"));
 
+			defineControlFlow(bpmn, el.getElementsByTag("bpmn2:sequenceflow"));
+			bpmnSet.add(bpmn);
 		}
-		return bpmnSet;
+		// Compute message flow
+		Elements collaboration = doc.getElementsByTag("bpmn2:collaboration");
+
+		Set<Pair<FlowNode,FlowNode>> messageflow = new HashSet<Pair<FlowNode,FlowNode>>();
+		collaboration.forEach(c -> {
+			for (Element e : c.children()) {
+				if (e.tagName().equals("bpmn2:messageflow")) {
+					Pair<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>, FlowNode> entry = detectSenderReceiver(bpmnSet,
+							e.attr("sourceref"));
+					Pair<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>, FlowNode> exit = detectSenderReceiver(bpmnSet,
+							e.attr("targetref"));
+					messageflow.add(Pair.of(entry.getRight(), exit.getRight()));
+				}
+			}
+		});
+
+		return Pair.of(bpmnSet,messageflow);
+	}
+
+	private static Pair<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>, FlowNode> detectSenderReceiver(
+			Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmnSet, String id) {
+		for (Bpmn<BpmnControlFlow<FlowNode>, FlowNode> f : bpmnSet) {
+			FlowNode entry;
+			if ((entry = getFlowNode(f.getFlowNodes(), id)) != null)
+				return Pair.of(f, entry);
+		}
+		System.err.println("There is no receive or send for the message");
+		return null;
 	}
 
 	private static void detectAssociation(Elements childrens, Set<DataNode> datanodeset, FlowNode f) {
@@ -136,13 +162,6 @@ public class BpmnParser {
 	private static void defineControlFlow(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn, Elements elements) {
 		for (Element e : elements) {
 			bpmn.addControlFlow(getFlowNode(bpmn.getFlowNodes(), e.attr("sourceref")),
-					getFlowNode(bpmn.getFlowNodes(), e.attr("targetref")));
-		}
-	}
-
-	private static void defineMessageFlow(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn, Elements elements) {
-		for (Element e : elements) {
-			bpmn.addMessageFlow(getFlowNode(bpmn.getFlowNodes(), e.attr("sourceref")),
 					getFlowNode(bpmn.getFlowNodes(), e.attr("targetref")));
 		}
 	}

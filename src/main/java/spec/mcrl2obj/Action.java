@@ -36,7 +36,13 @@ public class Action {
 	public Action() {
 		istau = true;
 	}
+	public static Action setSendAction() {
+		return new Action(send);
+	}
 	
+	public static Action setReadAction() {
+		return new Action(read);
+	}
 	//An action that has only parameters is used to represent sum: e1,...en : Data 
 	private Action(Set<DataParameter> parameters) {
 		this.parameters = parameters;

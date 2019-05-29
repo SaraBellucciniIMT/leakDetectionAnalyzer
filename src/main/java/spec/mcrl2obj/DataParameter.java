@@ -7,6 +7,8 @@ public class DataParameter {
 	private String name;
 	//For temporary parameters
 	private static final String parameter = "p";
+	private static final String placeholderChar = "e";
+	private String placeholder;
 	
 	/*
 	 * Fixed data parameter
@@ -21,9 +23,17 @@ public class DataParameter {
 		 this.sort = sort;
 	}
 	
+	public void setPlaceHolder() {
+		this.placeholder = placeholderChar + (index++);
+	}
+	
+	public String getPlaeholder() {
+		return this.placeholder;
+	}
 	public static DataParameter setEmptyParameter(Sort sort) {
 		 return new DataParameter(Sort.empty,sort);
 	}
+	
 	/*
 	 * Get in which domain it is
 	 */
