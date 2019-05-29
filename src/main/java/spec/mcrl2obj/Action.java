@@ -11,6 +11,8 @@ public class Action {
 	private static final String tau = "tau";
 	private static final String input = "i";
 	private static final String output = "o";
+	private static final String send = "send";
+	private static final String read = "read";
 	private boolean istau = false;
 
 	/*
@@ -35,6 +37,7 @@ public class Action {
 		istau = true;
 	}
 	
+	//An action that has only parameters is used to represent sum: e1,...en : Data 
 	private Action(Set<DataParameter> parameters) {
 		this.parameters = parameters;
 	}
@@ -42,15 +45,19 @@ public class Action {
 	public String getName() {
 		return this.name;
 	}
+	
+	//Standard representation for a INPUT CHANNEL with n parameters
 	public static Action inputAction(Set<DataParameter> parameters) {
 		return new Action(input + (id++),parameters);
 	}
 	
 	
+	//Standard representation for an OUTPUT CHANNEL with n parameters
 	public static Action outputAction(Set<DataParameter> parameters) {
 		return new Action(output + (id++),parameters);
 	}
 	
+	// Gives as result an action of this form : sum: e1,...en : Data 
 	public static Action sumAction(Set<DataParameter> parameters) {
 		return new Action(parameters);
 	}
@@ -65,7 +72,10 @@ public class Action {
 	 * Add 1 parameter to this action
 	 */
 	public void addDataParameter(DataParameter parameter) {
-		this.parameters.add(parameter);
+		if(!istau)
+			this.parameters.add(parameter);
+		else
+			System.err.println("You cannot add parameters to a TAU action");
 	}
 
 	public boolean isEmpty() {

@@ -13,8 +13,9 @@ import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
 
-import algo.TranslationAlg;
+import algo.CollaborativeAlg;
 import io.BpmnParser;
+import spec.mCRL2;
 
 /**
  * Hello world!
@@ -34,10 +35,8 @@ public class App {
 			});
 			
 			
-			for(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : set) {
-				TranslationAlg f = new TranslationAlg();
-				f.getSpec(b);
-			}
+			CollaborativeAlg translationalg = new CollaborativeAlg(set);
+			mCRL2 mcrl2 = translationalg.getSpec();
 		
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -60,20 +59,6 @@ public class App {
 		if (!collection.isEmpty())
 			for (IRPSTNode<ControlFlow<FlowNode>, FlowNode> n : collection)
 				traverRPST(n, rpst);
-
-	}
-
-	// Each node is identified as => LABEL : (Entry,Exit) - [Fragment]
-	public static void traversRPST(IRPSTNode<DirectedEdge, Vertex> node, RPST<DirectedEdge, Vertex> rpst) {
-		Collection<IRPSTNode<DirectedEdge, Vertex>> collection = rpst.getDirectSuccessors(node);
-		System.out.println("Label: " + node.getLabel() + " TYPE: " + node.getType());
-		System.out.println("Entry: " + node.getEntry());
-		System.out.println("Exit: " + node.getExit());
-		System.out.println("Successors: " + collection.toString());
-		if (!collection.isEmpty()) {
-			for (IRPSTNode<DirectedEdge, Vertex> n : collection)
-				traversRPST(n, rpst);
-		}
 
 	}
 }

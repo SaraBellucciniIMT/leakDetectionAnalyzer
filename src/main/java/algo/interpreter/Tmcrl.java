@@ -70,4 +70,9 @@ public class Tmcrl {
 		return null;
 	}
 
+	@Override
+	public String toString() {
+		return "Tmcrl [process=" + process + "]";
+	}
+
 }

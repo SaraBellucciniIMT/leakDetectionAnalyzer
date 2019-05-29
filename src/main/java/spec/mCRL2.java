@@ -3,6 +3,7 @@ package spec;
 import java.util.Set;
 
 import spec.mcrl2obj.Action;
+import spec.mcrl2obj.CommunicationFunction;
 import spec.mcrl2obj.Sort;
 
 /*
@@ -13,7 +14,7 @@ public class mCRL2 implements ISpec{
 	Sort sort;
 	Set<Action> actions;
 	Set<Action> allow ;
-	Set<Action> comm;
+	Set<CommunicationFunction> comm;
 	Set<Action> hide;
 	Set<Process> processes;
 	Set<Process> initSet;
@@ -46,11 +47,11 @@ public class mCRL2 implements ISpec{
 		this.allow = allow;
 	}
 
-	public Set<Action> getComm() {
+	public Set<CommunicationFunction> getComm() {
 		return comm;
 	}
 
-	public void setComm(Set<Action> comm) {
+	public void setComm(Set<CommunicationFunction> comm) {
 		this.comm = comm;
 	}
 

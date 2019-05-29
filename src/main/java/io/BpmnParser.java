@@ -14,6 +14,7 @@ import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.AlternativeGateway;
 import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
+import org.jbpt.pm.bpmn.BpmnMessageFlow;
 import org.jbpt.pm.bpmn.CatchingEvent;
 import org.jbpt.pm.bpmn.EndEvent;
 import org.jbpt.pm.bpmn.StartEvent;
@@ -37,14 +38,13 @@ public class BpmnParser {
 		for (int i = 0; i < partecipant.size(); i++) {
 			Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn = new Bpmn<BpmnControlFlow<FlowNode>, FlowNode>();
 			Element el = partecipant.get(i);
-			//Set of all data objects identified uniquely by their name
-			Set<DataNode> datanodeSet = detectDataObject( el.getElementsByTag("bpmn2:dataobjectreference"));
-			
+			// Set of all data objects identified uniquely by their name
+			Set<DataNode> datanodeSet = detectDataObject(el.getElementsByTag("bpmn2:dataobjectreference"));
+
 			// Set<FlowNode> allNodes = new HashSet<FlowNode>();
 			for (Element e : el.children()) {
 				FlowNode f = null;
-				
-				
+
 				if (e.tagName().equals("bpmn2:startevent")) {
 					f = new StartEvent();
 					f.setTag(BPMNLabel.STARTEVENT);
@@ -71,35 +71,37 @@ public class BpmnParser {
 				setIdName(f, e);
 				bpmn.addFlowNode(f);
 			}
-			datanodeSet.forEach(nfn->bpmn.addNonFlowNode(nfn));
+			datanodeSet.forEach(nfn -> bpmn.addNonFlowNode(nfn));
 			bpmnSet.add(bpmn);
 			defineControlFlow(bpmn, el.getElementsByTag("bpmn2:sequenceflow"));
-			
+			defineMessageFlow(bpmn, el.getElementsByTag("bpmn2:messageflow"));
 
 		}
 		return bpmnSet;
 	}
-	
 
-	private static void detectAssociation(Elements childrens, Set<DataNode> datanodeset,FlowNode f) {
-		for(Element child : childrens) {
-			if(child.tagName().equals("bpmn2:datainputassociation")) {
+	private static void detectAssociation(Elements childrens, Set<DataNode> datanodeset, FlowNode f) {
+		for (Element child : childrens) {
+			if (child.tagName().equals("bpmn2:datainputassociation")) {
 				String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
 				String nodename = dataobjrefMap.get(dataobjref);
-				datanodeset.stream().filter(p -> p.getId().equals(nodename)).forEach(d->d.addReadingFlowNode(f));;
-			}else if(child.tagName().equals("bpmn2:dataoutputassociation")) {
+				datanodeset.stream().filter(p -> p.getId().equals(nodename)).forEach(d -> d.addReadingFlowNode(f));
+				;
+			} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
 				String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
 				String nodename = dataobjrefMap.get(dataobjref);
-				datanodeset.stream().filter(p -> p.getId().equals(nodename)).forEach(d->d.addWritingFlowNode(f));	
-			}else
+				datanodeset.stream().filter(p -> p.getId().equals(nodename)).forEach(d -> d.addWritingFlowNode(f));
+			} else
 				continue;
 		}
 	}
+
 	/*
 	 * Create a Set of Data Object identified by their Name
 	 */
-	private static Map<String,String> dataobjrefMap = new HashMap<String,String>();
-	private static Set<DataNode> detectDataObject(Elements dataobref){
+	private static Map<String, String> dataobjrefMap = new HashMap<String, String>();
+
+	private static Set<DataNode> detectDataObject(Elements dataobref) {
 		Set<DataNode> datanodeSet = new HashSet<DataNode>();
 		dataobref.forEach(d -> {
 			DataNode dn = new DataNode();
@@ -111,6 +113,7 @@ public class BpmnParser {
 		});
 		return datanodeSet;
 	}
+
 	private static void setIdName(FlowNode f, Element e) {
 		if (!e.attr("name").isEmpty())
 			f.setName(e.attr("name"));
@@ -133,6 +136,13 @@ public class BpmnParser {
 	private static void defineControlFlow(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn, Elements elements) {
 		for (Element e : elements) {
 			bpmn.addControlFlow(getFlowNode(bpmn.getFlowNodes(), e.attr("sourceref")),
+					getFlowNode(bpmn.getFlowNodes(), e.attr("targetref")));
+		}
+	}
+
+	private static void defineMessageFlow(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn, Elements elements) {
+		for (Element e : elements) {
+			bpmn.addMessageFlow(getFlowNode(bpmn.getFlowNodes(), e.attr("sourceref")),
 					getFlowNode(bpmn.getFlowNodes(), e.attr("targetref")));
 		}
 	}
