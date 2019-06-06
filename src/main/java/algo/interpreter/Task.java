@@ -1,8 +1,9 @@
 package algo.interpreter;
 
-import algo.TaskProcess;
+
+import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Action;
-import spec.mcrl2obj.Process;
+import spec.mcrl2obj.TaskProcess;
 
 /*
  * TO-DO: ricrevere codice Task
@@ -10,10 +11,12 @@ import spec.mcrl2obj.Process;
 public class Task implements ITProcess{
 
 	@Override
-	public Process interpreter(Tmcrl node) {
+	public AbstractProcess interpreter(Tmcrl node) {
 		// TODO Auto-generated method stub
-		TaskProcess tp = new TaskProcess(new Action(node.getCurrentNode().getName()), node.getCurrentNode());
-		node.addTaskProcess(tp);
+		Action a = new Action(node.getCurrentNode().getName());
+		TaskProcess tp = new TaskProcess(a, node.getCurrentNode());
+		node.addProcess(tp);
+		node.addAction(a);
 		return tp;
 	}
 

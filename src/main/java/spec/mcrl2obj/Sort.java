@@ -24,13 +24,23 @@ public class Sort {
 		return this.types;
 	}
 	
+
 	public String getName() {
 		return this.name;
 	}
 
 	@Override
 	public String toString() {
-		return "Sort [sort = " + name + " = "+ struct +" " + types + "";
+		String s = "sort " + name + " = "+ struct +" ";
+		int i =0;
+		for(String type : types) {
+			s = s+ type ;
+			if(i != types.size()-1)
+				s = s + "|";
+			i++;
+		}
+		
+		return s;
 	}
 	
 	

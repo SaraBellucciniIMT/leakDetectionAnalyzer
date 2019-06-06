@@ -2,7 +2,7 @@ package spec.mcrl2obj;
 
 public class DataParameter {
 	
-	private Sort sort;
+	
 	private static int index =0;
 	private String name;
 	//For temporary parameters
@@ -13,15 +13,15 @@ public class DataParameter {
 	/*
 	 * Fixed data parameter
 	 */
-	public DataParameter(String name,Sort sort) {
+	public DataParameter(String name) {
 		this.name = name;
-		this.sort = sort;
 	}
 	//Generate temporary parameters name
-	public DataParameter(Sort sort) {
+	public DataParameter() {
 		 this.name = parameter + (index++);
-		 this.sort = sort;
 	}
+	
+	
 	
 	public void setPlaceHolder() {
 		this.placeholder = placeholderChar + (index++);
@@ -30,16 +30,11 @@ public class DataParameter {
 	public String getPlaeholder() {
 		return this.placeholder;
 	}
-	public static DataParameter setEmptyParameter(Sort sort) {
-		 return new DataParameter(Sort.empty,sort);
+	public static DataParameter setEmptyParameter() {
+		 return new DataParameter();
 	}
 	
-	/*
-	 * Get in which domain it is
-	 */
-	public Sort getType() {
-		return sort;
-	}
+
 	
 	public static void resetIndex() {
 		index =0;
@@ -54,7 +49,7 @@ public class DataParameter {
 
 	@Override
 	public String toString() {
-		return name +":" + sort.getName();
+		return name ;
 	}
 	
 }

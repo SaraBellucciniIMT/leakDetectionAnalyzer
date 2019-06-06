@@ -104,7 +104,7 @@ public class ExtendedNode {
 	@Override
 	public String toString() {
 		if (this.associatedIRPSTNode != null)
-			return this.associatedIRPSTNode.toString();
+			return this.associatedIRPSTNode.getName();
 		else
 			return this.getId();
 	}

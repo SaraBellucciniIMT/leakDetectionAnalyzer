@@ -14,24 +14,30 @@ import org.jbpt.pm.bpmn.BpmnControlFlow;
 
 import algo.CollaborativeAlg;
 import io.BpmnParser;
-import spec.mCRL2;
+import spec.mcrl2obj.mCRL2;
 
 /**
- * Hello world!
- *
+ * TO-DO: 
+ * VENERDì : runnare secondo test e fixing di possibili problemi
+ * SABATO : IMPLEMENTARE MIGLIORAMENTO RIMOZIONE TAU;
+ * DOMENICA : RISOLVI PARALELLISMI (VEDIZIONE FUNZIONE PAROUT DAL PAPER);
+ * LUNEDì : INTRODUCI RICORSIONE
+ * MARTEDì : FORMULE
+ * MERCOLEDì : INTERFACCIA ESTERNA
  */
 public class App {
 	public static void main(String[] args) {
 
 		try {
 			Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>,Set<Pair<FlowNode,FlowNode>>> set = BpmnParser
-					.collaborationParser("C:\\Users\\sara\\eclipse-workspace\\rpstTest\\bpmnfile\\2ucolseq.bpmn");
+					.collaborationParser("C:\\Users\\sara\\eclipse-workspace\\rpstTest\\bpmnfile\\colseq.bpmn");
 			
 			
 			
 			CollaborativeAlg translationalg = new CollaborativeAlg(set);
 			mCRL2 mcrl2 = translationalg.getSpec();
-		
+			System.out.println(mcrl2.toString());
+			mcrl2.toFile("prova");
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -39,20 +45,4 @@ public class App {
 
 	}
 
-	public static void traverRPST(IRPSTNode<ControlFlow<FlowNode>, FlowNode> node,
-			RPST<ControlFlow<FlowNode>, FlowNode> rpst) {
-		Collection<IRPSTNode<ControlFlow<FlowNode>, FlowNode>> collection = rpst.getDirectSuccessors(node);
-		System.out.println("---------");
-		System.out.println("Label: " + node.getLabel() + " TYPE: " + node.getType());
-		if (node.getEntry() != null)
-			System.out.println("Entry: " + node.getEntry() + " Entry TyPE " + node.getEntry().getTag());
-		if (node.getExit() != null)
-			System.out.println("Exit: " + node.getExit() + " Exit TyPE " + node.getExit().getTag());
-		System.out.println("Successors: " + collection.toString());
-		System.out.println("---------");
-		if (!collection.isEmpty())
-			for (IRPSTNode<ControlFlow<FlowNode>, FlowNode> n : collection)
-				traverRPST(n, rpst);
-
-	}
 }

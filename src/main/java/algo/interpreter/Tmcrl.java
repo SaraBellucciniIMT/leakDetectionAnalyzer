@@ -6,26 +6,30 @@ import java.util.Set;
 import org.jbpt.algo.tree.tctree.TCType;
 import org.jbpt.pm.IFlowNode;
 
-import algo.TaskProcess;
 import io.BPMNLabel;
 import io.ExploitedRPST;
 import io.ExtendedNode;
-import spec.mcrl2obj.Process;
+import spec.mcrl2obj.AbstractProcess;
+import spec.mcrl2obj.Action;
+import spec.mcrl2obj.TaskProcess;
 
 public class Tmcrl {
 
 	private ExploitedRPST rpst;
 	private ExtendedNode currentNode;
-	private Process process;
-	private Set<TaskProcess> taskprocesses;
+	private Set<Action> actions;
+	private Set<AbstractProcess> processes = new HashSet<AbstractProcess>();
+	private String firstProcess ;
 	
 	public Tmcrl(ExploitedRPST rpst) {
 		this.rpst = rpst;
-		taskprocesses = new HashSet<TaskProcess>();
-		this.process = applyT(rpst.getRoot());
+		actions = new HashSet<Action>();
+		AbstractProcess first = applyT(rpst.getRoot());
+		processes.add(first);
+		firstProcess = first.getName();
 	}
 
-	protected Process applyT(ExtendedNode node) {
+	protected AbstractProcess applyT(ExtendedNode node) {
 		this.currentNode = node;
 		if (node.getType().equals(TCType.TRIVIAL)) {
 			if (node.getTag().equals(BPMNLabel.STARTEVENT))
@@ -53,26 +57,42 @@ public class Tmcrl {
 	protected ExtendedNode getCurrentNode() {
 		return this.currentNode;
 	}
+
 	
-	public void addTaskProcess(TaskProcess tp) {
-		this.taskprocesses.add(tp);
+	protected void addProcess(AbstractProcess p) {
+		this.processes.add(p);
+	}
+
+	public void addAction(Action a) {
+		this.actions.add(a);
+	}
+
+	public Set<AbstractProcess> getProcess() {
+		return this.processes;
+	}
+
+	public Set<Action> getActions() {
+		return this.actions;
 	}
 	
-	public Process getProcess() {
-		return this.process;
+	public String getFirstProcess() {
+		return firstProcess;
 	}
-	
-	public TaskProcess getProcessOfTask(IFlowNode flowNode){
-		for(TaskProcess t : taskprocesses) {
-			if(t.geExtendedNode().getName().equals(flowNode.getName()))
+
+	public TaskProcess getProcessOfTask(IFlowNode flowNode) {
+		Set<TaskProcess> taskprocesses = new HashSet<>();
+		processes.forEach(p -> {
+			if (p.getClass().equals(TaskProcess.class))
+				taskprocesses.add((TaskProcess) p);
+		});
+		for (TaskProcess t : taskprocesses) {
+			if (t.geExtendedNode().getName().equals(flowNode.getName()))
 				return t;
 		}
+		System.err.println("Node " + flowNode.toString() + "doesn't exist in "+ rpst);
 		return null;
 	}
 
-	@Override
-	public String toString() {
-		return "Tmcrl [process=" + process + "]";
-	}
+	
 
 }

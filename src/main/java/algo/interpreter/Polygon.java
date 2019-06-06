@@ -3,9 +3,11 @@
  */
 package algo.interpreter;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.ExtendedNode;
+import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Operator;
 import spec.mcrl2obj.Process;
 
@@ -22,13 +24,15 @@ public class Polygon implements ITProcess {
 	}
 
 	@Override
-	public Process interpreter(Tmcrl node) {
+	public AbstractProcess interpreter(Tmcrl node) {
 		if (successors.size() > 1) {
-			Process[] p = new Process[successors.size()];
+			List<String> childList = new ArrayList<String>(successors.size());
 			for (int i = 0; i < successors.size(); i++) {
-				p[i] = node.applyT(successors.get(i));
-			}
-			return new Process(Operator.DOT, p);
+				AbstractProcess process = node.applyT(successors.get(i));
+				node.addProcess(process);
+				childList.add(process.getName());
+					}
+			return new Process(Operator.DOT,childList);
 		}else {
 			return new Task().interpreter(node);
 		}

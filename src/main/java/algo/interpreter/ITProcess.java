@@ -1,8 +1,10 @@
 package algo.interpreter;
 
-import spec.mcrl2obj.Process;
+import spec.mcrl2obj.AbstractProcess;
+
 
 public interface ITProcess {
 	
-	Process interpreter(Tmcrl node);
+	AbstractProcess interpreter(Tmcrl node);
+	
 }

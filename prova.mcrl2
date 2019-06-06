@@ -1,0 +1,13 @@
+sort Data = struct data1|eps;
+act
+B,IntermediateThrowEvent_1ihwm24;
+A,read,o4,C,o2,i3,i0,send : Data;
+proc
+P1 = A(data1).o2(data1);
+P8 = sum e0: Data.i3(e0).C(e0);
+P10 = (P8);
+P2 = B;
+P4 = (P1.P2);
+P6 = sum e0: Data.i0(e0).IntermediateThrowEvent_1ihwm24.o4(e0);
+
+init hide ({send,read},allow ({A,B,IntermediateThrowEvent_1ihwm24,C,send,read},comm ({o2|i0->send,o4|i3->read},P4||P6||P10)));

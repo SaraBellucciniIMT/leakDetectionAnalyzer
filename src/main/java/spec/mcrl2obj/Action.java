@@ -3,11 +3,12 @@ package spec.mcrl2obj;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Action {
+public class Action{
 
 	private String name;
 	private static int id =0;
 	private Set<DataParameter> parameters;
+	private boolean isParameter = false;
 	private static final String tau = "tau";
 	private static final String input = "i";
 	private static final String output = "o";
@@ -23,6 +24,7 @@ public class Action {
 		this.parameters = new HashSet<DataParameter>();
 	}
 
+	
 	/*
 	 * Parametrized action
 	 */
@@ -36,22 +38,38 @@ public class Action {
 	public Action() {
 		istau = true;
 	}
+	public static Action setSendAction(Set<DataParameter> dataParameters) {
+		return new Action(send,dataParameters);
+	}
 	public static Action setSendAction() {
 		return new Action(send);
 	}
 	
 	public static Action setReadAction() {
 		return new Action(read);
+		
+	}
+	public static Action setReadAction(Set<DataParameter> dataParameters) {
+		return new Action(read, dataParameters);
+		
 	}
 	//An action that has only parameters is used to represent sum: e1,...en : Data 
 	private Action(Set<DataParameter> parameters) {
+		this.name="";
 		this.parameters = parameters;
+		this.isParameter = true;
 	}
 	
 	public String getName() {
 		return this.name;
 	}
+	public Set<DataParameter> getParameters(){
+		return parameters;
+	}
 	
+	public int nparameter() {
+		return parameters.size();
+	}
 	//Standard representation for a INPUT CHANNEL with n parameters
 	public static Action inputAction(Set<DataParameter> parameters) {
 		return new Action(input + (id++),parameters);
@@ -69,9 +87,9 @@ public class Action {
 	}
 	
 	// Generate an action as following : o(eps), a(eps) etc..
-	public static Action emptyParameterAction(String name,Sort sort) {
+	public static Action emptyParameterAction(String name) {
 		Set<DataParameter> parameters = new HashSet<DataParameter>();
-		parameters.add(DataParameter.setEmptyParameter(sort));
+		parameters.add(DataParameter.setEmptyParameter());
 		return new Action(name, parameters);
 	}
 	/*
@@ -98,14 +116,31 @@ public class Action {
 			return true;
 	}
 
+
 	@Override
 	public String toString() {
 		if (istau)
 			return tau;
-		else if (!parameters.isEmpty())
-			return name + "(" + parameters + ")";
+		else if(isParameter) {
+			return  organizeParameterAsString() + ": Data";
+		}else if (!parameters.isEmpty() && !this.name.isEmpty())
+			return name + "(" + organizeParameterAsString() + ")";
 		else
 			return name;
 	}
+	
+	public boolean isTau() {
+		return istau;
+	}
 
+	private String organizeParameterAsString() {
+		String s= "";
+		int i =0;
+		for(DataParameter d : parameters) {
+			s = s+d;
+			if(i != parameters.size()-1)
+				s = s + ",";
+		}
+		return s;
+	}
 }
