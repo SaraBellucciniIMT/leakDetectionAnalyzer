@@ -4,8 +4,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -51,10 +53,21 @@ public class mCRL2 implements ISpec {
 		return actions;
 	}
 
-	public void addAction(Action actions) {
-		this.actions.add(actions);
+	public void addAction(Action action) {
+		boolean t = false;
+		for (Action a : actions) {
+			if (a.getName().equals(action.getName()) && a.nparameter() == action.nparameter())
+				t = true;
+		}
+		if (!t)
+			this.actions.add(action);
 	}
 
+	/*
+	 * public void tauimporvement() {
+	 * 
+	 * for(AbstractProcess p : processes) { if(p.) } }
+	 */
 	public void addActions(Set<Action> actions) {
 		this.actions.addAll(actions);
 	}
@@ -154,10 +167,7 @@ public class mCRL2 implements ISpec {
 		}
 		s = s + "proc" + "\n";
 		for (AbstractProcess process : processes) {
-			if (process.getClass().equals(TaskProcess.class))
-				s = s + process.toString() + ";\n";
-			else
-				s = s + process.toString() + ";\n";
+			s = s + process.toString() + ";\n";
 		}
 
 		s = s + "init ";
@@ -228,6 +238,43 @@ public class mCRL2 implements ISpec {
 		return classact;
 	}
 
+	public void taureduction() {
+		List<String> processtoremove = new ArrayList<String>();
+		for (AbstractProcess p : processes) {
+			if (p.getClass().equals(Process.class) && ((Process) p).hasChild()) {
+				Process process = (Process) p;
+				List<String> newchilds = new ArrayList<String>();
+				for (int i = 0; i < process.getLength(); i++) {
+					AbstractProcess child;
+					if ((child = identifyProcess(process.getChildName(i))).getClass().equals(Process.class)) {
+						if (((Process) child).isActivity() && ((Process) child).getAction().isTau()) {
+							processtoremove.add(process.getChildName(i));
+						} else
+							newchilds.add(process.getChildName(i));
+					}
+					else
+						newchilds.add(process.getChildName(i));
+				}
+				process.setChild(newchilds);
+			}
+		}
+		Set<AbstractProcess> newprocess = new HashSet<AbstractProcess>();
+		for (AbstractProcess p : processes) {
+			if (!processtoremove.contains(p.getName())) {
+				newprocess.add(p);
+			}
+		}
+		processes = newprocess;
+	}
+
+	private AbstractProcess identifyProcess(String name) {
+		for (AbstractProcess p : processes) {
+			if (p.getName().equals(name))
+				return p;
+		}
+		return null;
+	}
+
 	public void toFile(String fileName) {
 		File file = new File(fileName + ".mcrl2");
 		if (!file.exists()) {
@@ -236,9 +283,9 @@ public class mCRL2 implements ISpec {
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
-		}else
+		} else
 			System.err.println("File with this name already exist");
 		System.out.println(fileName + " GENERATED");
-		
+
 	}
 }

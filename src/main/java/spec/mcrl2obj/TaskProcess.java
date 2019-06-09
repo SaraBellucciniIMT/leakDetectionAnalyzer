@@ -21,6 +21,7 @@ public class TaskProcess extends AbstractProcess {
 	private Set<Action> outputAction;
 	private Action action;
 
+
 	public TaskProcess(Action a, ExtendedNode en) {
 		setName();
 		this.action = a;
@@ -42,7 +43,9 @@ public class TaskProcess extends AbstractProcess {
 	public ExtendedNode geExtendedNode() {
 		return this.extendednode;
 	}
-
+	public void setBufferName() {
+		setName();
+	}
 	public Action getAction() {
 		return this.action;
 	}
@@ -94,7 +97,7 @@ public class TaskProcess extends AbstractProcess {
 				s = s + getInsideDef(inputp.getChildName(1)).toString() + ".";
 			}
 		}
-		if (!action.isEmpty()) {
+		if (action != null) {
 			s = s + action.toString();
 			if (!outputAction.isEmpty())
 				s = s + ".";

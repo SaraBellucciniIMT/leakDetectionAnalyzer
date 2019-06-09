@@ -140,7 +140,35 @@ public class Action{
 			s = s+d;
 			if(i != parameters.size()-1)
 				s = s + ",";
+			i++;
 		}
 		return s;
+	}
+
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Action other = (Action) obj;
+		if (isParameter != other.isParameter)
+			return false;
+		if (istau != other.istau)
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (parameters == null) {
+			if (other.parameters != null)
+				return false;
+		} else if (nparameter() !=other.nparameter())
+			return false;
+		return true;
 	}
 }

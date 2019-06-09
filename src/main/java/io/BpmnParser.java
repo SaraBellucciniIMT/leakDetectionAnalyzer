@@ -110,13 +110,13 @@ public class BpmnParser {
 		for (Element child : childrens) {
 			if (child.tagName().equals("bpmn2:datainputassociation")) {
 				String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
-				String nodename = dataobjrefMap.get(dataobjref);
-				datanodeset.stream().filter(p -> p.getId().equals(nodename)).forEach(d -> d.addReadingFlowNode(f));
+				//String nodename = dataobjrefMap.get(dataobjref);
+				datanodeset.stream().filter(p -> p.getId().equals(dataobjref)).forEach(d -> d.addReadingFlowNode(f));
 				;
 			} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
 				String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
 				String nodename = dataobjrefMap.get(dataobjref);
-				datanodeset.stream().filter(p -> p.getId().equals(nodename)).forEach(d -> d.addWritingFlowNode(f));
+				datanodeset.stream().filter(p -> p.getId().equals(dataobjref)).forEach(d -> d.addWritingFlowNode(f));
 			} else
 				continue;
 		}
@@ -132,7 +132,7 @@ public class BpmnParser {
 		dataobref.forEach(d -> {
 			DataNode dn = new DataNode();
 			String name = d.attr("name");
-			dn.setId(name);
+			dn.setId(d.attr("id"));
 			dn.setName(name);
 			datanodeSet.add(dn);
 			dataobjrefMap.put(d.attr("id"), name);

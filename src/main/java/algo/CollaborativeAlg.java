@@ -19,8 +19,8 @@ import org.jbpt.pm.bpmn.Task;
 
 import algo.interpreter.Tmcrl;
 import io.BPMNLabel;
-import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Action;
+import spec.mcrl2obj.Buffer;
 import spec.mcrl2obj.CommunicationFunction;
 import spec.mcrl2obj.DataParameter;
 import spec.mcrl2obj.Operator;
@@ -85,9 +85,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 			if (triple.getLeft().getTag().equals(BPMNLabel.TASK) && triple.getRight().getTag().equals(BPMNLabel.TASK)) {
 				// Generate buffer and add the buffer to the init set
-				AbstractProcess buffer = generateCommunicationBuffer(i, o, parameters);
-				this.mcrl2.addProcess(buffer);
-				this.mcrl2.addInitSet(buffer.getName());
+				generateCommunicationBuffer(i, o, parameters);
 
 				Set<DataParameter> parametertosend = createOutputChannel(triple);
 				Action send = Action.outputAction(parametertosend);
@@ -207,21 +205,27 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return null;
 	}
 
-	private AbstractProcess generateCommunicationBuffer(Action i, Action o, Set<DataParameter> parameters) {
+	private void generateCommunicationBuffer(Action i, Action o, Set<DataParameter> parameters) {
 
 		TaskProcess buffer = new TaskProcess();
 		List<String> childlist = new ArrayList<String>();
 		// generate i(e1,...,e_n)
-		Process input = new Process(i);
-		childlist.add(input.getName());
 		// Generate the sum : e1,...en:Data
 		Process sum = new Process(Action.sumAction(parameters), Operator.SUM);
 		childlist.add(sum.getName());
-
+		Process input = new Process(i);
+		childlist.add(input.getName());
+		
 		Process seqinputsum = new Process(Operator.DOT, childlist);
 		buffer.addInputAction(seqinputsum, input, sum);
 		buffer.addOutputAction(o);
-		return buffer;
+		buffer.setBufferName();
+		Process p = new Process(Action.emptyParameterAction(o.getName()));
+		
+		Buffer sumprocess = new Buffer(buffer, p);
+		sumprocess.setBufferName();
+		this.mcrl2.addProcess(sumprocess);
+		this.mcrl2.addInitSet(buffer.getName());
 	}
 
 	// What is in output from a Intermediate Message Event is the data that was

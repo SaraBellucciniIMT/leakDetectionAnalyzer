@@ -1,5 +1,6 @@
 package spec.mcrl2obj;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.management.openmbean.OpenMBeanOperationInfo;
@@ -20,6 +21,7 @@ public class Process extends AbstractProcess{
 	 */
 	public Process(Action a) {
 		this.action = a;
+		this.child = new ArrayList<String>();
 		setName();
 	}
 
@@ -44,8 +46,13 @@ public class Process extends AbstractProcess{
 		setName();
 	}
 
+	public boolean hasChild() {
+		if(child.isEmpty())
+			return false;
+		return true;
+	}
 	public boolean isActivity() {
-		if (this.action.isEmpty())
+		if (this.action == null)
 			return false;
 		else
 			return true;
@@ -70,6 +77,12 @@ public class Process extends AbstractProcess{
 		return this.op;
 	}
 	
+	//Rimuove i vecchi figli presenti e li sostituisce con quelli nuovi
+	public void setChild(List<String> childs) {
+		this.child = new ArrayList<>();
+		if(!childs.isEmpty())
+		this.child.addAll(childs);
+	}
 	public String getChildName(int i) {
 		return this.child.get(i);
 	}

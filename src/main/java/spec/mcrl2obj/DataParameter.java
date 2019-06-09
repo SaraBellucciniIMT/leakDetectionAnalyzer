@@ -8,6 +8,7 @@ public class DataParameter {
 	//For temporary parameters
 	private static final String parameter = "p";
 	private static final String placeholderChar = "e";
+	private static final String empty = "eps";
 	private String placeholder;
 	
 	/*
@@ -31,7 +32,7 @@ public class DataParameter {
 		return this.placeholder;
 	}
 	public static DataParameter setEmptyParameter() {
-		 return new DataParameter();
+		 return new DataParameter(empty);
 	}
 	
 
