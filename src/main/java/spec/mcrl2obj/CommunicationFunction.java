@@ -1,7 +1,7 @@
 package spec.mcrl2obj;
 
 import java.util.Iterator;
-import java.util.Set;
+import java.util.List;
 
 
 /*
@@ -9,10 +9,10 @@ import java.util.Set;
  */
 public class CommunicationFunction {
 	
-	Set<Action> domain ;
+	List<Action> domain ;
 	Action codomain;
 	
-	public CommunicationFunction(Set<Action> domain, Action codomain) {
+	public CommunicationFunction(List<Action> domain, Action codomain) {
 		this.domain = domain;
 		this.codomain = codomain;
 	}

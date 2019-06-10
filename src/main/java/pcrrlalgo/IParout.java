@@ -1,9 +1,11 @@
 package pcrrlalgo;
 
+import pcrrlalgoelement.Parout;
 import spec.mcrl2obj.Process;
 
 public interface IParout {
 
-	Process interpreter(Process p);
+	
+	void interpreter(Parout process, Process dada, Process child);
 
 }

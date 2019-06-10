@@ -34,7 +34,7 @@ public class mCRL2 implements ISpec {
 		this.hide = new HashSet<Action>();
 		this.processes = new HashSet<AbstractProcess>();
 		this.initSet = new HashSet<String>();
-
+		
 	}
 
 	public Sort getSort() {
@@ -143,6 +143,7 @@ public class mCRL2 implements ISpec {
 
 	}
 
+	
 	@Override
 	public String toString() {
 		;
@@ -246,13 +247,12 @@ public class mCRL2 implements ISpec {
 				List<String> newchilds = new ArrayList<String>();
 				for (int i = 0; i < process.getLength(); i++) {
 					AbstractProcess child;
-					if ((child = identifyProcess(process.getChildName(i))).getClass().equals(Process.class)) {
+					if ((child = identifyAbstractProcess(process.getChildName(i))).getClass().equals(Process.class)) {
 						if (((Process) child).isActivity() && ((Process) child).getAction().isTau()) {
 							processtoremove.add(process.getChildName(i));
 						} else
 							newchilds.add(process.getChildName(i));
-					}
-					else
+					} else
 						newchilds.add(process.getChildName(i));
 				}
 				process.setChild(newchilds);
@@ -267,10 +267,30 @@ public class mCRL2 implements ISpec {
 		processes = newprocess;
 	}
 
-	private AbstractProcess identifyProcess(String name) {
+	public AbstractProcess identifyAbstractProcess(String name) {
 		for (AbstractProcess p : processes) {
 			if (p.getName().equals(name))
 				return p;
+		}
+		return null;
+	}
+
+	public void removeProcess(String name) {
+		for(AbstractProcess ap : this.processes) {
+			if(ap.getName().equals(name)) {
+				this.processes.remove(ap);
+				System.out.println(name + "REMOVED");
+				break;
+			}
+		}
+		
+	}
+
+	
+	public Process identifyProcess(String name) {
+		for (AbstractProcess p : processes) {
+			if (p.getName().equals(name))
+				return (Process) p;
 		}
 		return null;
 	}

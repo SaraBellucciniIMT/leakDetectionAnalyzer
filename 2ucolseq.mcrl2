@@ -1,0 +1,20 @@
+sort Data = struct data5|data4|data3|data1|eps;
+act
+IntermediateThrowEvent_1gatuld;
+i12,i17,o11,o10,o6,read,i9,i16,o14,o18,i13,o7,o1,i0,i2,i20,A,i5,C,E,o19,D,o4,send,i8,o15 : Data;
+F : Data#Data;
+proc
+P1 = sum e0: Data.i2(e0).IntermediateThrowEvent_1gatuld.o1(e0);
+P33 = sum e2: Data.i9(e2).o10(e2)+o10(eps);
+P4 = sum e1: Data.i8(e1).D(e1).o15(data4);
+P3 = sum e0: Data.i0(e0).C(e0).o7(data1).o11(data3);
+P51 = sum e5: Data.i17(e5).o18(e5)+o18(eps);
+P6 = (P4+P5);
+P7 = sum e5: Data.i20(e5).sum e3: Data.i16(e3).F(e5,e3);
+P42 = sum e3: Data.i13(e3).o14(e3)+o14(eps);
+P11 = A(data1).o4(data1);
+P13 = (P11);
+P24 = sum e1: Data.i5(e1).o6(e1)+o6(eps);
+P9 = (P3.P6.P7);
+P5 = sum e2: Data.i12(e2).E(e2).o19(data5);
+init hide ({read,send},allow ({F,A,C,E,send,D,IntermediateThrowEvent_1gatuld,read},comm ({o6|i8->read,o1|i0->read,o14|i16->read,o19|i17->send,o18|i20->read,o11|i9->send,o7|i5->send,o10|i12->read,i2|o4->send,o15|i13->send},P1||P33||P13||P24||P9||P51||P42)));

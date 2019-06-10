@@ -14,6 +14,7 @@ public class Action{
 	private static final String output = "o";
 	private static final String send = "send";
 	private static final String read = "read";
+	private static final String temporary = "t";
 	private boolean istau = false;
 
 	/*
@@ -52,6 +53,10 @@ public class Action{
 	public static Action setReadAction(Set<DataParameter> dataParameters) {
 		return new Action(read, dataParameters);
 		
+	}
+	
+	public static Action setTemporaryAction() {
+		return new Action(temporary + (id++));
 	}
 	//An action that has only parameters is used to represent sum: e1,...en : Data 
 	private Action(Set<DataParameter> parameters) {

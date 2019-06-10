@@ -1,21 +1,20 @@
 package spec.mcrl2obj;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import javax.management.openmbean.OpenMBeanOperationInfo;
-
-
-
-public class Process extends AbstractProcess{
+public class Process extends AbstractProcess {
 
 	// Process Name
-
 
 	private Action action;
 	private Operator op;
 	private List<String> child;
-	//private Process[] processes;
+	private Set<Process> insidedef;
+
+	// private Process[] processes;
 	/*
 	 * Basic definition of process P = a;
 	 */
@@ -32,6 +31,7 @@ public class Process extends AbstractProcess{
 		this.action = null;
 		this.op = op;
 		this.child = p;
+		insidedef = new HashSet<Process>();
 		setName();
 	}
 
@@ -47,10 +47,11 @@ public class Process extends AbstractProcess{
 	}
 
 	public boolean hasChild() {
-		if(child.isEmpty())
+		if (child.isEmpty())
 			return false;
 		return true;
 	}
+
 	public boolean isActivity() {
 		if (this.action == null)
 			return false;
@@ -62,7 +63,7 @@ public class Process extends AbstractProcess{
 		if (this.action != null)
 			return action;
 		else
-			System.err.println("No action in this process");
+			System.err.println("No action in this process \n");
 		return action;
 	}
 
@@ -76,40 +77,65 @@ public class Process extends AbstractProcess{
 	public Operator getOperator() {
 		return this.op;
 	}
-	
-	//Rimuove i vecchi figli presenti e li sostituisce con quelli nuovi
+
+	public void addInsideDef(Process p) {
+		this.insidedef.add(p);
+	}
+
+	// Rimuove i vecchi figli presenti e li sostituisce con quelli nuovi
 	public void setChild(List<String> childs) {
 		this.child = new ArrayList<>();
-		if(!childs.isEmpty())
-		this.child.addAll(childs);
+		if (!childs.isEmpty())
+			this.child.addAll(childs);
 	}
+
+	public void setOpertor(Operator op) {
+		this.op = op;
+	}
+
 	public String getChildName(int i) {
 		return this.child.get(i);
 	}
-	
+
 	public int getLength() {
-		if(!child.isEmpty())
+		if (!child.isEmpty())
 			return this.child.size();
-		else if(!action.isEmpty())
+		else if (!action.isEmpty())
 			return 1;
-		else 
+		else
 			return -1;
+	}
+
+	public Process inInsideDef(String name) {
+		for (Process p : insidedef) {
+			if (p.getName().equals(name))
+				return p;
+		}
+		return null;
 	}
 
 	@Override
 	public String toString() {
 		String s = "";
-		if(getName() != null && ( op == null || !op.equals(Operator.SUM)) && (action == null|| action.isTau()))
-			 s = s+ getName() + " = ";
-		if(op != null && op.equals(Operator.SUM))
-			return s + Operator.SUM.getValue() + " "+ action.toString();
-		else if(action != null)
+		if (getName() != null && (op == null || !op.equals(Operator.SUM)) && (action == null || action.isTau()))
+			s = s + getName() + " = ";
+		if (op != null && op.equals(Operator.SUM))
+			return s + Operator.SUM.getValue() + " " + action.toString();
+		else if (action != null)
 			return s + action.toString();
 		else {
-			s= s + "(";
-			for(int i=0; i<child.size()-1; i++)
-				s = s+child.get(i) + op.getValue();
-			return s + child.get(child.size()-1) + ")";
+			s = s + "(";
+			for (int i = 0; i < child.size(); i++) {
+				Process p;
+				if ((p = inInsideDef(child.get(i))) == null)
+					s = s + child.get(i);
+				else
+					s = s + p.toString();
+				if(i != child.size()-1)
+					s = s + op.getValue();
+			}
+			s = s+")";
+			return s;
 		}
 	}
 

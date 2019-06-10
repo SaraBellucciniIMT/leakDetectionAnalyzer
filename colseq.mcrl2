@@ -9,4 +9,4 @@ P10 = (P8);
 P2 = B;
 P4 = (P1.P2);
 P6 = sum e0: Data.i2(e0).IntermediateThrowEvent_1ihwm24.o1(e0);
-init hide ({send,read},allow ({A,B,IntermediateThrowEvent_1ihwm24,C,send,read},comm ({o1|i0->read,o4|i2->send},P4||P6||P10)));
+init hide ({send,read},allow ({A,B,IntermediateThrowEvent_1ihwm24,C,send,read},comm ({o1|i0->read,i2|o4->send},P4||P6||P10)));

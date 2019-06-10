@@ -133,7 +133,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	}
 
 	private CommunicationFunction createSendCommunication(Action a, Action b) {
-		Set<Action> domainsend = new HashSet<Action>();
+		List<Action> domainsend = new ArrayList<Action>();
 		domainsend.add(a);
 		domainsend.add(b);
 		mcrl2.addAction(a);
@@ -144,7 +144,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	}
 
 	private CommunicationFunction createReadCommunication(Action a, Action b) {
-		Set<Action> domainread = new HashSet<Action>();
+		List<Action> domainread = new ArrayList<Action>();
 		domainread.add(a);
 		domainread.add(b);
 		mcrl2.addAction(a);
