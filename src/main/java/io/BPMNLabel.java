@@ -8,5 +8,6 @@ public enum BPMNLabel {
 	MESSAGE,
 	XOR,
 	POLYGON,
+	LOOP,
 	AND;
 }

@@ -115,7 +115,6 @@ public class BpmnParser {
 				;
 			} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
 				String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
-				String nodename = dataobjrefMap.get(dataobjref);
 				datanodeset.stream().filter(p -> p.getId().equals(dataobjref)).forEach(d -> d.addWritingFlowNode(f));
 			} else
 				continue;

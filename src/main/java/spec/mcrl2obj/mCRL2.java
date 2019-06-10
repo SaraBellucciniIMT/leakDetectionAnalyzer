@@ -26,7 +26,7 @@ public class mCRL2 implements ISpec {
 	Set<Action> hide;
 	Set<AbstractProcess> processes;
 	Set<String> initSet;
-
+	private static int id =0;
 	public mCRL2() {
 		this.actions = new HashSet<Action>();
 		this.allow = new HashSet<Action>();
@@ -304,7 +304,7 @@ public class mCRL2 implements ISpec {
 				// TODO: handle exception
 			}
 		} else
-			System.err.println("File with this name already exist");
+			toFile(fileName+"(" +(id++) +")");
 		System.out.println(fileName + " GENERATED");
 
 	}
