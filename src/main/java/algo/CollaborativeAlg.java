@@ -300,7 +300,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		tmcrl2 = new HashSet<Tmcrl>();
 		for (Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : bpmn)
 			tmcrl2.add(analyzeControlFlow(b));
-
+		
 		mcrl2 = new mCRL2();
 		mcrl2.setSort(sort);
 		tmcrl2.forEach(t -> {

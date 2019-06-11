@@ -21,10 +21,11 @@ public class Tmcrl {
 	private Set<AbstractProcess> processes = new HashSet<AbstractProcess>();
 	private String firstProcess ;
 	
-	public Tmcrl(ExploitedRPST rpst) {
+	public Tmcrl(ExploitedRPST rpst,String bpmnname) {
 		this.rpst = rpst;
 		actions = new HashSet<Action>();
 		AbstractProcess first = applyT(rpst.getRoot());
+		first.setId(bpmnname);
 		processes.add(first);
 		firstProcess = first.getName();
 	}

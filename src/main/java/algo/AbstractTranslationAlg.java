@@ -22,7 +22,7 @@ import io.ExploitedRPST;
 public abstract class AbstractTranslationAlg implements ITranslationAlg{
 	
 	protected Tmcrl analyzeControlFlow(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn) {
-		return new Tmcrl(new ExploitedRPST(new RPST<ControlFlow<FlowNode>, FlowNode>(bpmn)));	
+		return new Tmcrl(new ExploitedRPST(new RPST<ControlFlow<FlowNode>, FlowNode>(bpmn)),bpmn.getName());	
 	}
 	
 	protected abstract void analyzeData();

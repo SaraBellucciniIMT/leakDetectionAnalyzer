@@ -15,9 +15,9 @@ import pcrrlalgoelement.Parout;
 import spec.mcrl2obj.mCRL2;
 
 /**
- * TO-DO: RICORSIONE?
+ * TO-DO: 
  * MARTEDì : FORMULE
- * MERCOLEDì : INTERFACCIA ESTERNA
+ * MERCOLEDì : RICORSIONE // **LIMITATION INSIDE PARALLEL**
  * GIOVEDì: Check single function
  */
 public class App {
