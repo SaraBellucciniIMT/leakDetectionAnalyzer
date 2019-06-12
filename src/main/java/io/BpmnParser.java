@@ -40,9 +40,9 @@ public class BpmnParser {
 		for (int i = 0; i < partecipant.size(); i++) {
 			Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn = new Bpmn<BpmnControlFlow<FlowNode>, FlowNode>();
 
-			String idpartecipant = partecipant.attr("id");
-			bpmn.setName(getCollaborationName(doc.getElementsByTag("bpmn2:collaboration"), idpartecipant));
 			Element el = partecipant.get(i);
+			String idpartecipant = el.attr("id");
+			bpmn.setName(getCollaborationName(doc.getElementsByTag("bpmn2:collaboration"), idpartecipant));
 			// Set of all data objects identified uniquely by their name
 			Set<DataNode> datanodeSet = detectDataObject(el.getElementsByTag("bpmn2:dataobjectreference"));
 
@@ -144,10 +144,11 @@ public class BpmnParser {
 			Elements partecipants = e.getElementsByTag("bpmn2:participant");
 			Iterator<Element> itp = partecipants.iterator();
 			while (itp.hasNext()) {
-				if (itp.next().attr("processref").equals(name)) {
-					s = itp.next().attr("name");
+				Element ee = itp.next();
+				if (ee.attr("processref").equals(name)) {
+					s = ee.attr("name");
 					if (s.equals(""))
-						s = itp.next().attr("id");
+						s = ee.attr("id");
 				}
 			}
 		}

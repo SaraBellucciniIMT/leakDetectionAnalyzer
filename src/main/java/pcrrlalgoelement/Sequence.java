@@ -33,7 +33,6 @@ public class Sequence extends AbstractParaout {
 		dad.setChild(newchildren);
 
 		parout.removeProcess(child.getName());
-		System.out.println(dad.toString());
 
 	}
 

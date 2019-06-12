@@ -59,6 +59,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		messages.forEach(pair -> this.internalCommList
 				.add(Triple.of(pair.getLeft(), findData(pair.getRight()), pair.getRight())));
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
+			System.out.println(triple.toString());
 			int size = triple.getMiddle().size();
 			Set<DataParameter> parameters = new HashSet<DataParameter>(size);
 			triple.getMiddle()
@@ -90,7 +91,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				Set<DataParameter> parametertosend = createOutputChannel(triple);
 				Action send = Action.outputAction(parametertosend);
 				S.addOutputAction(send);
-				parameters.forEach(par -> R.addDataToAction(par));
 				Action read = Action.inputAction(parameters);
 				pread = new Process(read);
 
@@ -98,15 +98,15 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				this.mcrl2.addCommunicaitonFunction(createReadCommunication(o, read));
 
 			} else if (triple.getLeft().getTag().equals(BPMNLabel.MESSAGE)) {
-				if(!mcrl2.getInitSet().contains(S.getName()))
+				if (!mcrl2.getInitSet().contains(S.getName()))
 					mcrl2.addInitSet(S.getName());
-				parameters.forEach(par -> R.addDataToAction(par));
+				// parameters.forEach(par -> R.addDataToAction(par));
 				pread = new Process(i);
 				S.addOutputAction(o);
 				this.mcrl2.addCommunicaitonFunction(createReadCommunication(o, i));
 
 			} else if (triple.getRight().getTag().equals(BPMNLabel.MESSAGE)) {
-				if(!mcrl2.getInitSet().contains(R.getName()))
+				if (!mcrl2.getInitSet().contains(R.getName()))
 					mcrl2.addInitSet(R.getName());
 				pread = new Process(i);
 				Set<DataParameter> parametertosend = createOutputChannel(triple);
@@ -115,6 +115,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 				this.mcrl2.addCommunicaitonFunction(createSendCommunication(i, send));
 			}
+			parameters.forEach(par -> R.addDataToAction(par));
 			ArrayList<String> childlist = new ArrayList<String>();
 			childlist.add(suminput.getName());
 			childlist.add(pread.getName());
@@ -187,9 +188,13 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	private boolean isitFirst(IFlowNode node, DataNode data) {
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			if (triple.getMiddle().contains(data) && triple.getRight().equals(node)
-					&& !triple.getLeft().equals(epsilon)) {
-				return false;
+			System.out.println(triple);
+			for (DataNode datanode : triple.getMiddle()) {
+				if (datanode.getName().equals(data.getName())) {
+					if (triple.getRight().equals(node) && !triple.getLeft().equals(epsilon)) {
+						return false;
+					}
+				}
 			}
 		}
 		return true;
@@ -215,13 +220,13 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		childlist.add(sum.getName());
 		Process input = new Process(i);
 		childlist.add(input.getName());
-		
+
 		Process seqinputsum = new Process(Operator.DOT, childlist);
 		buffer.addInputAction(seqinputsum, input, sum);
 		buffer.addOutputAction(o);
 		buffer.setBufferName();
-		Process p = new Process(Action.emptyParameterAction(o.getName()));
-		
+		Process p = new Process(Action.emptyParameterAction(o.getName(), o.nparameter()));
+
 		Buffer sumprocess = new Buffer(buffer, p);
 		sumprocess.setBufferName();
 		this.mcrl2.addProcess(sumprocess);
@@ -300,7 +305,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		tmcrl2 = new HashSet<Tmcrl>();
 		for (Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : bpmn)
 			tmcrl2.add(analyzeControlFlow(b));
-		
+
 		mcrl2 = new mCRL2();
 		mcrl2.setSort(sort);
 		tmcrl2.forEach(t -> {

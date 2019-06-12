@@ -1,3 +1,6 @@
+/**
+ * 
+ */
 package rpstTest;
 
 import java.io.IOException;
@@ -17,17 +20,24 @@ import pcrrlalgoelement.Parout;
 import spec.mcrl2obj.mCRL2;
 
 /**
- * TO-DO: 
- * MARTEDì : FORMULE
- * MERCOLEDì : RICORSIONE // **LIMITATION INSIDE PARALLEL**
- * GIOVEDì: Check single function
+ * @author sara
+ *
  */
-public class App {
-	public static void main(String[] args) {
-			String filename = "colseq";
+public class IOTerminal {
+	private static Scanner scan;
+	private final static String YES = "Y";
+	private final static String NO = "N";
+
+	public IOTerminal() {
+		while (true) {
+
+			System.out.println("Inser filename : ");
+			scan = new Scanner(System.in);
+			String filename = scan.nextLine();
 			Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 			try {
-				set = BpmnParser.collaborationParser("C:\\Users\\sara\\eclipse-workspace\\rpstTest\\bpmnfile\\"+filename + ".bpmn");
+				set = BpmnParser.collaborationParser(
+						"C:\\Users\\sara\\eclipse-workspace\\rpstTest\\bpmnfile\\" + filename + ".bpmn");
 
 				CollaborativeAlg translationalg = new CollaborativeAlg(set);
 				mCRL2 mcrl2 = translationalg.getSpec();
@@ -39,12 +49,21 @@ public class App {
 				System.out.println(mcrl2.toStringAllTask());
 				Set<String> datset = new HashSet<>();
 				datset.add("data1");
-				TaskFormula.toFile(mcrl2, "Q",datset);
+				datset.add("data2");
+				TaskFormula.toFile(mcrl2, "A", datset);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-			}		
-			
-	}
+			}
+			System.out.println("CONTINUE (Y/N) : ");
+			String r = scan.nextLine();
+			while (!r.equalsIgnoreCase(NO) && r.equalsIgnoreCase(YES)) {
+				System.out.println("command not available, try again ... ");
+				r = scan.nextLine();
+			}
+			if (r.equalsIgnoreCase(NO))
+				System.exit(0);
+		}
 
+	}
 }

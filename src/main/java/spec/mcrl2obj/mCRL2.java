@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -19,13 +20,13 @@ import spec.ISpec;
  */
 public class mCRL2 implements ISpec {
 
-	Sort sort;
-	Set<Action> actions;
-	Set<Action> allow;
-	Set<CommunicationFunction> comm;
-	Set<Action> hide;
-	Set<AbstractProcess> processes;
-	Set<String> initSet;
+	private Sort sort;
+	private Set<Action> actions;
+	private Set<Action> allow;
+	private Set<CommunicationFunction> comm;
+	private Set<Action> hide;
+	private Set<AbstractProcess> processes;
+	private Set<String> initSet;
 	private static int id =0;
 	public mCRL2() {
 		this.actions = new HashSet<Action>();
@@ -103,6 +104,23 @@ public class mCRL2 implements ISpec {
 	public Set<AbstractProcess> getProcesses() {
 		return processes;
 	}
+	
+	public Process getPartcipant(String name) {
+		for(AbstractProcess ap : processes) {
+			if(ap.getId().equals(name))
+				return (Process)ap;
+		}
+		return null;
+	}
+	
+	public Set<TaskProcess> getTaskProcessesInsideProcesses(){
+		Set<TaskProcess> taskprocessset = new HashSet<TaskProcess>();
+		processes.forEach(tp->{
+			if(tp.getClass().equals(TaskProcess.class))
+				taskprocessset.add((TaskProcess)tp);
+		});
+		return taskprocessset;
+	}
 
 	public void addProcess(AbstractProcess process) {
 		this.processes.add(process);
@@ -120,6 +138,7 @@ public class mCRL2 implements ISpec {
 		this.initSet.add(initSet);
 	}
 
+	
 	public void mcrl22file(String f) {
 		File file = new File(f + ".mcrl2");
 		if (!file.exists()) {
@@ -142,7 +161,6 @@ public class mCRL2 implements ISpec {
 		}
 
 	}
-
 	
 	@Override
 	public String toString() {
@@ -295,8 +313,27 @@ public class mCRL2 implements ISpec {
 		return null;
 	}
 
+
+	public String toStringPartecipants() {
+		String s = "PARTECIPANTS:\n";
+		for(AbstractProcess ap : processes) {
+			if(!ap.getId().equals(""))
+				s = s+ ap.getId() + "\n";
+		}
+		return s;
+	}
+	
+	public String toStringAllTask() {
+		String s = "TASKS: \n";
+		for(AbstractProcess ap : processes) {
+			if(ap.getClass().equals(TaskProcess.class))
+				s = s + ((TaskProcess)ap).getAction().getName() + "\n";
+		}
+		return s;
+	}
 	public void toFile(String fileName) {
-		File file = new File(fileName + ".mcrl2");
+		String path = "C:\\Users\\sara\\eclipse-workspace\\rpstTest\\result\\";
+		File file = new File(path + fileName + ".mcrl2");
 		if (!file.exists()) {
 			try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
 				output.write(toString());
@@ -306,6 +343,5 @@ public class mCRL2 implements ISpec {
 		} else
 			toFile(fileName+"(" +(id++) +")");
 		System.out.println(fileName + " GENERATED");
-
 	}
 }

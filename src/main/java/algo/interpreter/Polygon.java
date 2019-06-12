@@ -25,7 +25,6 @@ public class Polygon implements ITProcess {
 
 	@Override
 	public AbstractProcess interpreter(Tmcrl node) {
-		if (successors.size() > 1) {
 			List<String> childList = new ArrayList<String>(successors.size());
 			for (int i = 0; i < successors.size(); i++) {
 				AbstractProcess process = node.applyT(successors.get(i));
@@ -33,9 +32,9 @@ public class Polygon implements ITProcess {
 				childList.add(process.getName());
 					}
 			return new Process(Operator.DOT,childList);
-		}else {
+		/*}else {
 			return new Task().interpreter(node);
-		}
+		}*/
 	}
 
 }

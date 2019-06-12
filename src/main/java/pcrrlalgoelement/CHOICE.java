@@ -16,17 +16,19 @@ public class CHOICE extends AbstractParaout {
 	private Process tpar1;
 	private Process tpar2;
 	// it contains t1.t2, t3.t4 , etc...
-	private List<String> choicerip;
+	private List<String> choicerip = new ArrayList<String>();
 
 	@Override
 	public void interpreter(Parout parout, Process dad, Process child) {
 		this.dad = dad;
 		this.child = child;
 		String firstchoicename = constructFirstChoice(parout);
+		
 		List<String> followingchoicename = followingChoice(parout);
 		followingchoicename.add(firstchoicename);
 		dad.setOpertor(Operator.PARALLEL);
 		dad.setChild(followingchoicename);
+		parout.removeProcess(child.getName());
 	}
 
 	private String constructFirstChoice(Parout parout) {
@@ -46,14 +48,17 @@ public class CHOICE extends AbstractParaout {
 			} else {
 				Process pt1 = new Process(t1);
 				Process pt2 = new Process(t2);
-				//-------- t1.t2 ---------
+				//-------- t1.t2 --------- useful later
 				List<String> childseqtmp = new ArrayList<String>();
 				childseqtmp.add(pt1.getName());
 				childseqtmp.add(pt2.getName());
 				Process seqtemp = new Process(Operator.DOT, childseqtmp);
+				seqtemp.addInsideDef(pt1);
+				seqtemp.addInsideDef(pt2);
 				//-----------------------
 				parout.addProcess(seqtemp);
 				choicerip.add(seqtemp.getName());
+				
 				newchildren = t1Processt2(pt1.getName(), dad.getChildName(i), pt2.getName());
 				newprocess = new Process(Operator.DOT, newchildren);
 				newprocess.addInsideDef(pt1);

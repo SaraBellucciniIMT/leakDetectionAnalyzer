@@ -1,0 +1,1 @@
+<true*.exists p0,p1:Data.(B(p0,p1,data1)||B(p0,data1,p1)||B(data1,p0,p1)||B(data1,p1,p0)||B(p1,data1,p0)||B(p1,p0,data1))>true

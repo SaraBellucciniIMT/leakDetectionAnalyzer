@@ -1,5 +1,8 @@
 package pcrrlalgoelement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.commons.lang3.tuple.Pair;
 
 import spec.mcrl2obj.AbstractProcess;
@@ -41,12 +44,13 @@ public class Parout {
 	private Pair<Process, Process> hasParallel(Process p) {
 		// This means that the process is an action because otherwise cannot have just
 		// one child
-		if (p.getLength() < 2)
+		if (p.getAction() != null)
 			return null;
 		for (int i = 0; i < p.getLength(); i++) {
 			if(p.inInsideDef(p.getChildName(i))!= null)
 				continue;
 			AbstractProcess child = mcrl2.identifyAbstractProcess(p.getChildName(i));
+			System.out.println("CHILD : " + child.toString());
 			if (child.getClass().equals(Process.class) && ((Process) child).getAction() == null
 					&& ((Process) child).getOperator().equals(Operator.PARALLEL))
 				return Pair.of(p, (Process) child);
@@ -55,10 +59,19 @@ public class Parout {
 	}
 
 	private void parallel(Process dad, Process child) {
-		if (dad.getOperator().equals(Operator.DOT))
+		if (dad.getOperator().equals(Operator.DOT) && dad.getLength() >1)
 			new Sequence().interpreter(this, dad, child);
-		else if (dad.getOperator().equals(Operator.PLUS))
+		else if (dad.getOperator().equals(Operator.PLUS) && dad.getLength() >1)
 			new CHOICE().interpreter(this, dad, child);
+		else {
+			dad.setOpertor(child.getOperator());
+			List<String> newchilds = new ArrayList<String>();
+			for(int i=0; i<child.getLength(); i++)
+				newchilds.add(child.getChildName(i));
+			dad.setChild(newchilds);
+			removeProcess(child.getName());
+		}
+			
 
 	}
 
