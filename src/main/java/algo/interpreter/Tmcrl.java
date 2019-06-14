@@ -19,9 +19,9 @@ public class Tmcrl {
 	private ExtendedNode currentNode;
 	private Set<Action> actions;
 	private Set<AbstractProcess> processes = new HashSet<AbstractProcess>();
-	private String firstProcess ;
-	
-	public Tmcrl(ExploitedRPST rpst,String bpmnname) {
+	private String firstProcess;
+
+	public Tmcrl(ExploitedRPST rpst, String bpmnname) {
 		this.rpst = rpst;
 		actions = new HashSet<Action>();
 		AbstractProcess first = applyT(rpst.getRoot());
@@ -59,7 +59,6 @@ public class Tmcrl {
 		return this.currentNode;
 	}
 
-	
 	protected void addProcess(AbstractProcess p) {
 		this.processes.add(p);
 	}
@@ -75,7 +74,7 @@ public class Tmcrl {
 	public Set<Action> getActions() {
 		return this.actions;
 	}
-	
+
 	public String getFirstProcess() {
 		return firstProcess;
 	}
@@ -87,13 +86,15 @@ public class Tmcrl {
 				taskprocesses.add((TaskProcess) p);
 		});
 		for (TaskProcess t : taskprocesses) {
+			if(t.geExtendedNode().getName().equals("")){
+				if(t.geExtendedNode().getId().equals(flowNode.getId())) 
+						return t;
+				continue;
+			}
 			if (t.geExtendedNode().getName().equals(flowNode.getName()))
 				return t;
 		}
-		System.err.println("Node " + flowNode.toString() + "doesn't exist in "+ rpst);
 		return null;
 	}
-
-	
 
 }

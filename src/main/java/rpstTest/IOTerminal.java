@@ -14,7 +14,9 @@ import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
 
 import algo.CollaborativeAlg;
+import formula.PartecipantFormula;
 import formula.TaskFormula;
+import formula.TextInterpreterFormula;
 import io.BpmnParser;
 import pcrrlalgoelement.Parout;
 import spec.mcrl2obj.mCRL2;
@@ -48,22 +50,67 @@ public class IOTerminal {
 				System.out.println(mcrl2.toStringPartecipants());
 				System.out.println(mcrl2.toStringAllTask());
 				Set<String> datset = new HashSet<>();
-				datset.add("data1");
-				datset.add("data2");
-				TaskFormula.toFile(mcrl2, "A", datset);
+
+				while(continueOrExit()) {
+				System.out.println(
+						"Verification \n -1 to check your personal formula \n -2 chec SecretSharingViolation \n -3 exit \n Choose your action: \n");
+				scan = new Scanner(System.in);
+				String number = scan.nextLine();
+				String partecipant ;
+				switch (Integer.valueOf(number)) {
+				case 1:
+					partecipant = scanTaskOrPartecipant();
+					datset.addAll(scanData());
+					if (mcrl2.toStringPartecipants().contains(partecipant))
+						PartecipantFormula.toFile(mcrl2, partecipant, datset,"");
+					else
+						TaskFormula.toFile(mcrl2, partecipant, datset,"");
+
+					break;
+				case 2:
+					partecipant = scanTaskOrPartecipant();
+					TextInterpreterFormula.toFile(mcrl2, partecipant, datset, TextInterpreterFormula.violation);
+				case 3:
+					System.exit(0);
+				default:
+					break;
+				}
+			}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			System.out.println("CONTINUE (Y/N) : ");
-			String r = scan.nextLine();
-			while (!r.equalsIgnoreCase(NO) && r.equalsIgnoreCase(YES)) {
-				System.out.println("command not available, try again ... ");
-				r = scan.nextLine();
-			}
-			if (r.equalsIgnoreCase(NO))
-				System.exit(0);
 		}
+	}
+	
+	private String scanTaskOrPartecipant() {
+		System.out.println("Choose partecipant/task: ");
+		scan = new Scanner(System.in);
+		return scan.nextLine();
+	}
+	
+	private Set<String> scanData() {
+		Set<String> datset = new HashSet<>();
+		System.out.println("Choose data (, in the middle): ");
+		scan = new Scanner(System.in);
+		String s = scan.nextLine();
+		String[] split = s.split(",");
+		for (int i = 0; i < split.length; i++)
+			datset.add(split[i]);
 
+		return datset;
+	}
+	private boolean continueOrExit() {
+		System.out.println("CONTINUE (Y/N) : ");
+		String r = scan.nextLine();
+		while (!r.equalsIgnoreCase(NO) && !r.equalsIgnoreCase(YES)) {
+			System.out.println("command not available, try again ... ");
+			r = scan.nextLine();
+		}
+		if(r.equals(YES))
+			return true;
+		if (r.equalsIgnoreCase(NO))
+			System.exit(0);	
+		return false;
 	}
 }

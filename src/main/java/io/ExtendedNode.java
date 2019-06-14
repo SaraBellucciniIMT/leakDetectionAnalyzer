@@ -12,7 +12,7 @@ public class ExtendedNode {
 	private TCType type;
 	private String id;
 	private IRPSTNode<ControlFlow<FlowNode>, FlowNode> associatedIRPSTNode;
-
+	
 	public ExtendedNode(IRPSTNode<ControlFlow<FlowNode>, FlowNode> f) {
 		this.associatedIRPSTNode = f;
 	}

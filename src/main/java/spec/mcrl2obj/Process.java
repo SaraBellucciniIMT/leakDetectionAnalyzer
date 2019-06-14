@@ -11,7 +11,7 @@ public class Process extends AbstractProcess {
 
 	private Action action;
 	private Operator op;
-	private List<String> child;
+	private List<String> child = new ArrayList<String>();
 	private Set<Process> insidedef;
 
 	// private Process[] processes;
@@ -20,7 +20,6 @@ public class Process extends AbstractProcess {
 	 */
 	public Process(Action a) {
 		this.action = a;
-		this.child = new ArrayList<String>();
 		setName();
 	}
 
@@ -43,6 +42,7 @@ public class Process extends AbstractProcess {
 		else
 			this.op = op;
 		this.action = a;
+	
 		setName();
 	}
 
@@ -62,13 +62,11 @@ public class Process extends AbstractProcess {
 	public Action getAction() {
 		if (this.action != null)
 			return action;
-		else
-			System.err.println("No action in this process \n");
 		return action;
 	}
 
 	public boolean isProcess() {
-		if (this.action.isEmpty())
+		if (this.action == null)
 			return true;
 		else
 			return false;
@@ -87,6 +85,10 @@ public class Process extends AbstractProcess {
 		this.child = new ArrayList<>();
 		if (!childs.isEmpty())
 			this.child.addAll(childs);
+		//Is just a reference to another process then remove Operator
+		if(this.child.size()<2)
+			this.op = null;
+		
 	}
 
 	public void setOpertor(Operator op) {
@@ -100,7 +102,7 @@ public class Process extends AbstractProcess {
 	public int getLength() {
 		if (!child.isEmpty())
 			return this.child.size();
-		else if (!action.isEmpty())
+		else if (action!= null)
 			return 1;
 		else
 			return -1;
@@ -117,6 +119,8 @@ public class Process extends AbstractProcess {
 	@Override
 	public String toString() {
 		String s = "";
+		if(getAction() == null && child.isEmpty())
+			System.out.println("chi minchia sei");
 		if (getName() != null && (op == null || !op.equals(Operator.SUM)) && (action == null || action.isTau()))
 			s = s + getName() + " = ";
 		if (op != null && op.equals(Operator.SUM))

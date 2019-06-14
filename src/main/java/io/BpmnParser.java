@@ -2,12 +2,11 @@ package io;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,6 +23,12 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
+import io.pet.PET;
+import io.pet.PETLabel;
+import io.pet.SScomputation;
+import io.pet.SSreconstruction;
+import io.pet.SSsharing;
 
 /*
  * Every partecipant is inteded as a bpmn model itself, not as a unique model
@@ -43,8 +48,9 @@ public class BpmnParser {
 			Element el = partecipant.get(i);
 			String idpartecipant = el.attr("id");
 			bpmn.setName(getCollaborationName(doc.getElementsByTag("bpmn2:collaboration"), idpartecipant));
+
 			// Set of all data objects identified uniquely by their name
-			Set<DataNode> datanodeSet = detectDataObject(el.getElementsByTag("bpmn2:dataobjectreference"));
+			Set<PETExtendedNode> datanodeSet = detectDataObject(el.getElementsByTag("bpmn2:dataobjectreference"));
 
 			// Set<FlowNode> allNodes = new HashSet<FlowNode>();
 			for (Element e : el.children()) {
@@ -107,26 +113,71 @@ public class BpmnParser {
 			if ((entry = getFlowNode(f.getFlowNodes(), id)) != null)
 				return Pair.of(f, entry);
 		}
-		System.err.println("There is no receive or send for the message");
 		return null;
 	}
 
-	private static void detectAssociation(Elements childrens, Set<DataNode> datanodeset, FlowNode f) {
+	private static void detectAssociation(Elements childrens, Set<PETExtendedNode> datanodeset, FlowNode f) {
+		PET pet = detectePet(childrens);
 		for (Element child : childrens) {
 			if (child.tagName().equals("bpmn2:datainputassociation")) {
 				String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
-			
 				datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 						.forEach(d -> d.addReadingFlowNode(f));
+				if (pet != null && pet.getPET().equals(PETLabel.SSRECONTRUCTION))
+					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref)).forEach(d -> d.setPET(pet));
+				else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION))
+					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref)).forEach(d -> {
+						if (((SScomputation) pet).containObjRef(dataobjref))
+							d.setPET(pet);
+					});
 				;
 			} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
 				String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
 				datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 						.forEach(d -> d.addWritingFlowNode(f));
+				if (pet != null && pet.getPET().equals(PETLabel.SSSHARING))
+					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref)).forEach(d -> d.setPET(pet));
 			} else
 				continue;
 		}
+
 	}
+
+	private static PET detectePet(Elements childrens) {
+		for (Element child : childrens) {
+			if (child.tagName().equals("pleak:sssharing")) {
+				String ssssharing = child.getElementsByTag("pleak:sssharing").text();
+				String[] attr = ssssharing.replace("{", "").replace("}", "").split(",");
+				int treshold = -1;
+				int computation = -1;
+				for (int i = 0; i < attr.length; i++) {
+					String[] subsplit = attr[i].split(":");
+					if (subsplit[0].contains("treshold"))
+						treshold = Integer.valueOf(subsplit[1]);
+					else if (subsplit[0].contains("computationParties"))
+						computation = Integer.valueOf(subsplit[1]);
+				}
+				return new SSsharing(treshold, computation);
+			} else if (child.tagName().equals("pleak:sscomputation")) {
+				String computation = child.getElementsByTag("pleak:sscomputation").text().replace("{", "").replace("}",
+						"");
+				int index = computation.indexOf("groupId");
+				String tpm = computation.substring(index + 7 + 3, index + 7 + 4);
+				String[] objref = computation.split("\"");
+				List<String> listobjref = new ArrayList<String>();
+				for (int i = 0; i < objref.length; i++) {
+					if (objref[i].contains("DataObjectReference")) {
+						listobjref.add(objref[i]);
+					}
+				}
+				return new SScomputation(Integer.valueOf(tpm), listobjref);
+			} else if (child.tagName().equalsIgnoreCase("pleak:SSReconstruction")) {
+				return new SSreconstruction();
+			}
+		}
+		return null;
+	}
+
 
 	/*
 	 * DataNode composition: ID _ NAME
@@ -156,17 +207,19 @@ public class BpmnParser {
 	}
 
 	/*
-	 * Create a Set of Data Object identified by their Name
+	 * Create a Set of Data Object s.t : ID-Name
 	 */
 	private static Set<Pair<String, String>> dataobjrefMap = new HashSet<Pair<String, String>>();
 
-	private static Set<DataNode> detectDataObject(Elements dataobref) {
-		Set<DataNode> datanodeSet = new HashSet<DataNode>();
+	private static Set<PETExtendedNode> detectDataObject(Elements dataobref) {
+		Set<PETExtendedNode> datanodeSet = new HashSet<PETExtendedNode>();
 		dataobref.forEach(d -> {
 			String name = d.attr("name");
+
+			name = name.replace(".", "_");
 			String[] differentnames = name.split(",");
 			for (int i = 0; i < differentnames.length; i++) {
-				DataNode dn = new DataNode();
+				PETExtendedNode dn = new PETExtendedNode();
 				dn.setId(d.attr("id") + differentnames[i]);
 				dn.setName(differentnames[i]);
 				datanodeSet.add(dn);
@@ -177,8 +230,11 @@ public class BpmnParser {
 	}
 
 	private static void setIdName(FlowNode f, Element e) {
-		if (!e.attr("name").isEmpty())
-			f.setName(e.attr("name"));
+		if (!e.attr("name").isEmpty()) {
+			String name = e.attr("name");
+			name = name.replace(" ", "_");
+			f.setName(name);
+		}
 		f.setId(e.attr("id"));
 	}
 

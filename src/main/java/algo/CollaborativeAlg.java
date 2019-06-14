@@ -19,6 +19,8 @@ import org.jbpt.pm.bpmn.Task;
 
 import algo.interpreter.Tmcrl;
 import io.BPMNLabel;
+import io.PETExtendedNode;
+import io.pet.PET;
 import spec.mcrl2obj.Action;
 import spec.mcrl2obj.Buffer;
 import spec.mcrl2obj.CommunicationFunction;
@@ -59,7 +61,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		messages.forEach(pair -> this.internalCommList
 				.add(Triple.of(pair.getLeft(), findData(pair.getRight()), pair.getRight())));
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			System.out.println(triple.toString());
+
 			int size = triple.getMiddle().size();
 			Set<DataParameter> parameters = new HashSet<DataParameter>(size);
 			triple.getMiddle()
@@ -188,7 +190,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	private boolean isitFirst(IFlowNode node, DataNode data) {
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			System.out.println(triple);
+
 			for (DataNode datanode : triple.getMiddle()) {
 				if (datanode.getName().equals(data.getName())) {
 					if (triple.getRight().equals(node) && !triple.getLeft().equals(epsilon)) {
@@ -206,7 +208,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 			if ((task = t.getProcessOfTask(f)) != null)
 				return task;
 		}
-		System.out.println("there isn't a task process for node : " + f.toString());
 		return null;
 	}
 
@@ -237,15 +238,11 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	// sended
 	private Set<DataNode> findData(IFlowNode f) {
 		Set<DataNode> set = new HashSet<DataNode>();
-		bpmn.forEach(b -> {
-			for (DataNode d : b.getDataNodes()) {
-				d.getWritingFlowNodes().forEach(flow -> {
-					if (flow.getName().equals(f.getName()))
-						set.add(d);
-				});
-
+		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
+			if (triple.getLeft().equals(f)) {
+				set.addAll(triple.getMiddle());
 			}
-		});
+		}
 		return set;
 	}
 
@@ -300,6 +297,25 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return null;
 	}
 
+
+
+	private void checkSensibleData() {
+		Map<PET,Set<String>> map = new HashMap<PET,Set<String>>();
+		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
+			for (DataNode data : triple.getMiddle()) {
+				if (data.getClass().equals(PETExtendedNode.class) && ((PETExtendedNode) data).getPET() != null)
+					
+					if(!map.containsKey(((PETExtendedNode) data).getPET() )) {
+						Set<String> set = new HashSet<String>();
+						set.add(data.getName());
+						map.put(((PETExtendedNode) data).getPET() , set);
+					}else
+						map.get(((PETExtendedNode) data).getPET()).add(data.getName());
+			}
+		}
+		this.mcrl2.setSensibleData(map);
+	}
+
 	@Override
 	public mCRL2 getSpec() {
 		tmcrl2 = new HashSet<Tmcrl>();
@@ -315,7 +331,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 			mcrl2.addInitSet(t.getFirstProcess());
 		});
 		analyzeData();
-
+		checkSensibleData();		
 		return mcrl2;
 	}
 

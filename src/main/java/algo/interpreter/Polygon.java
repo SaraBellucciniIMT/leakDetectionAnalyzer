@@ -32,9 +32,7 @@ public class Polygon implements ITProcess {
 				childList.add(process.getName());
 					}
 			return new Process(Operator.DOT,childList);
-		/*}else {
-			return new Task().interpreter(node);
-		}*/
+		
 	}
 
 }

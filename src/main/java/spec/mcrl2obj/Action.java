@@ -114,13 +114,6 @@ public class Action {
 			System.err.println("You cannot add parameters to a TAU action");
 	}
 
-	public boolean isEmpty() {
-		if (this.name.isEmpty())
-			return true;
-		else
-			return false;
-	}
-
 	public boolean isParametrized() {
 		if (this.parameters.isEmpty())
 			return false;

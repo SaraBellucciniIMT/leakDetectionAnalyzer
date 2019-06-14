@@ -19,7 +19,6 @@ public class Parout {
 	public mCRL2 parout(mCRL2 mcrl2) {
 		this.mcrl2 = mcrl2;
 		callParout();
-		System.out.println("OLD PROCESSES" + mcrl2.getProcesses().toString());
 		return mcrl2;
 	}
 
@@ -29,7 +28,7 @@ public class Parout {
 		while (parout) {
 			parout = false;
 			for (AbstractProcess ap : mcrl2.getProcesses()) {
-				System.out.println(ap.toString());
+				
 				Pair<Process, Process> pair;
 
 				if (ap.getClass().equals(Process.class) && ((pair = hasParallel((Process) ap)) != null)) {
@@ -50,9 +49,9 @@ public class Parout {
 			if(p.inInsideDef(p.getChildName(i))!= null)
 				continue;
 			AbstractProcess child = mcrl2.identifyAbstractProcess(p.getChildName(i));
-			System.out.println("CHILD : " + child.toString());
+			
 			if (child.getClass().equals(Process.class) && ((Process) child).getAction() == null
-					&& ((Process) child).getOperator().equals(Operator.PARALLEL))
+					&& ((Process) child).getOperator()!= null && ((Process) child).getOperator().equals(Operator.PARALLEL))
 				return Pair.of(p, (Process) child);
 		}
 		return null;
