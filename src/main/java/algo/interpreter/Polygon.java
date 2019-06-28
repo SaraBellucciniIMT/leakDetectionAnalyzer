@@ -3,7 +3,6 @@
  */
 package algo.interpreter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import io.ExtendedNode;
@@ -25,11 +24,11 @@ public class Polygon implements ITProcess {
 
 	@Override
 	public AbstractProcess interpreter(Tmcrl node) {
-			List<String> childList = new ArrayList<String>(successors.size());
+			String[] childList = new String[successors.size()];
 			for (int i = 0; i < successors.size(); i++) {
 				AbstractProcess process = node.applyT(successors.get(i));
 				node.addProcess(process);
-				childList.add(process.getName());
+				childList[i]= process.getName();
 					}
 			return new Process(Operator.DOT,childList);
 		

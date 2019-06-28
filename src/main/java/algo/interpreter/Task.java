@@ -14,7 +14,9 @@ public class Task implements ITProcess{
 	public AbstractProcess interpreter(Tmcrl node) {
 		// TODO Auto-generated method stub
 	
-		Action a = new Action(node.getCurrentNode().getName());
+		Action a = new Action(node.getCurrentNode().getId());
+		a.setId(node.getCurrentNode().getId());
+		a.setSecondName(node.getCurrentNode().getName());
 		TaskProcess tp = new TaskProcess(a, node.getCurrentNode());
 		node.addProcess(tp);
 		node.addAction(a);

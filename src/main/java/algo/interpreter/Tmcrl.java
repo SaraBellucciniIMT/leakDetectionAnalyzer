@@ -6,11 +6,14 @@ import java.util.Set;
 import org.jbpt.algo.tree.tctree.TCType;
 import org.jbpt.pm.IFlowNode;
 
+import algo.interpreter.StartEvent;
 import io.BPMNLabel;
 import io.ExploitedRPST;
 import io.ExtendedNode;
 import spec.mcrl2obj.AbstractProcess;
+import spec.mcrl2obj.Process;
 import spec.mcrl2obj.Action;
+import spec.mcrl2obj.PartecipantProcess;
 import spec.mcrl2obj.TaskProcess;
 
 public class Tmcrl {
@@ -21,13 +24,14 @@ public class Tmcrl {
 	private Set<AbstractProcess> processes = new HashSet<AbstractProcess>();
 	private String firstProcess;
 
-	public Tmcrl(ExploitedRPST rpst, String bpmnname) {
+	public Tmcrl(ExploitedRPST rpst, String bpmnname,String bpmnid) {
 		this.rpst = rpst;
 		actions = new HashSet<Action>();
-		AbstractProcess first = applyT(rpst.getRoot());
-		first.setId(bpmnname);
-		processes.add(first);
-		firstProcess = first.getName();
+	
+		PartecipantProcess partecipantProcess = new PartecipantProcess((Process)applyT(rpst.getRoot()),bpmnname);
+		firstProcess = partecipantProcess.getName();
+		partecipantProcess.setId(bpmnid);
+		processes.add(partecipantProcess);
 	}
 
 	protected AbstractProcess applyT(ExtendedNode node) {
@@ -95,6 +99,6 @@ public class Tmcrl {
 				return t;
 		}
 		return null;
-	}
+	}	
 
 }

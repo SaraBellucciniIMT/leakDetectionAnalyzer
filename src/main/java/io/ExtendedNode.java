@@ -60,6 +60,7 @@ public class ExtendedNode {
 			return this.singleNode.getName();
 	}
 
+	
 	@Override
 	public int hashCode() {
 		final int prime = 31;

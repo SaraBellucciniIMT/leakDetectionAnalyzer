@@ -1,14 +1,9 @@
 package formula;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import spec.mcrl2obj.AbstractProcess;
-import spec.mcrl2obj.Operator;
-import spec.mcrl2obj.Process;
-import spec.mcrl2obj.TaskProcess;
+import spec.mcrl2obj.PartecipantProcess;
 import spec.mcrl2obj.mCRL2;
 
 /*
@@ -17,49 +12,39 @@ import spec.mcrl2obj.mCRL2;
 public class PartecipantFormula extends TextInterpreterFormula {
 
 	protected static String generatePartecipantFormula(mCRL2 mcrl2, String partecipantname, Set<String> data) {
-		List<String> childs = new ArrayList<String>();
-		Process partecipant = mcrl2.getPartcipant(partecipantname);
-		childs = childTaskProcess(partecipant, mcrl2, childs);
-		String formula = "";
-		for (int i = 0; i < childs.size(); i++) {
-			
-			int dim =0;
-			String internalformula = "";
-			for (String datasingle : data) {
-				
-				Set<String> singleset = new HashSet<String>();
-				singleset.add(datasingle);
-				String s = TaskFormula.generateTaskFormula(mcrl2, childs.get(i), singleset);
-				if(!s.equals("") ) {
-					internalformula = internalformula + s;
-				if(dim != data.size()-1)
-					internalformula = internalformula + "||";
+		PartecipantProcess partecipant = (PartecipantProcess) mcrl2.getPartcipant(partecipantname);
+		String s = "";
+		if (data.size() > partecipant.getDimensionMemory())
+			return s;
+		else {
+			s = openpossibilityformula;
+			Set<String> parameterplu = new HashSet<String>();
+			if (data.size() < partecipant.getDimensionMemory()) {
+				parameterplu = generatePar(partecipant.getDimensionMemory() - data.size());
+				s = s + "exists ";
+				int i = 0;
+				for (String par : parameterplu) {
+					s = s + par;
+					if (i != parameterplu.size() - 1)
+						s = s + ",";
+					i++;
 				}
-				dim ++;
+				s = s + ":Data.";
 			}
-			if(!formula.equals("") && !internalformula.equals(""))
-				formula = formula + "&&";
-			if(!internalformula.equals(""))
-				formula =formula +"("+ internalformula +")";
+			if (!parameterplu.isEmpty())
+				data.addAll(parameterplu);
+			s = s + partecipant.getActionMemory().getName() + "({";
+			int i=0;
+			for(String d : data) {
+				s = s + d;
+				if(i != data.size()-1)
+					s =s + ",";
+				i++;
+			}
+			s = s + "})" + closepossibilityformula;
+		
 		}
-		return formula;
+		return s;
 	}
-
-	private static List<String> childTaskProcess(Process partecipant, mCRL2 mcrl2, List<String> childs) {
-		if (!partecipant.hasChild())
-			return childs;
-		for (int i = 0; i < partecipant.getLength(); i++) {
-			AbstractProcess child = mcrl2.identifyAbstractProcess(partecipant.getChildName(i));
-			if (child == null)
-				continue;
-			if (child.getClass().equals(TaskProcess.class))
-				childs.add(((TaskProcess) child).getAction().getName());
-			else
-				childTaskProcess(((Process) child), mcrl2, childs);
-		}
-		return childs;
-	}
-	
-
 
 }

@@ -11,6 +11,7 @@ public class CatchingEvent implements ITProcess{
 		// TODO Auto-generated method stub
 
 		Action a = new Action(node.getCurrentNode().getId());
+		a.setId(node.getCurrentNode().getId());
 		TaskProcess tp = new TaskProcess(a, node.getCurrentNode());
 		node.addProcess(tp);
 		node.addAction(a);

@@ -1,8 +1,6 @@
 package algo.interpreter;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import io.ExtendedNode;
 import spec.mcrl2obj.AbstractProcess;
@@ -20,12 +18,13 @@ private Collection<ExtendedNode> successors;
 	
 	@Override
 	public AbstractProcess interpreter(Tmcrl node) {
-		List<String> childlist = new ArrayList<String>(successors.size());
-
+		String[] childlist = new String[successors.size()];
+		int i=0;
 		for(ExtendedNode n : successors) {
 			AbstractProcess process = node.applyT(n);
 			node.addProcess(process);
-			childlist.add(process.getName());
+			childlist[i]= process.getName();
+			i++;
 		}
 		
 		return new Process(Operator.PLUS, childlist);

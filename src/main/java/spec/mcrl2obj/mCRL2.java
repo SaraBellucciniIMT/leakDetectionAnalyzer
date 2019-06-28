@@ -3,7 +3,6 @@ package spec.mcrl2obj;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -12,10 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.jbpt.pm.DataNode;
-
 import io.pet.PET;
-import io.pet.PETLabel;
 import spec.ISpec;
 
 /*
@@ -23,7 +19,7 @@ import spec.ISpec;
  */
 public class mCRL2 implements ISpec {
 
-	private Sort sort;
+	public Set<Sort> sorts;
 	private Set<Action> actions;
 	private Set<Action> allow;
 	private Set<CommunicationFunction> comm;
@@ -31,70 +27,66 @@ public class mCRL2 implements ISpec {
 	private Set<AbstractProcess> processes;
 	private Set<String> initSet;
 	private static int id = 0;
-	private Map<PET,Set<String>> sensibledata;
+	private Map<PET, Set<String>> sensibledata;
 
 	public mCRL2() {
 		this.actions = new HashSet<Action>();
 		this.allow = new HashSet<Action>();
 		this.comm = new HashSet<CommunicationFunction>();
+		this.sorts = new HashSet<Sort>();
 		this.hide = new HashSet<Action>();
 		this.processes = new HashSet<AbstractProcess>();
 		this.initSet = new HashSet<String>();
 
 	}
 
-	public Sort getSort() {
-		return sort;
-	}
-
 	public void addCommunicaitonFunction(CommunicationFunction f) {
 		this.comm.add(f);
-	}
-
-	public void setSort(Sort sort) {
-		this.sort = sort;
 	}
 
 	public Set<Action> getActions() {
 		return actions;
 	}
 
-	public Map<PET,Set<String>> getSensibleData() {
+	public Map<PET, Set<String>> getSensibleData() {
 		return this.sensibledata;
 	}
-	
-	public void setSensibleData(Map<PET,Set<String>>  s) {
+
+	public void setSensibleData(Map<PET, Set<String>> s) {
 		this.sensibledata = s;
 	}
-	public void addAction(Action action) {
-		boolean t = false;
-		for (Action a : actions) {
-			if (a.getName().equals(action.getName()) && a.nparameter() == action.nparameter())
-				t = true;
+
+	public void addAction(Action... action) {
+		for (Action a : action) {
+			boolean t = false;
+			for(Action act : this.actions) {
+				if(act.getName().equals(a.getName()) && act.getSortString().equals(a.getSortString()))
+					t = true;
+			}
+			if(!t)
+				this.actions.add(a);
 		}
-		if (!t)
-			this.actions.add(action);
 	}
 
-	/*
-	 * public void tauimporvement() {
-	 * 
-	 * for(AbstractProcess p : processes) { if(p.) } }
-	 */
-	public void addActions(Set<Action> actions) {
-		this.actions.addAll(actions);
+	public void addSort(Sort... sorts) {
+		for (int i = 0; i < sorts.length; i++)
+			this.sorts.add(sorts[i]);
 	}
 
 	public Set<Action> getAllow() {
 		return allow;
 	}
 
-	public void addAllow(Action allow) {
-		this.allow.add(allow);
-	}
-
-	public void addAllow(Set<Action> allow) {
-		this.allow.addAll(allow);
+	public void addAllow(Action... allow) {
+		for (Action a : allow) {
+			boolean t = false;
+			for(Action act : this.allow) {
+				if(act.getName().equals(a.getName()))
+					t = true;
+			}
+			if(!t)
+				this.allow.add(a);
+		}
 	}
 
 	public Set<CommunicationFunction> getComm() {
@@ -109,8 +101,16 @@ public class mCRL2 implements ISpec {
 		return hide;
 	}
 
-	public void addHide(Action hide) {
-		this.hide.add(hide);
+	public void addHide(Action... hide) {
+		for (Action a : hide) {
+			boolean t = false;
+			for(Action act : this.hide) {
+				if(act.getName().equals(a.getName()))
+					t = true;
+			}
+			if(!t)
+				this.hide.add(a);
+		}
 	}
 
 	public Set<AbstractProcess> getProcesses() {
@@ -119,19 +119,10 @@ public class mCRL2 implements ISpec {
 
 	public Process getPartcipant(String name) {
 		for (AbstractProcess ap : processes) {
-			if (ap.getId().equals(name))
+			if (ap.getClass().equals(PartecipantProcess.class) && ((PartecipantProcess)ap).getId().equals(name))
 				return (Process) ap;
 		}
 		return null;
-	}
-
-	public Set<TaskProcess> getTaskProcessesInsideProcesses() {
-		Set<TaskProcess> taskprocessset = new HashSet<TaskProcess>();
-		processes.forEach(tp -> {
-			if (tp.getClass().equals(TaskProcess.class))
-				taskprocessset.add((TaskProcess) tp);
-		});
-		return taskprocessset;
 	}
 
 	public void addProcess(AbstractProcess process) {
@@ -146,55 +137,39 @@ public class mCRL2 implements ISpec {
 		return initSet;
 	}
 
-	public void addInitSet(String initSet) {
-		this.initSet.add(initSet);
+	public void addInitSet(String... initSet) {
+		for(String s : initSet)
+			this.initSet.add(s);
 	}
 
-	public void mcrl22file(String f) {
-		File file = new File(f + ".mcrl2");
-		if (!file.exists()) {
-			try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
-				output.write("sort" + sort.getName() + "=" + "struct");
-				int i = 0;
-				for (String s : sort.getTypes()) {
-					output.write(s);
-					if (i != sort.getTypes().size())
-						output.write("|");
-					else
-						output.write(";\n");
-				}
-				output.write("act");
-
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-
+	public void removePinInitSet(String name) {
+		this.initSet.remove(name);
 	}
-
 	@Override
 	public String toString() {
-		;
-		String s = sort.toString() + ";\n";
+
+		String s = "";
+		for (Sort sort : sorts) {
+			if(!sort.getName().equalsIgnoreCase("bool"))
+				s = s + sort.toString() + ";\n";
+		}
+		s = s + memoryToString();
 		s = s + "act" + "\n";
-		Map<Integer, Set<Action>> classact = classifyaction();
-		for (Entry<Integer, Set<Action>> entry : classact.entrySet()) {
+		Map<String, Set<String>> classact = classifyaction();
+		for (Entry<String, Set<String>> entry : classact.entrySet()) {
 			int i = 0;
-			for (Action a : entry.getValue()) {
-				s = s + a.getName();
+			for (String a : entry.getValue()) {
+				s = s + a;
 				if (i != entry.getValue().size() - 1)
 					s = s + ",";
 				i++;
 			}
-			if (entry.getKey() != 0) {
-				s = s + " : " + sort.getName();
-				for (int j = 0; j < entry.getKey() - 1; j++) {
-					s = s + "#" + sort.getName();
-				}
-			}
-			s = s + ";\n";
+			if (entry.getKey().equals(""))
+				s = s + ";\n";
+			else
+				s = s + ": " +entry.getKey() + ";\n";
 		}
+
 		s = s + "proc" + "\n";
 		for (AbstractProcess process : processes) {
 			s = s + process.toString() + ";\n";
@@ -253,30 +228,41 @@ public class mCRL2 implements ISpec {
 		return s + ";";
 	}
 
-	private Map<Integer, Set<Action>> classifyaction() {
+	private Map<String, Set<String>> classifyaction() {
 		// n of parameters - action
-		Map<Integer, Set<Action>> classact = new HashMap<Integer, Set<Action>>();
+		Map<String, Set<String>> classact = new HashMap<String, Set<String>>();
 		for (Action a : actions) {
-			if (classact.containsKey(a.nparameter())) {
-				classact.get(a.nparameter()).add(a);
-			} else {
-				Set<Action> actions = new HashSet<Action>();
-				actions.add(a);
-				classact.put(a.nparameter(), actions);
+			if (classact.containsKey(a.getSortString()))
+				classact.get(a.getSortString()).add(a.getName());
+			else {
+				Set<String> actions = new HashSet<String>();
+				actions.add(a.getName());
+				classact.put(a.getSortString(), actions);
 			}
 		}
 		return classact;
+
 	}
 
 	public void taureduction() {
 		List<String> processtoremove = new ArrayList<String>();
 		for (AbstractProcess p : processes) {
-			if (p.getClass().equals(Process.class) && ((Process) p).hasChild()) {
-				Process process = (Process) p;
+			if ((p.getClass().equals(Process.class) && ((Process) p).hasChild()) || p.getClass().equals(PartecipantProcess.class)) {
+
+				Process process;
+				if(p.getClass().equals(PartecipantProcess.class))
+					process = ((PartecipantProcess)p).getProcess();
+				else
+					process= (Process) p;
+				
 				List<String> newchilds = new ArrayList<String>();
 				for (int i = 0; i < process.getLength(); i++) {
-					AbstractProcess child;
-					if ((child = identifyAbstractProcess(process.getChildName(i))).getClass().equals(Process.class)) {
+					AbstractProcess child = identifyAbstractProcess(process.getChildName(i));
+					if (child == null) {
+						newchilds.add(process.getChildName(i));
+						continue;
+					}
+					if (child.getClass().equals(Process.class)) {
 						if (((Process) child).isActivity() && ((Process) child).getAction().isTau()) {
 							processtoremove.add(process.getChildName(i));
 						} else
@@ -286,14 +272,16 @@ public class mCRL2 implements ISpec {
 				}
 				process.setChild(newchilds);
 			}
+			
 		}
 		Set<AbstractProcess> newprocess = new HashSet<AbstractProcess>();
 		for (AbstractProcess p : processes) {
 			if (!processtoremove.contains(p.getName())) {
 				newprocess.add(p);
+
 			}
 		}
-		processes = newprocess;
+		this.processes = newprocess;
 		emptyprocess();
 	}
 
@@ -302,29 +290,35 @@ public class mCRL2 implements ISpec {
 		while (change) {
 			change = false;
 			for (AbstractProcess p : processes) {
-				if (p.getClass().equals(Process.class)) {
-					//Empty process
-					if (((Process) p).getAction() == null && !((Process) p).hasChild()) {
-						processes.remove(p);
-						change= true;
+
+				if (p.getClass().equals(Process.class) || p.getClass().equals(PartecipantProcess.class)) {
+					Process process;
+					if(p.getClass().equals(Process.class))
+						process = (Process) p;
+					else
+						process =	((PartecipantProcess) p).getProcess();
+					// Empty process
+					if (process.getAction() == null && !process.hasChild()) {
+						this.processes.remove(p);
+						change = true;
 						break;
-					}
-					else if(((Process)p).hasChild()){
-						//Process thatcontainedemptyprocess or single references to process are removed
+					} else if (process.hasChild()) {
+						// Process thatcontainedemptyprocess or single references to process are removed
 						List<String> newchild = new ArrayList<String>();
 						boolean removec = false;
-						for(int i=0; i<((Process)p).getLength(); i++) {
-							if(identifyAbstractProcess(((Process)p).getChildName(i))!= null)
-								newchild.add(((Process)p).getChildName(i));	
+						for (int i = 0; i < process.getLength(); i++) {
+							if (identifyAbstractProcess(process.getChildName(i)) != null
+									|| process.inInsideDef(process.getChildName(i)) != null)
+								newchild.add(process.getChildName(i));
 							else
 								removec = true;
 						}
-						if(removec) {
-							((Process)p).setChild(newchild);
-							change=true;
+						if (removec) {
+							process.setChild(newchild);
+							change = true;
 							break;
 						}
-							
+
 					}
 				}
 
@@ -332,7 +326,6 @@ public class mCRL2 implements ISpec {
 		}
 	}
 
-	
 	public AbstractProcess identifyAbstractProcess(String name) {
 		for (AbstractProcess p : processes) {
 			if (p.getName().equals(name))
@@ -342,64 +335,79 @@ public class mCRL2 implements ISpec {
 	}
 
 	public void removeProcess(String name) {
-		for (AbstractProcess ap : this.processes) {
+		for (AbstractProcess ap : processes) {
 			if (ap.getName().equals(name)) {
-				this.processes.remove(ap);
-				System.out.println(name + "REMOVED");
+				processes.remove(ap);
 				break;
 			}
 		}
 
 	}
 
-	public Process identifyProcess(String name) {
-		for (AbstractProcess p : processes) {
-			if (p.getName().equals(name))
-				return (Process) p;
-		}
-		return null;
-	}
-	public TaskProcess identifyTaskProcess(String name) {
-		Set<TaskProcess> tasks  = getTaskProcessesInsideProcesses();
-		for(TaskProcess t : tasks) {
-			if(t.getAction().getName().equalsIgnoreCase(name))
-				return t;
-		}
-		return null;
-	}
-	
-
 	public String toStringPartecipants() {
 		String s = "PARTECIPANTS:\n";
 		for (AbstractProcess ap : processes) {
-			if (!ap.getId().equals(""))
-				s = s + ap.getId() + "\n";
+			if (ap.getClass().equals(PartecipantProcess.class))
+				s = s + " ID: " +  ((PartecipantProcess)ap).getId() + " NAME: "+((PartecipantProcess)ap).getPartecipantName() + "\n";
 		}
 		return s;
 	}
 
-	public String toStringAllTask() {
-		String s = "TASKS: \n";
-		for (AbstractProcess ap : processes) {
-			if (ap.getClass().equals(TaskProcess.class))
-				s = s + ((TaskProcess) ap).getAction().getName() + "\n";
+	public String toStringTasks() {
+		String s = "All task in the model: ";
+		for(Action a : actions) {
+			if(a.getId()!= null && !a.getId().equals(""))
+				s = s+ "ID: " +a.getId() + " " + " NAME: "+ a.getSecondName() +"\n";
 		}
 		return s;
 	}
-
-	public void toFile(String fileName) {
+	
+	public String toStringData() {
+		String s = "All data in the model ";
+		for(Sort sort : sorts) {
+			if(sort.getName().equals("Data")) {
+				for(String t : sort.getTypes())
+					s = s+t.toString() + "\n";
+				break;
+			}
+		}
+		return s;
+	}
+	public String toFile(String fileName) {
 		String path = "C:\\Users\\sara\\eclipse-workspace\\rpstTest\\result\\";
 		File file = new File(path + fileName + ".mcrl2");
-		if (!file.exists()) {
+		while(file.exists())
+			file = new File(path + fileName+ (id++) + ".mcrl2");
+			
+			
 			try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
 				output.write(toString());
 			} catch (Exception e) {
 				// TODO: handle exception
 			}
-		} else {
-			toFile(fileName + "(" + (id++) + ")");
-			return;
-		}
-		System.out.println(fileName + " GENERATED");
+		
+		return file.getName();
 	}
+
+	public String memoryToString() {
+		String s = "sort Memory = Set(Data);\r\n" + "map \r\n" + "union : Memory # Memory -> Memory;\r\n" + "var\r\n"
+				+ "m1,m2: Memory;\r\n" + "eqn \r\n" + "union(m1,m2) = m1 + m2 ; \n";
+		return s;
+	}
+
+	public static List<String> childTaskProcess(Process partecipant, mCRL2 mcrl2, List<String> childs) {
+		if (!partecipant.hasChild())
+			return childs;
+		for (int i = 0; i < partecipant.getLength(); i++) {
+			AbstractProcess child = mcrl2.identifyAbstractProcess(partecipant.getChildName(i));
+			if (child == null)
+				continue;
+			if (child.getClass().equals(TaskProcess.class))
+				childs.add(((TaskProcess) child).getAction().getName());
+			else
+				childTaskProcess(((Process) child), mcrl2, childs);
+		}
+		return childs;
+	}
+	
 }

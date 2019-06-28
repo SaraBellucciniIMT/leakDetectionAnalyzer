@@ -19,6 +19,9 @@ import org.jbpt.pm.bpmn.CatchingEvent;
 import org.jbpt.pm.bpmn.EndEvent;
 import org.jbpt.pm.bpmn.StartEvent;
 import org.jbpt.pm.bpmn.Task;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -47,8 +50,12 @@ public class BpmnParser {
 
 			Element el = partecipant.get(i);
 			String idpartecipant = el.attr("id");
-			bpmn.setName(getCollaborationName(doc.getElementsByTag("bpmn2:collaboration"), idpartecipant));
-
+			String namepartecipant = el.attr("name");
+			bpmn.setId(getCollaborationName(doc.getElementsByTag("bpmn2:collaboration"), idpartecipant));
+			if (namepartecipant != null && !namepartecipant.isEmpty())
+				bpmn.setName(getCollaborationName(doc.getElementsByTag("bpmn2:collaboration"), namepartecipant));
+			else
+				bpmn.setName(getCollaborationName(doc.getElementsByTag("bpmn2:collaboration"), idpartecipant));
 			// Set of all data objects identified uniquely by their name
 			Set<PETExtendedNode> datanodeSet = detectDataObject(el.getElementsByTag("bpmn2:dataobjectreference"));
 
@@ -117,67 +124,75 @@ public class BpmnParser {
 	}
 
 	private static void detectAssociation(Elements childrens, Set<PETExtendedNode> datanodeset, FlowNode f) {
-		PET pet = detectePet(childrens);
-		for (Element child : childrens) {
-			if (child.tagName().equals("bpmn2:datainputassociation")) {
-				String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
-				datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
-						.forEach(d -> d.addReadingFlowNode(f));
-				if (pet != null && pet.getPET().equals(PETLabel.SSRECONTRUCTION))
-					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref)).forEach(d -> d.setPET(pet));
-				else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION))
-					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref)).forEach(d -> {
-						if (((SScomputation) pet).containObjRef(dataobjref))
-							d.setPET(pet);
-					});
-				;
-			} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
-				String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
-				datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
-						.forEach(d -> d.addWritingFlowNode(f));
-				if (pet != null && pet.getPET().equals(PETLabel.SSSHARING))
-					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref)).forEach(d -> d.setPET(pet));
-			} else
-				continue;
+		try {
+			PET pet = null;
+			pet = detectePet(childrens);
+
+			for (Element child : childrens) {
+				if (child.tagName().equals("bpmn2:datainputassociation")) {
+					String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
+					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
+							.forEach(d -> d.addReadingFlowNode(f));
+					if (pet != null && pet.getPET().equals(PETLabel.SSRECONTRUCTION)) {
+						for (PETExtendedNode e : datanodeset) {
+							if (getIdDataNode(e).equals(dataobjref))
+								e.setPET(pet);
+						}
+					} else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION))
+						for (PETExtendedNode d : datanodeset) {
+							if (getIdDataNode(d).equals(dataobjref) && ((SScomputation) pet).containObjRef(dataobjref))
+								d.setPET(pet);
+						}
+				} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
+					String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
+					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
+							.forEach(d -> d.addWritingFlowNode(f));
+					if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
+						for (PETExtendedNode d : datanodeset) {
+							if (getIdDataNode(d).equals(dataobjref))
+								d.setPET(pet);
+						}
+					}
+				} else
+					continue;
+			}
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 
 	}
 
-	private static PET detectePet(Elements childrens) {
+	private static PET detectePet(Elements childrens) throws JSONException {
 		for (Element child : childrens) {
 			if (child.tagName().equals("pleak:sssharing")) {
 				String ssssharing = child.getElementsByTag("pleak:sssharing").text();
-				String[] attr = ssssharing.replace("{", "").replace("}", "").split(",");
-				int treshold = -1;
-				int computation = -1;
-				for (int i = 0; i < attr.length; i++) {
-					String[] subsplit = attr[i].split(":");
-					if (subsplit[0].contains("treshold"))
-						treshold = Integer.valueOf(subsplit[1]);
-					else if (subsplit[0].contains("computationParties"))
-						computation = Integer.valueOf(subsplit[1]);
-				}
+				JSONObject obj = new JSONObject(ssssharing);
+				int treshold = obj.getInt("treshold");
+				int computation = obj.getInt("computationParties");
+
 				return new SSsharing(treshold, computation);
 			} else if (child.tagName().equals("pleak:sscomputation")) {
-				String computation = child.getElementsByTag("pleak:sscomputation").text().replace("{", "").replace("}",
-						"");
-				int index = computation.indexOf("groupId");
-				String tpm = computation.substring(index + 7 + 3, index + 7 + 4);
-				String[] objref = computation.split("\"");
+				String computation = child.getElementsByTag("pleak:sscomputation").text();
+				JSONObject obj = new JSONObject(computation);
+				int index = obj.getInt("groupId");
+				JSONArray arr = obj.getJSONArray("inputs");
 				List<String> listobjref = new ArrayList<String>();
-				for (int i = 0; i < objref.length; i++) {
-					if (objref[i].contains("DataObjectReference")) {
-						listobjref.add(objref[i]);
+				for (int i = 0; i < arr.length(); i++) {
+					JSONArray ar;
+					if ((ar = arr.getJSONObject(i).getJSONArray("inputs")) != null) {
+						for (int j = 0; j < ar.length(); j++)
+							listobjref.add(ar.getJSONObject(j).getString("id"));
 					}
+
 				}
-				return new SScomputation(Integer.valueOf(tpm), listobjref);
+				return new SScomputation(index, listobjref);
 			} else if (child.tagName().equalsIgnoreCase("pleak:SSReconstruction")) {
 				return new SSreconstruction();
 			}
 		}
 		return null;
 	}
-
 
 	/*
 	 * DataNode composition: ID _ NAME

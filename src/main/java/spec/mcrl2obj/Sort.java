@@ -6,24 +6,20 @@ import java.util.Set;
 public class Sort {
 
 	private String name;
-	private static final String struct = "struct";
-	protected static final String empty = "eps";
-	private Set<String> types;
-	
+	private Set<String> types = new HashSet<String>();
+
 	public Sort(String name) {
 		this.name = name;
-		types = new HashSet<String>();
-		types.add(empty);
 	}
-	
+
 	public void addType(String type) {
 		this.types.add(type);
+
 	}
-	
-	public Set<String> getTypes(){
+
+	public Set<String> getTypes() {
 		return this.types;
 	}
-	
 
 	public String getName() {
 		return this.name;
@@ -31,17 +27,35 @@ public class Sort {
 
 	@Override
 	public String toString() {
-		String s = "sort " + name + " = "+ struct +" ";
-		int i =0;
-		for(String type : types) {
-			s = s+ type ;
-			if(i != types.size()-1)
-				s = s + "|";
-			i++;
+		String s = "sort " + getName() + " = ";
+		for (String t : types) {
+			s = s + t;
 		}
-		
 		return s;
 	}
-	
-	
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Sort other = (Sort) obj;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
+	}
 }

@@ -9,6 +9,7 @@ import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Action;
 import spec.mcrl2obj.CommunicationFunction;
 import spec.mcrl2obj.Operator;
+import spec.mcrl2obj.PartecipantProcess;
 import spec.mcrl2obj.Process;
 import spec.mcrl2obj.mCRL2;
 
@@ -23,54 +24,61 @@ public class Parout {
 	}
 
 	private void callParout() {
-		System.out.println(mcrl2.getInitSet());
 		boolean parout = true;
 		while (parout) {
 			parout = false;
 			for (AbstractProcess ap : mcrl2.getProcesses()) {
-				
 				Pair<Process, Process> pair;
-
-				if (ap.getClass().equals(Process.class) && ((pair = hasParallel((Process) ap)) != null)) {
-					parallel(pair.getLeft(), pair.getRight());
-					parout = true;
+				if (ap.getClass().equals(Process.class) && ((pair = hasParallel (ap)) != null)
+						|| (ap.getClass().equals(PartecipantProcess.class)
+								&& (pair = hasParallel(ap)) != null)) {
+					parout = parallel(pair.getLeft(), pair.getRight());
+					// parout = true;
 					break;
 				}
 			}
 		}
 	}
 
-	private Pair<Process, Process> hasParallel(Process p) {
+	private Pair<Process, Process> hasParallel(AbstractProcess process) {
 		// This means that the process is an action because otherwise cannot have just
 		// one child
+		Process p ;
+		if(process.getClass().equals(Process.class))
+			p = (Process)process;
+		else
+			p=((PartecipantProcess) process).getProcess();
 		if (p.getAction() != null)
 			return null;
 		for (int i = 0; i < p.getLength(); i++) {
-			if(p.inInsideDef(p.getChildName(i))!= null)
+			if (p.inInsideDef(p.getChildName(i)) != null)
 				continue;
 			AbstractProcess child = mcrl2.identifyAbstractProcess(p.getChildName(i));
-			
+
 			if (child.getClass().equals(Process.class) && ((Process) child).getAction() == null
-					&& ((Process) child).getOperator()!= null && ((Process) child).getOperator().equals(Operator.PARALLEL))
+					&& ((Process) child).getOperator() != null
+					&& ((Process) child).getOperator().equals(Operator.PARALLEL))
 				return Pair.of(p, (Process) child);
 		}
 		return null;
 	}
 
-	private void parallel(Process dad, Process child) {
-		if (dad.getOperator().equals(Operator.DOT) && dad.getLength() >1)
+	private boolean parallel(Process dad, Process child) {
+		if (dad.getOperator().equals(Operator.DOT) && dad.getLength() > 1)
 			new Sequence().interpreter(this, dad, child);
-		else if (dad.getOperator().equals(Operator.PLUS) && dad.getLength() >1)
+		else if (dad.getOperator().equals(Operator.PLUS) && dad.getLength() > 1)
 			new CHOICE().interpreter(this, dad, child);
+		else if (dad.getOperator().equals(Operator.PARALLEL))
+			return false;
 		else {
 			dad.setOpertor(child.getOperator());
 			List<String> newchilds = new ArrayList<String>();
-			for(int i=0; i<child.getLength(); i++)
+			for (int i = 0; i < child.getLength(); i++)
 				newchilds.add(child.getChildName(i));
 			dad.setChild(newchilds);
 			removeProcess(child.getName());
 		}
-			
+		return true;
 
 	}
 
@@ -90,7 +98,7 @@ public class Parout {
 		this.mcrl2.addAllow(a);
 	}
 
-	protected void addAct(Action a) {
+	protected void addAct(Action... a) {
 		this.mcrl2.addAction(a);
 	}
 

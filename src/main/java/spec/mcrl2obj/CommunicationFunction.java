@@ -1,5 +1,6 @@
 package spec.mcrl2obj;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,26 +10,27 @@ import java.util.List;
  */
 public class CommunicationFunction {
 	
-	List<Action> domain ;
+	List<String> domain = new ArrayList<String>();
 	Action codomain;
 	
-	public CommunicationFunction(List<Action> domain, Action codomain) {
-		this.domain = domain;
+	public CommunicationFunction(Action codomain,String... domain) {
+		for(int i=0; i<domain.length; i++)
+			this.domain.add(domain[i]);
 		this.codomain = codomain;
 	}
 	
-	public void addActionDomain(Action a) {
+	public void addActionDomain(String a) {
 		this.domain.add(a);
 	}
 
 	@Override
 	public String toString() {
 		String s ="";
-		Iterator<Action> it = domain.iterator();
+		Iterator<String> it = domain.iterator();
 		int n= 0;
 		while(it.hasNext()) {
-			Action a = it.next();
-			s = s.concat(a.getName());
+			String a = it.next();
+			s = s.concat(a);
 			if(n<domain.size()-1)
 				s = s + "|";
 			n++;

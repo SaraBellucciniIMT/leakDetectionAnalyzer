@@ -6,28 +6,19 @@ package formula;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import javax.print.attribute.SetOfIntegerSyntax;
-
 import java.util.Set;
-
-import org.apache.commons.collections4.SetUtils;
-import org.jbpt.pm.DataNode;
-
 import com.google.common.collect.Sets;
 
 import io.pet.PET;
 import io.pet.PETLabel;
 import io.pet.SScomputation;
-import io.pet.SSreconstruction;
 import io.pet.SSsharing;
+import spec.mcrl2obj.AbstractProcess;
+import spec.mcrl2obj.TaskProcess;
 import spec.mcrl2obj.mCRL2;
 
 /**
@@ -41,27 +32,28 @@ public abstract class TextInterpreterFormula {
 	private static final String fileName = "formula";
 	private static int id = 0;
 	public static final String violation = "violation";
+	private static String parameter = "p";
 
-	public static void toFile(mCRL2 mcrl2, String name, Set<String> data, String violation) {
+	public static String toFile(mCRL2 mcrl2, String idname, Set<String> data) {
 		String path = "C:\\Users\\sara\\eclipse-workspace\\rpstTest\\result\\";
-
-		File file = new File(path + fileName + ".mcf");
+		File file = new File(path + idname + fileName + ".mcf");
 		while (file.exists())
-			file = new File(path + fileName + (id++) + ".mcf");
+			file = new File(path + idname +fileName + (id++) + ".mcf");
 
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
-			if (violation.equals(TextInterpreterFormula.violation)) {
-				output.write(sssharingChecking(mcrl2, name));
-			} else {
-				if (mcrl2.identifyProcess(name) != null || mcrl2.identifyTaskProcess(name) != null)
-					output.write(TaskFormula.generateTaskFormula(mcrl2, name, data));
+
+				if (identifyIdTaskFormula(mcrl2, idname) != null)
+					output.write(TaskFormula.generateTaskFormula(mcrl2, idname, data));
 				else
-					output.write(PartecipantFormula.generatePartecipantFormula(mcrl2, name, data));
-			}
-			System.out.println(fileName + " GENERATED");
+					output.write(PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data));
+			
+			output.close();
+			System.out.println(file.getName() + " GENERATED");
 		} catch (Exception e) {
-			System.err.println("error in generating " + fileName);
+			System.err.println("error in generating " + idname +fileName);
 		}
+	
+		return file.getName();
 	}
 
 	public static String sssharingChecking(mCRL2 mcrl2, String partecipantname) {
@@ -95,7 +87,7 @@ public abstract class TextInterpreterFormula {
 				}
 			}
 		}
-		formula = formula + "||";
+		formula = "(" + formula+ ")" + "||";
 		Set<Set<String>> subrec = Sets.powerSet(recontruction);
 		String subformula = "";
 		for (Set<String> d : subrec) {
@@ -111,5 +103,28 @@ public abstract class TextInterpreterFormula {
 		return formula;
 	}
 
+	protected static TaskProcess identifyTaskFormula(mCRL2 mcrl, String name) {
+		for(AbstractProcess ab : mcrl.getProcesses()) {
+			if(ab.getClass().equals(TaskProcess.class) && ((TaskProcess)ab).getAction().getName().equals(name))
+				return (TaskProcess)ab;
+		}
+		return null;
+	}
 	
+	public static TaskProcess identifyIdTaskFormula(mCRL2 mcrl, String idtask) {
+		for(AbstractProcess ab : mcrl.getProcesses()) {
+			if(ab.getClass().equals(TaskProcess.class) && ((TaskProcess)ab).getAction().getId().equals(idtask))
+				return ((TaskProcess)ab);
+		}
+		return null;
+	}
+	
+	protected static Set<String> generatePar(int n) {
+		Set<String> s = new HashSet<String>();
+		while (n != 0) {
+			s.add(parameter + id++);
+			n--;
+		}
+		return s;
+	}
 }

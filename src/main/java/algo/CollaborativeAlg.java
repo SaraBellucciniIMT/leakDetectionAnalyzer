@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -21,13 +22,15 @@ import algo.interpreter.Tmcrl;
 import io.BPMNLabel;
 import io.PETExtendedNode;
 import io.pet.PET;
+import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Action;
 import spec.mcrl2obj.Buffer;
 import spec.mcrl2obj.CommunicationFunction;
 import spec.mcrl2obj.DataParameter;
 import spec.mcrl2obj.Operator;
+import spec.mcrl2obj.PartecipantProcess;
 import spec.mcrl2obj.Process;
-import spec.mcrl2obj.Sort;
+import spec.mcrl2obj.StructSort;
 import spec.mcrl2obj.TaskProcess;
 import spec.mcrl2obj.mCRL2;
 
@@ -39,9 +42,9 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	private Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmn;
 	private Set<Triple<IFlowNode, Set<DataNode>, IFlowNode>> internalCommList;
 	private static final FlowNode epsilon = new Task();
-	private final Sort sort = new Sort("Data");
+
 	private Set<Pair<FlowNode, FlowNode>> messages;
-	Set<Tmcrl> tmcrl2;
+	private Set<Tmcrl> tmcrl2;
 	private mCRL2 mcrl2;
 
 	public CollaborativeAlg(Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> pair) {
@@ -63,18 +66,23 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
 
 			int size = triple.getMiddle().size();
-			Set<DataParameter> parameters = new HashSet<DataParameter>(size);
-			triple.getMiddle()
-					.forEach(dn -> parameters.add(new DataParameter(dataplaceholder.get(dn).getPlaeholder())));
+			DataParameter[] parameters = new DataParameter[size];
+			int j = 0;
+			for (DataNode dn : triple.getMiddle()) {
+				parameters[j] = parameters[j] = new DataParameter(dataplaceholder.get(dn.getName()).getPlaeholder(),
+						getSortData());
+				j++;
+			}
 
-			// Update the sorate of the right side Process
+			// Update the storage of the right side Process
 			if (triple.getLeft().equals(epsilon)) {
 				TaskProcess R = getProcessOfTask(triple.getRight());
 				triple.getMiddle().forEach(d -> {
-					R.addDataToAction(new DataParameter(d.getName()));
+					R.addDataToAction(new DataParameter(d.getName(), getSortData()));
 				});
 				continue;
 			}
+
 			// Generate i(e_1,...,e_n)
 			Action i = Action.inputAction(parameters);
 			// Generate o(e_1,...,e_n)
@@ -90,99 +98,99 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				// Generate buffer and add the buffer to the init set
 				generateCommunicationBuffer(i, o, parameters);
 
-				Set<DataParameter> parametertosend = createOutputChannel(triple);
+				DataParameter[] parametertosend = createOutputChannel(triple);
 				Action send = Action.outputAction(parametertosend);
+				for (int k = 0; k < parametertosend.length; k++) {
+					if (!S.getAction().containsParameter(parametertosend[k]))
+						S.getAction().addDataParameter(parametertosend[k]);
+				}
 				S.addOutputAction(send);
 				Action read = Action.inputAction(parameters);
 				pread = new Process(read);
 
-				this.mcrl2.addCommunicaitonFunction(createSendCommunication(send, i));
-				this.mcrl2.addCommunicaitonFunction(createReadCommunication(o, read));
+				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(send, i));
+				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(o, read));
 
 			} else if (triple.getLeft().getTag().equals(BPMNLabel.MESSAGE)) {
 				if (!mcrl2.getInitSet().contains(S.getName()))
 					mcrl2.addInitSet(S.getName());
 				// parameters.forEach(par -> R.addDataToAction(par));
 				pread = new Process(i);
+				for (int k = 0; k < parameters.length; k++) {
+					if (!S.getAction().containsParameter(parameters[k]))
+						S.getAction().addDataParameter(parameters[k]);
+				}
 				S.addOutputAction(o);
-				this.mcrl2.addCommunicaitonFunction(createReadCommunication(o, i));
+				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(o, i));
 
 			} else if (triple.getRight().getTag().equals(BPMNLabel.MESSAGE)) {
 				if (!mcrl2.getInitSet().contains(R.getName()))
 					mcrl2.addInitSet(R.getName());
 				pread = new Process(i);
-				Set<DataParameter> parametertosend = createOutputChannel(triple);
+				DataParameter[] parametertosend = createOutputChannel(triple);
 				Action send = Action.outputAction(parametertosend);
 				S.addOutputAction(send);
-
-				this.mcrl2.addCommunicaitonFunction(createSendCommunication(i, send));
+				for (int k = 0; k < parametertosend.length; k++) {
+					if (!S.getAction().containsParameter(parametertosend[k]))
+						S.getAction().addDataParameter(parametertosend[k]);
+				}
+				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(i, send));
 			}
-			parameters.forEach(par -> R.addDataToAction(par));
-			ArrayList<String> childlist = new ArrayList<String>();
-			childlist.add(suminput.getName());
-			childlist.add(pread.getName());
-			Process seqsuminput = new Process(Operator.DOT, childlist);
+
+			for (DataParameter d : parameters) {
+				if (!R.getAction().containsParameter(d))
+					R.addDataToAction(d);
+			}
+			Process seqsuminput = new Process(Operator.DOT, suminput.getName(), pread.getName());
 			R.addInputAction(seqsuminput, suminput, pread);
 
 		}
-		adjustSets();
+
 	}
 
-	private void adjustSets() {
-		mcrl2.addAllow(Action.setSendAction());
-		mcrl2.addAllow(Action.setReadAction());
-		mcrl2.addHide(Action.setSendAction());
-		mcrl2.addHide(Action.setReadAction());
+	private CommunicationFunction createSendReadCommunication(Action a, Action b) {
+		mcrl2.addAction(a, b);
+		Action read = Action.setSendReadAction(a.getParameters());
+		addToActionAllowHide(read);
+		return new CommunicationFunction(read, a.getName(), b.getName());
 	}
 
-	private CommunicationFunction createSendCommunication(Action a, Action b) {
-		List<Action> domainsend = new ArrayList<Action>();
-		domainsend.add(a);
-		domainsend.add(b);
+	private void addToActionAllowHide(Action a) {
 		mcrl2.addAction(a);
-		mcrl2.addAction(b);
-		Action send = Action.setSendAction(a.getParameters());
-		mcrl2.addAction(send);
-		return new CommunicationFunction(domainsend, send);
+		mcrl2.addAllow(a);
+		mcrl2.addHide(a);
 	}
 
-	private CommunicationFunction createReadCommunication(Action a, Action b) {
-		List<Action> domainread = new ArrayList<Action>();
-		domainread.add(a);
-		domainread.add(b);
-		mcrl2.addAction(a);
-		mcrl2.addAction(b);
-		Action read = Action.setReadAction(a.getParameters());
-		mcrl2.addAction(read);
-		return new CommunicationFunction(domainread, read);
-	}
-
-	private Set<DataParameter> createOutputChannel(Triple<IFlowNode, Set<DataNode>, IFlowNode> triple) {
-		Set<DataParameter> parametertosend = new HashSet<DataParameter>();
+	private DataParameter[] createOutputChannel(Triple<IFlowNode, Set<DataNode>, IFlowNode> triple) {
+		List<DataParameter> parametertosend = new ArrayList<DataParameter>();
 		triple.getMiddle().forEach(d -> {
 			if (isitFirst(triple.getLeft(), d)) {
-				parametertosend.add(new DataParameter(d.getName()));
-				sort.addType(d.getName());
+				parametertosend.add(new DataParameter(d.getName(), getSortData()));
+				getSortData().addType(d.getName());
 			} else
-				parametertosend.add(dataplaceholder.get(d));
+				parametertosend.add(new DataParameter(dataplaceholder.get(d.getName()).getPlaeholder(), getSortData()));
+
 		});
-		return parametertosend;
+		return parametertosend.toArray(new DataParameter[] {});
 	}
 
-	// return the dataParameter established for that dataNode
-	private Map<DataNode, DataParameter> dataplaceholder;
+	/*
+	 * String : name of the data object DataParameter : placeholder chossen for that
+	 * data object
+	 */
+	private Map<String, DataParameter> dataplaceholder;
 
 	// Gives a fixed placeholder to each dataparameter
 
 	private void assignPlaceholder() {
-		this.dataplaceholder = new HashMap<DataNode, DataParameter>();
+		this.dataplaceholder = new HashMap<String, DataParameter>();
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			triple.getMiddle().forEach(d -> {
-				if (!dataplaceholder.containsKey(d)) {
-					DataParameter dp = new DataParameter(d.getName());
-					sort.addType(d.getName());
+				if (!dataplaceholder.containsKey(d.getName())) {
+					DataParameter dp = new DataParameter(d.getName(), getSortData());
+					getSortData().addType(d.getName());
 					dp.setPlaceHolder();
-					dataplaceholder.put(d, dp);
+					dataplaceholder.put(d.getName(), dp);
 				}
 			});
 		}
@@ -211,22 +219,21 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return null;
 	}
 
-	private void generateCommunicationBuffer(Action i, Action o, Set<DataParameter> parameters) {
+	private void generateCommunicationBuffer(Action i, Action o, DataParameter[] parameters) {
 
 		TaskProcess buffer = new TaskProcess();
-		List<String> childlist = new ArrayList<String>();
 		// generate i(e1,...,e_n)
 		// Generate the sum : e1,...en:Data
 		Process sum = new Process(Action.sumAction(parameters), Operator.SUM);
-		childlist.add(sum.getName());
 		Process input = new Process(i);
-		childlist.add(input.getName());
 
-		Process seqinputsum = new Process(Operator.DOT, childlist);
+		Process seqinputsum = new Process(Operator.DOT, sum.getName(), input.getName());
 		buffer.addInputAction(seqinputsum, input, sum);
 		buffer.addOutputAction(o);
 		buffer.setBufferName();
-		Process p = new Process(Action.emptyParameterAction(o.getName(), o.nparameter()));
+		Action a = new Action(o.getName(), new DataParameter(StructSort.empty, getSortData()));
+
+		Process p = new Process(a);
 
 		Buffer sumprocess = new Buffer(buffer, p);
 		sumprocess.setBufferName();
@@ -297,19 +304,17 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return null;
 	}
 
-
-
 	private void checkSensibleData() {
-		Map<PET,Set<String>> map = new HashMap<PET,Set<String>>();
+		Map<PET, Set<String>> map = new HashMap<PET, Set<String>>();
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			for (DataNode data : triple.getMiddle()) {
 				if (data.getClass().equals(PETExtendedNode.class) && ((PETExtendedNode) data).getPET() != null)
-					
-					if(!map.containsKey(((PETExtendedNode) data).getPET() )) {
+
+					if (!map.containsKey(((PETExtendedNode) data).getPET())) {
 						Set<String> set = new HashSet<String>();
 						set.add(data.getName());
-						map.put(((PETExtendedNode) data).getPET() , set);
-					}else
+						map.put(((PETExtendedNode) data).getPET(), set);
+					} else
 						map.get(((PETExtendedNode) data).getPET()).add(data.getName());
 			}
 		}
@@ -323,16 +328,143 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 			tmcrl2.add(analyzeControlFlow(b));
 
 		mcrl2 = new mCRL2();
-		mcrl2.setSort(sort);
 		tmcrl2.forEach(t -> {
 			mcrl2.addProcesses(t.getProcess());
-			mcrl2.addActions(t.getActions());
-			mcrl2.addAllow(t.getActions());
+			mcrl2.addAction(t.getActions().toArray(new Action[] {}));
+			mcrl2.addAllow(t.getActions().toArray(new Action[] {}));
 			mcrl2.addInitSet(t.getFirstProcess());
+			mcrl2.addSort(getSortData(), getSortMemory(), getSortBool());
 		});
+
+		Set<PartecipantProcess> partecipant = collectPartecipants();
+		for (PartecipantProcess p : partecipant)
+			generateProcessMemory(p);
+		changePartecipants();
 		analyzeData();
-		checkSensibleData();		
+		checkSensibleData();
+		mcrl2.taureduction();
+		addConnectionToMemory();
 		return mcrl2;
+	}
+
+	private void generateProcessMemory(PartecipantProcess p) {
+		// sum b:Bool
+		DataParameter parbool = new DataParameter(getSortBool());
+		Process sumbool = new Process(Action.sumAction(parbool), Operator.SUM);
+		// ----
+		// sum d:Data
+		DataParameter pardata = new DataParameter(getSortData());
+		Process sumdata = new Process(Action.sumAction(pardata), Operator.SUM);
+		// ---
+		// s(b,d) also added to the action
+		Action s = Action.setTemporaryAction(parbool, pardata);
+		Process processs = new Process(s);
+		// ---
+		Process notcomplete = new Process(Operator.DOT, sumbool.getName(), sumdata.getName(), processs.getName());
+		// (.. )-> .. <> ...
+		Process negbool = new Process(new Action("(!" + parbool.getName() + ")"));
+		Process thenp = new Process(new Action(notcomplete.getName() + "(union({" + pardata + "},m))"));
+		Action memp = Action.setMemoryAction(getSortMemory());
+		p.setActionMemory(memp);
+		mcrl2.addAction(memp, s);
+		mcrl2.addAllow(memp);
+		Process elsepmep = new Process(memp);
+		Process eleserec = new Process(new Action(notcomplete.getName() + "(m)"));
+		Process elsep = new Process(Operator.DOT, elsepmep.getName(), eleserec.getName());
+		elsep.addInsideDef(elsepmep, eleserec);
+		Process ifthen = new Process(Operator.IF, negbool.getName(), thenp.getName(), elsep.getName());
+		ifthen.addInsideDef(negbool, thenp, elsep);
+		// -----
+		notcomplete.addChild(ifthen.getName());
+		notcomplete.addInsideDef(sumbool, sumdata, processs, ifthen);
+		p.setMemory(notcomplete);
+		p.setActionToMemory(s.getName());
+		mcrl2.addInitSet(notcomplete.getName() + "({})");			
+	}
+
+	// Identify the task process using is task/activity name
+	private TaskProcess identiyTaskProcessName(String name) {
+		Set<TaskProcess> tasks = getTaskProcessesInsideProcesses();
+		for (TaskProcess t : tasks) {
+			if (t.getAction().getName().equalsIgnoreCase(name))
+				return t;
+		}
+		return null;
+	}
+
+	// Qui è definito la dimensione massima che la memoria raggiungerà
+	private void addConnectionToMemory() {
+
+		Action codomain = Action.setSendReadAction(new DataParameter(getSortBool()), new DataParameter(getSortData()));
+		for (PartecipantProcess partecipant : collectPartecipants()) {
+			Set<String> sendedtomemory = new HashSet<String>();
+			List<String> childspartecipant = mCRL2.childTaskProcess(partecipant.getProcess(), mcrl2,
+					new ArrayList<String>());
+			for (String s : childspartecipant) {
+				TaskProcess t = identiyTaskProcessName(s);
+				for (DataParameter d : t.getAction().getParameters()) {
+					Action output = new Action(partecipant.getActionToMemory(),
+							new DataParameter("false", getSortBool()), d);
+					t.addOutputAction(output);
+					String myData ="";
+					for(Entry<String, DataParameter> entry :dataplaceholder.entrySet()) {
+						if(entry.getKey().equals(d.getName()) ||entry.getValue().getPlaeholder().equals(d.getName())) {
+							myData = entry.getKey();
+							break;
+						}
+					}
+					
+					if (!sendedtomemory.contains(myData))
+						sendedtomemory.add(myData);
+				}
+			}
+			partecipant.setMaxDim(sendedtomemory.size());
+			mcrl2.addCommunicaitonFunction(new CommunicationFunction(codomain, partecipant.getActionToMemory(),
+					partecipant.getActionToMemory()));
+		}
+		mcrl2.addAction(codomain);
+	}
+
+	private Set<TaskProcess> getTaskProcessesInsideProcesses() {
+		Set<TaskProcess> taskprocessset = new HashSet<TaskProcess>();
+		mcrl2.getProcesses().forEach(tp -> {
+			if (tp.getClass().equals(TaskProcess.class))
+				taskprocessset.add((TaskProcess) tp);
+		});
+		return taskprocessset;
+	}
+
+	private void changePartecipants() {
+		for (PartecipantProcess p : collectPartecipants()) {
+			Process newpartecipant = new Process(Operator.DOT);
+			for (int i = 0; i < p.getProcess().getLength(); i++)
+				newpartecipant.addChild(p.getProcess().getChildName(i));
+			Process lastsend = new Process(new Action(p.getActionToMemory(), new DataParameter("true", getSortBool()),
+					new DataParameter(StructSort.empty, getSortData())));
+			newpartecipant.addChild(lastsend.getName());
+			newpartecipant.addInsideDef(lastsend);
+			newpartecipant.addInsideDef(p.getProcess().getAllInsideDef().toArray(new Process[] {}));
+			mcrl2.removePinInitSet(p.getName());
+			p.setProcessPartecipant(newpartecipant);
+			mcrl2.addInitSet(newpartecipant.getName());
+			mcrl2.addProcess(p);
+
+		}
+
+	}
+
+	/*
+	 * Partecipants are always Process because are such that P = P'.P''.P'''. ... .
+	 * a(true,eps)
+	 */
+	private Set<PartecipantProcess> collectPartecipants() {
+		Set<PartecipantProcess> partecipants = new HashSet<PartecipantProcess>();
+		for (AbstractProcess ap : mcrl2.getProcesses()) {
+			if (ap.getClass().equals(PartecipantProcess.class))
+				partecipants.add((PartecipantProcess) ap);
+		}
+		
+		return partecipants;
 	}
 
 }

@@ -38,6 +38,7 @@ public class TaskProcess extends AbstractProcess {
 		this.inputAction = new HashSet<Process>();
 		this.insidedef = new HashSet<Process>();
 		this.outputAction = new HashSet<Action>();
+		this.action = null;
 	}
 
 	public ExtendedNode geExtendedNode() {
@@ -76,9 +77,7 @@ public class TaskProcess extends AbstractProcess {
 		return this.extendednode.getTag();
 	}
 
-	public void addInsideDef(Process p) {
-		this.insidedef.add(p);
-	}
+	
 
 	private Process getInsideDef(String name) {
 		for (Process p : insidedef) {
@@ -90,7 +89,8 @@ public class TaskProcess extends AbstractProcess {
 
 	@Override
 	public String toString() {
-		String s = getName() + " = ";
+		
+		String s =getName()+" = ";
 		if (!inputAction.isEmpty()) {
 			for (Process inputp : inputAction) {
 				s = s + getInsideDef(inputp.getChildName(0)).toString() + ".";

@@ -31,28 +31,29 @@ public class Sequence extends AbstractParaout {
 		// ----This is the new Operator---
 		dad.setOpertor(Operator.PARALLEL);
 		dad.setChild(newchildren);
-
+		
 		parout.removeProcess(child.getName());
 
 	}
 
 	private String constructfirstsequence(Parout parout) {
 		// Construct the first sequence
-		List<String> newchild = new ArrayList<String>(dad.getLength() + 2);
+		Process firstsequence = new Process(Operator.DOT);
 		for (int i = 0; i < dad.getLength(); i++) {
-			if (!dad.getChildName(i).equals(child.getName()))
-				newchild.add(dad.getChildName(i));
-			else {
+			if (!dad.getChildName(i).equals(child.getName())) {
+				firstsequence.addChild(dad.getChildName(i));
+				if(dad.getInsideDef(dad.getChildName(i))!= null)
+					firstsequence.addInsideDef(dad.getInsideDef(dad.getChildName(i)));
+			}else {
 				this.t1 = new Process(Action.setTemporaryAction());
 				this.t2 = new Process(Action.setTemporaryAction());
-				newchild.addAll(t1Processt2(t1.getName(), child.getChildName(0), t2.getName()));
+				firstsequence.addChild(t1.getName(), child.getChildName(0), t2.getName());
 				communicationFunctionUpdateSet(parout, t1.getAction(), t1.getAction(), Action.setTemporaryAction());
 				communicationFunctionUpdateSet(parout, t2.getAction(), t2.getAction(), Action.setTemporaryAction());
 			}
 		}
-		Process firstsequence = new Process(Operator.DOT, newchild);
-		firstsequence.addInsideDef(t1);
-		firstsequence.addInsideDef(t2);
+	
+		firstsequence.addInsideDef(t1,t2);
 		parout.addProcess(firstsequence);
 		return firstsequence.getName();
 	}
@@ -60,10 +61,8 @@ public class Sequence extends AbstractParaout {
 	private List<String> followingSequence(Parout parout) {
 		List<String> followingsequence = new ArrayList<String>();
 		for (int i = 1; i < child.getLength(); i++) {
-			List<String> newchilds = t1Processt2(t1.getName(), child.getChildName(i), t2.getName());
-			Process p = new Process(Operator.DOT, newchilds);
-			p.addInsideDef(t1);
-			p.addInsideDef(t2);
+			Process p = new Process(Operator.DOT, t1.getName(), child.getChildName(i), t2.getName());
+			p.addInsideDef(t1,t2);
 			parout.addProcess(p);
 			followingsequence.add(p.getName());
 		}
