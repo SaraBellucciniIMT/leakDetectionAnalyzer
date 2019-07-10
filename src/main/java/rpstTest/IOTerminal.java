@@ -11,9 +11,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -29,8 +26,6 @@ import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import com.google.common.collect.Sets;
 
 import algo.CollaborativeAlg;
 import formula.PartecipantFormula;
@@ -115,7 +110,6 @@ public class IOTerminal {
 				case 3:
 					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
 							TextInterpreterFormula.violation);
-					System.out.println("Start verification...");
 					callFormula(check, filename, mcrl2);
 				default:
 					System.out.println("Operation not recognised");
@@ -135,10 +129,8 @@ public class IOTerminal {
 		if (check.isEmpty())
 			System.err.println("This partecipant/task never have the set of selected elements ");
 		else {
-			System.out.println("Start verification...");
 			lps2pbes2solve2convert(filename, check);
 			Map<String, Set<String>> s = scanFSMfile(dirname.getPath() + filename + ".pbes.evidence.fsm", mcrl2);
-			System.out.println("PATH: " + s.toString());
 			try {
 				fromPathInFSMtoJsonFile(dirname.getPath() + "json", s);
 				System.out.println("Json file generated");
@@ -156,16 +148,12 @@ public class IOTerminal {
 	private void lps2pbes2solve2convert(String filename, String formulafilename) {
 		String lps2pbes = "lps2pbes -c -f " + formulafilename + " " + filename + ".lps " + filename + ".pbes";
 		runmcrlcommand(lps2pbes);
-		System.out.println("pbes generater");
 		String pbessolve = "pbessolve --file=" + filename + ".lps " + filename + ".pbes";
 		runmcrlcommand(pbessolve);
-		System.out.println("counter example generated");
 		String lps2lts = "lps2lts " + filename + evidencelps + " " + filename + evidencelts;
 		runmcrlcommand(lps2lts);
-		System.out.println("lts generated");
 		String ltsconvert = "ltsconvert " + filename + evidencelts + " " + filename + evidencefsm;
 		runmcrlcommand(ltsconvert);
-		System.out.println("lts conveterd into fsm file");
 	}
 
 	private boolean runmcrlcommand(String command) {
@@ -182,7 +170,7 @@ public class IOTerminal {
 				if (line == null) {
 					break;
 				}
-				System.out.println(line);
+			//	System.out.println(line);
 			}
 			return true;
 		} catch (IOException e) {
@@ -293,7 +281,6 @@ public class IOTerminal {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("JSON FILE GENERATED");
 	}
 
 	private void deleteTemporaryFile(String... name) {

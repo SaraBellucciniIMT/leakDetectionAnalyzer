@@ -53,7 +53,6 @@ public abstract class TextInterpreterFormula {
 				output.write(PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data));
 
 			output.close();
-			System.out.println(file.getName() + " GENERATED");
 		} catch (Exception e) {
 			System.err.println("error in generating " + idname + fileName);
 		}
