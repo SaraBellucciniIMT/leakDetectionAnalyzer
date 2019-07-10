@@ -12,15 +12,18 @@ import spec.mcrl2obj.mCRL2;
 public class PartecipantFormula extends TextInterpreterFormula {
 
 	protected static String generatePartecipantFormula(mCRL2 mcrl2, String partecipantname, Set<String> data) {
+		Set<String> analyzedata = new HashSet<String>(data);
 		PartecipantProcess partecipant = (PartecipantProcess) mcrl2.getPartcipant(partecipantname);
+		if(partecipant == null)
+			System.err.println("This partecipant doesn't exist");
 		String s = "";
-		if (data.size() > partecipant.getDimensionMemory())
+		if (analyzedata.size() > partecipant.getDimensionMemory())
 			return s;
 		else {
 			s = openpossibilityformula;
 			Set<String> parameterplu = new HashSet<String>();
-			if (data.size() < partecipant.getDimensionMemory()) {
-				parameterplu = generatePar(partecipant.getDimensionMemory() - data.size());
+			if (analyzedata.size() < partecipant.getDimensionMemory()) {
+				parameterplu = generatePar(partecipant.getDimensionMemory() - analyzedata.size());
 				s = s + "exists ";
 				int i = 0;
 				for (String par : parameterplu) {
@@ -32,12 +35,12 @@ public class PartecipantFormula extends TextInterpreterFormula {
 				s = s + ":Data.";
 			}
 			if (!parameterplu.isEmpty())
-				data.addAll(parameterplu);
+				analyzedata.addAll(parameterplu);
 			s = s + partecipant.getActionMemory().getName() + "({";
 			int i=0;
-			for(String d : data) {
+			for(String d : analyzedata) {
 				s = s + d;
-				if(i != data.size()-1)
+				if(i != analyzedata.size()-1)
 					s =s + ",";
 				i++;
 			}

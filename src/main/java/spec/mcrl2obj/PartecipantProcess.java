@@ -4,7 +4,8 @@
 package spec.mcrl2obj;
 
 /**
- * @author sara Every partecipant has: 1-name 2-personal memory 3-dimension of
+ * @author sara 
+ * Every partecipant has: 1-name 2-personal memory 3-dimension of
  *         the memory;
  */
 public class PartecipantProcess extends Process {
@@ -75,6 +76,8 @@ public class PartecipantProcess extends Process {
 	public int getDimensionMemory() {
 		return this.maxdim;
 	}
+	
+	
 
 	@Override
 	public String toString() {

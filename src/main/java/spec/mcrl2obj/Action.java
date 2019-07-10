@@ -2,6 +2,8 @@ package spec.mcrl2obj;
 
 import org.apache.commons.lang3.ArrayUtils;
 
+import io.pet.PETLabel;
+
 public class Action {
 
 	private String name = "";
@@ -23,6 +25,7 @@ public class Action {
 	private static final String temporary = "t";
 	private static final String memory = "memory";
 	private boolean istau = false;
+	private PETLabel pet;
 
 	public Action(String name, DataParameter... dataParameters) {
 		this.name = name;
@@ -40,6 +43,13 @@ public class Action {
 		this.id = id;
 	}
 
+	public void setPet(PETLabel pet) {
+		this.pet = pet;
+	}
+	
+	public PETLabel getPet() {
+		return this.pet;
+	}
 	public void setSecondName(String secondName) {
 		this.secondName = secondName;
 	}

@@ -48,8 +48,8 @@ public class Sequence extends AbstractParaout {
 				this.t1 = new Process(Action.setTemporaryAction());
 				this.t2 = new Process(Action.setTemporaryAction());
 				firstsequence.addChild(t1.getName(), child.getChildName(0), t2.getName());
-				communicationFunctionUpdateSet(parout, t1.getAction(), t1.getAction(), Action.setTemporaryAction());
-				communicationFunctionUpdateSet(parout, t2.getAction(), t2.getAction(), Action.setTemporaryAction());
+				communicationFunctionUpdateSet(parout, Action.setTemporaryAction(), t1.getAction(), child.getLength());
+				communicationFunctionUpdateSet(parout, Action.setTemporaryAction(), t2.getAction(), child.getLength());
 			}
 		}
 	

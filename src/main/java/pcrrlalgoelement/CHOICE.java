@@ -60,8 +60,7 @@ public class CHOICE extends AbstractParaout {
 			 
 			parout.addProcess(newprocess);
 			firstchoice.addChild(newprocess.getName());
-			communicationFunctionUpdateSet(parout, t1, t1, Action.setTemporaryAction());
-			communicationFunctionUpdateSet(parout, t2, t2, Action.setTemporaryAction());
+			communicationFunctionUpdateSet(parout, Action.setTemporaryAction(), t1, child.getLength());
 		}
 		parout.addProcess(firstchoice);
 		return firstchoice.getName();

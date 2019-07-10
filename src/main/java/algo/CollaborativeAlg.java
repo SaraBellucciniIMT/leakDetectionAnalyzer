@@ -175,7 +175,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	}
 
 	/*
-	 * String : name of the data object DataParameter : placeholder chossen for that
+	 * String : name of the data object DataParameter : placeholder for that
 	 * data object
 	 */
 	private Map<String, DataParameter> dataplaceholder;
@@ -383,7 +383,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	}
 
 	// Identify the task process using is task/activity name
-	private TaskProcess identiyTaskProcessName(String name) {
+	public TaskProcess identiyTaskProcessName(String name) {
 		Set<TaskProcess> tasks = getTaskProcessesInsideProcesses();
 		for (TaskProcess t : tasks) {
 			if (t.getAction().getName().equalsIgnoreCase(name))

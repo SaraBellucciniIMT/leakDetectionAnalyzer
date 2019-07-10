@@ -41,6 +41,10 @@ public class BpmnParser {
 	public static Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> collaborationParser(
 			String s) throws IOException {
 		Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmnSet = new HashSet<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>();
+		
+		File file = new File(s);
+		if(!file.exists())
+			System.err.println(file.getName() + " doens't exist in this directory");
 		Document doc = Jsoup.parse(new File(s), "UTF-8");
 
 		Elements partecipant = doc.getElementsByTag("bpmn2:process");
@@ -127,7 +131,8 @@ public class BpmnParser {
 		try {
 			PET pet = null;
 			pet = detectePet(childrens);
-
+			if(pet!= null)
+				f.setDescription(pet.getPET().toString());
 			for (Element child : childrens) {
 				if (child.tagName().equals("bpmn2:datainputassociation")) {
 					String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
@@ -251,6 +256,7 @@ public class BpmnParser {
 			f.setName(name);
 		}
 		f.setId(e.attr("id"));
+	
 	}
 
 	/*

@@ -8,7 +8,8 @@ import algo.interpreter.Tmcrl;
 import spec.ISpec;
 
 /*
- * Continue the implementation of a single model
+ * TO-DO: generate specification for a single model 
+ * 
  */
 public class SingleAlg extends AbstractTranslationAlg{
 
