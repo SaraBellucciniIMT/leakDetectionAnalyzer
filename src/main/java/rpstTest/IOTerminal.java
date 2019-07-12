@@ -10,9 +10,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
@@ -24,6 +27,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -111,6 +115,7 @@ public class IOTerminal {
 					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
 							TextInterpreterFormula.violation);
 					callFormula(check, filename, mcrl2);
+					break;
 				default:
 					System.out.println("Operation not recognised");
 					System.exit(0);
@@ -129,40 +134,44 @@ public class IOTerminal {
 		if (check.isEmpty())
 			System.err.println("This partecipant/task never have the set of selected elements ");
 		else {
-			lps2pbes2solve2convert(filename, check);
-			Map<String, Set<String>> s = scanFSMfile(dirname.getPath() + filename + ".pbes.evidence.fsm", mcrl2);
+			boolean resultbool = lps2pbes2solve2convert(filename, check);
+			
 			try {
-				fromPathInFSMtoJsonFile(dirname.getPath() + "json", s);
-				System.out.println("Json file generated");
+				if(resultbool) {
+					List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + filename + ".pbes.evidence.fsm", mcrl2);
+					fromPathInFSMtoJsonFile(dirname.getPath() + "json", s);
+				}
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			String basename = dirname.getPath() + filename;
-			deleteTemporaryFile(basename +".lps", basename + ".pbes",basename + evidencelps, basename + evidencelts,
+			deleteTemporaryFile(basename + ".pbes",basename + evidencelps, basename + evidencelts,
 					basename + evidencefsm, dirname.getPath() + check);
 		}
 
 	}
 
-	private void lps2pbes2solve2convert(String filename, String formulafilename) {
+	private boolean lps2pbes2solve2convert(String filename, String formulafilename) {
 		String lps2pbes = "lps2pbes -c -f " + formulafilename + " " + filename + ".lps " + filename + ".pbes";
 		runmcrlcommand(lps2pbes);
 		String pbessolve = "pbessolve --file=" + filename + ".lps " + filename + ".pbes";
-		runmcrlcommand(pbessolve);
+		String resultsolve =runmcrlcommand(pbessolve);
+		if(resultsolve.equals("false"))
+			return false;
 		String lps2lts = "lps2lts " + filename + evidencelps + " " + filename + evidencelts;
 		runmcrlcommand(lps2lts);
 		String ltsconvert = "ltsconvert " + filename + evidencelts + " " + filename + evidencefsm;
 		runmcrlcommand(ltsconvert);
+		return true;
 	}
 
-	private boolean runmcrlcommand(String command) {
+	private String runmcrlcommand(String command) {
 		ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + dir + " &&" + command);
 		builder.redirectErrorStream(true);
 		Process p;
 		try {
 			p = builder.start();
-
 			BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			String line;
 			while (true) {
@@ -170,14 +179,14 @@ public class IOTerminal {
 				if (line == null) {
 					break;
 				}
-			//	System.out.println(line);
+				return line;
 			}
-			return true;
+			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return false;
+			e.printStackTrace();	
 		}
+		return "";
 	}
 
 	private Set<String> scanData() {
@@ -202,13 +211,13 @@ public class IOTerminal {
 		if (r.equalsIgnoreCase(YES))
 			return true;
 		else {
-			deleteTemporaryFile(dirname.getPath() + mcrl2file, mcrl2file.replaceAll(".mcrl2", "") + ".lps");
+			deleteTemporaryFile(dirname.getPath() + mcrl2file, dirname.getPath()  + mcrl2file.replaceAll(".mcrl2", "") + ".lps");
 			System.exit(0);
 			return false;
 		}
 	}
 
-	public Map<String, Set<String>> scanFSMfile(String fileName, mCRL2 mcrl) {
+	public List<Pair<String, Set<String>>> scanFSMfile(String fileName, mCRL2 mcrl) {
 		try {
 			FileReader fileReader = new FileReader(fileName);
 
@@ -219,7 +228,7 @@ public class IOTerminal {
 			// read line by line
 			String line;
 			String second = "";
-			Map<String, Set<String>> path = new HashMap<String, Set<String>>();
+			List<Pair<String,Set<String>>> path  = new ArrayList<Pair<String,Set<String>>>();
 			while ((line = br.readLine()) != null) {
 				if (line.matches(regex)) {
 					String[] split = line.split(" ");
@@ -242,7 +251,8 @@ public class IOTerminal {
 							for (String s : splitmatch)
 								tmp.add(s);
 						}
-						path.put(t.getAction().getId(), tmp);
+						path.add(Pair.of(t.getAction().getId(), tmp));
+					
 					}
 				}
 			}
@@ -257,7 +267,7 @@ public class IOTerminal {
 		return null;
 	}
 
-	private void fromPathInFSMtoJsonFile(String pathfile, Map<String, Set<String>> path) throws JSONException {
+	private void fromPathInFSMtoJsonFile(String pathfile, List<Pair<String, Set<String>>> path) throws JSONException {
 		int i = 0;
 		File file = new File(pathfile + i + ".json");
 		while (file.exists())
@@ -265,16 +275,14 @@ public class IOTerminal {
 
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
 			JSONObject ob = new JSONObject();
-			for (Entry<String, Set<String>> entry : path.entrySet()) {
-				JSONObject obid = new JSONObject();
-				JSONObject obtask = new JSONObject();
+			JSONObject obtask = new JSONObject();
+			JSONArray  arr = new JSONArray(path);
+			for (int j=0; j<path.size(); j++) {
 				JSONObject obdata = new JSONObject();
-				obdata.append("data", entry.getValue());
-				obtask.append(entry.getKey(), obdata);
-				obid.append("task", obtask);
-				ob.put("path", obid);
+				obdata.append("data", path.get(j).getRight());
+				obtask.append(path.get(j).getLeft(), obdata);
 			}
-
+			ob.put("path", arr);
 			output.write(ob.toString());
 
 		} catch (IOException e) {
