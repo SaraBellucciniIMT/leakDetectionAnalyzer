@@ -114,6 +114,7 @@ public class IOTerminal {
 					callFormula(check, filename, mcrl2);
 					break;
 				case 4: 
+					deleteTemporaryFile(dirname.getPath() + mcrl2file, dirname.getPath()  + mcrl2file.replaceAll(".mcrl2", "") + ".lps");
 					System.exit(0);
 				default:
 					System.out.println("Operation not recognised");

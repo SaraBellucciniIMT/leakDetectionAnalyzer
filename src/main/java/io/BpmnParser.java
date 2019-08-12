@@ -136,7 +136,6 @@ public class BpmnParser {
 			for (Element child : childrens) {
 				if (child.tagName().equals("bpmn2:datainputassociation")) {
 					String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
-					System.out.println(dataobjref);
 					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 							.forEach(d -> d.addReadingFlowNode(f));
 					if (pet != null && pet.getPET().equals(PETLabel.SSRECONTRUCTION)) {
