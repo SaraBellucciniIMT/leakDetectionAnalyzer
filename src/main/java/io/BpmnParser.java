@@ -136,6 +136,7 @@ public class BpmnParser {
 			for (Element child : childrens) {
 				if (child.tagName().equals("bpmn2:datainputassociation")) {
 					String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
+					System.out.println(dataobjref);
 					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 							.forEach(d -> d.addReadingFlowNode(f));
 					if (pet != null && pet.getPET().equals(PETLabel.SSRECONTRUCTION)) {
@@ -143,11 +144,12 @@ public class BpmnParser {
 							if (getIdDataNode(e).equals(dataobjref))
 								e.setPET(pet);
 						}
-					} else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION))
+					} else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION)) {
 						for (PETExtendedNode d : datanodeset) {
-							if (getIdDataNode(d).equals(dataobjref) && ((SScomputation) pet).containObjRef(dataobjref))
+							//if (getIdDataNode(d).equals(dataobjref) && ((SScomputation) pet).containObjRef(dataobjref))
+							if (((SScomputation) pet).containObjRef(getIdDataNode(d)))
 								d.setPET(pet);
-						}
+						}}
 				} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
 					String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
 					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))

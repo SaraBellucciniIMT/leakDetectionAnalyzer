@@ -232,7 +232,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		buffer.addOutputAction(o);
 		buffer.setBufferName();
 		Action a = new Action(o.getName(), new DataParameter(StructSort.empty, getSortData()));
-
+		this.mcrl2.addAction(a);
 		Process p = new Process(a);
 
 		Buffer sumprocess = new Buffer(buffer, p);
@@ -394,7 +394,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	// Qui è definito la dimensione massima che la memoria raggiungerà
 	private void addConnectionToMemory() {
-
 		Action codomain = Action.setSendReadAction(new DataParameter(getSortBool()), new DataParameter(getSortData()));
 		for (PartecipantProcess partecipant : collectPartecipants()) {
 			Set<String> sendedtomemory = new HashSet<String>();

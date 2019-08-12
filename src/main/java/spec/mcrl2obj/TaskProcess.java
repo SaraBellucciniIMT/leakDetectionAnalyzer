@@ -52,7 +52,8 @@ public class TaskProcess extends AbstractProcess {
 	}
 
 	public void addDataToAction(DataParameter d) {
-		this.action.addDataParameter(d);
+		if(!this.action.containsParameter(d))
+			this.action.addDataParameter(d);
 	}
 
 	public Set<Process> getInputAction() {

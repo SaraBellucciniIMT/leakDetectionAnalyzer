@@ -10,14 +10,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -81,7 +77,8 @@ public class IOTerminal {
 				System.out.println(
 						"Select action:\n" + "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
 								+ "->2 to check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
-								+ "->3 Verify if there is a secret sharing violation \n");
+								+ "->3 verify if there is a secret sharing violation \n"
+								+ "-> 4 exit");
 				scan = new Scanner(System.in);
 				String number = scan.nextLine();
 				String partecipant;
@@ -116,6 +113,8 @@ public class IOTerminal {
 							TextInterpreterFormula.violation);
 					callFormula(check, filename, mcrl2);
 					break;
+				case 4: 
+					System.exit(0);
 				default:
 					System.out.println("Operation not recognised");
 					System.exit(0);
@@ -161,13 +160,20 @@ public class IOTerminal {
 			return false;
 		String lps2lts = "lps2lts " + filename + evidencelps + " " + filename + evidencelts;
 		runmcrlcommand(lps2lts);
-		String ltsconvert = "ltsconvert " + filename + evidencelts + " " + filename + evidencefsm;
+		String ltsconvert = "ltsconvert -eweak-trace " + filename + evidencelts + " " + filename + evidencefsm;
 		runmcrlcommand(ltsconvert);
 		return true;
 	}
 
 	private String runmcrlcommand(String command) {
-		ProcessBuilder builder = new ProcessBuilder("cmd.exe", "/c", "cd " + dir + " &&" + command);
+		boolean isWindows = System.getProperty("os.name")
+				  .toLowerCase().startsWith("windows");
+		ProcessBuilder builder = new ProcessBuilder();
+		if (isWindows) {
+		    builder.command("cmd.exe", "/c", "cd " + dir + " &&" + command);
+		} else {
+		    builder.command("sh", "-c", "cd " + dir + " &&" + command);
+		}
 		builder.redirectErrorStream(true);
 		Process p;
 		try {
@@ -181,7 +187,6 @@ public class IOTerminal {
 				}
 				return line;
 			}
-			
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();	

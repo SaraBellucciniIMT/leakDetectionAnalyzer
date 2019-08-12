@@ -20,6 +20,9 @@ private Collection<ExtendedNode> successors;
 	@Override
 	public AbstractProcess interpreter(Tmcrl node) {
 		String[] childlist = new String[successors.size()];
+		//This means that remove the bound the polygon is reprenset another element 
+		if (childlist.length == 1)
+			return node.applyT(successors.stream().findAny().get());
 		int i=0;
 		for(ExtendedNode n : successors) {
 			AbstractProcess process = node.applyT(n);

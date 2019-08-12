@@ -157,7 +157,6 @@ public class mCRL2 implements ISpec {
 
 	@Override
 	public String toString() {
-
 		String s = "";
 		for (Sort sort : sorts) {
 			if (!sort.getName().equalsIgnoreCase("bool"))
@@ -414,7 +413,7 @@ public class mCRL2 implements ISpec {
 	}
 
 	public String memoryToString() {
-		String s = "sort Memory = Set(Data);\r\n" + "map \r\n" + "union : Memory # Memory -> Memory;\r\n" + "var\r\n"
+		String s = "map \r\n" + "union : Memory # Memory -> Memory;\r\n" + "var\r\n"
 				+ "m1,m2: Memory;\r\n" + "eqn \r\n" + "union(m1,m2) = m1 + m2 ; \n";
 		return s;
 	}
