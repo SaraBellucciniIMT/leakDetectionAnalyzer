@@ -38,20 +38,24 @@ public abstract class TextInterpreterFormula {
 	public static final String violation = "ssviolation";
 	private static String parameter = "p";
 
-	public static String toFile(mCRL2 mcrl2, String path , String idname, Set<String> data, String tag) {
+	public static String toFile(mCRL2 mcrl2, String path, String idname, Set<String> data, String tag) {
+		String formula;
+		if (identifyIdTaskFormula(mcrl2, idname) != null)
+			formula = TaskFormula.generateTaskFormula(mcrl2, idname, data);
+		else if (tag.equals(violation))
+			formula = sssharingChecking(mcrl2);
+		else
+			formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
+
+		if(formula == null)
+			return null;
+		
 		File file = new File(path + idname + fileName + ".mcf");
 		while (file.exists())
-			file = new File(path +idname + fileName + (id++) + ".mcf");
+			file = new File(path + idname + fileName + (id++) + ".mcf");
 
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
-
-			if (identifyIdTaskFormula(mcrl2, idname) != null)
-				output.write(TaskFormula.generateTaskFormula(mcrl2, idname, data));
-			else if (tag.equals(violation))
-				output.write(sssharingChecking(mcrl2));
-			else
-				output.write(PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data));
-
+			output.write(formula);
 			output.close();
 		} catch (Exception e) {
 			System.err.println("error in generating " + idname + fileName);
@@ -60,8 +64,21 @@ public abstract class TextInterpreterFormula {
 		return file.getName();
 	}
 
+	private static boolean isPET(PETLabel pet, Map<PET, Set<String>> sensible) {
+		for (PET p : sensible.keySet()) {
+			if (p.getPET().equals(pet))
+				return true;
+		}
+		return false;
+	};
+
 	protected static String sssharingChecking(mCRL2 mcrl2) {
 		Map<PET, Set<String>> map = mcrl2.getSensibleData();
+		if (map.isEmpty() || !isPET(PETLabel.SSCOMPUTATION, map) || !isPET(PETLabel.SSRECONTRUCTION, map)) {
+			System.out.println("No SSsharing PET over this model");
+			return null;
+		}
+		// check that you can really apply ss sharing
 		int treshold = 0;
 		Map<Integer, Set<String>> groupcomputation = new HashMap<Integer, Set<String>>();
 		Set<String> recontruction = new HashSet<String>();

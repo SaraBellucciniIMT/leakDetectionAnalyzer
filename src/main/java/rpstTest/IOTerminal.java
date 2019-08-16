@@ -58,8 +58,11 @@ public class IOTerminal {
 		System.out.println("Insert file name");
 		scan = new Scanner(System.in);
 		String inputfile = scan.nextLine();
+		if(!inputfile.contains(".bpmn"))
+			inputfile = inputfile+ ".bpmn";
+	
 		File f = new File(inputfile);
-		String filename = f.getName().substring(0, f.getName().lastIndexOf("."));
+			String filename = f.getName().substring(0, f.getName().lastIndexOf("."));
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
 			set = BpmnParser.collaborationParser(inputfile);
@@ -75,7 +78,8 @@ public class IOTerminal {
 				String check;
 				Set<String> datset = new HashSet<>();
 				System.out.println(
-						"Select action:\n" + "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+						"Select action:\n" 
+								+ "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
 								+ "->2 to check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
 								+ "->3 verify if there is a secret sharing violation \n"
 								+ "-> 4 exit");
@@ -111,6 +115,8 @@ public class IOTerminal {
 				case 3:
 					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
 							TextInterpreterFormula.violation);
+					if(check == null)
+						continueOrExit();
 					callFormula(check, filename, mcrl2);
 					break;
 				case 4: 
@@ -135,7 +141,7 @@ public class IOTerminal {
 			System.err.println("This partecipant/task never have the set of selected elements ");
 		else {
 			boolean resultbool = lps2pbes2solve2convert(filename, check);
-			
+			System.out.println(resultbool);
 			try {
 				if(resultbool) {
 					List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + filename + ".pbes.evidence.fsm", mcrl2);
@@ -302,6 +308,8 @@ public class IOTerminal {
 			File f = new File(s);
 			if (f.exists())
 				f.delete();
+			else
+				continue;
 		}
 
 	}

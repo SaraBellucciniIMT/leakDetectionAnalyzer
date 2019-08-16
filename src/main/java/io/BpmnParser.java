@@ -36,6 +36,7 @@ import io.pet.SSsharing;
 /*
  * Every partecipant is inteded as a bpmn model itself, not as a unique model
  */
+//Change path extension
 public class BpmnParser {
 
 	public static Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> collaborationParser(
@@ -43,6 +44,7 @@ public class BpmnParser {
 		Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmnSet = new HashSet<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>();
 		
 		File file = new File(s);
+		
 		if(!file.exists())
 			System.err.println(file.getName() + " doens't exist in this directory");
 		Document doc = Jsoup.parse(new File(s), "UTF-8");
@@ -63,7 +65,6 @@ public class BpmnParser {
 			// Set of all data objects identified uniquely by their name
 			Set<PETExtendedNode> datanodeSet = detectDataObject(el.getElementsByTag("bpmn2:dataobjectreference"));
 
-			// Set<FlowNode> allNodes = new HashSet<FlowNode>();
 			for (Element e : el.children()) {
 				FlowNode f = null;
 
