@@ -47,22 +47,28 @@ public class IOTerminal {
 	private final static String evidencelps = ".pbes.evidence.lps";
 	private final static String evidencelts = ".pbes.evidence.lts";
 	private final static String evidencefsm = ".pbes.evidence.fsm";
+	private final static String dotmcrl2 = ".mcrl2";
+	private final static String dotlps = ".lps";
+	private final static String json = "json.json";
 	private File dir = new File("result_FSAT");
 	private URI dirname;
 	private String mcrl2file;
+	private String check;
 
 	public IOTerminal() {
+		// If the folder result doesn't exist it generates it
 		if (!dir.exists())
 			dir.mkdir();
 		dirname = dir.toURI();
+
 		System.out.println("Insert file name");
 		scan = new Scanner(System.in);
 		String inputfile = scan.nextLine();
-		if(!inputfile.contains(".bpmn"))
-			inputfile = inputfile+ ".bpmn";
-	
+		if (!inputfile.contains(".bpmn"))
+			inputfile = inputfile + ".bpmn";
+
 		File f = new File(inputfile);
-			String filename = f.getName().substring(0, f.getName().lastIndexOf("."));
+		String filename = f.getName().substring(0, f.getName().lastIndexOf("."));
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
 			set = BpmnParser.collaborationParser(inputfile);
@@ -71,18 +77,15 @@ public class IOTerminal {
 			Parout parout = new Parout();
 			mcrl2 = parout.parout(mcrl2);
 			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
-			String lpsgen = "mcrl22lps " + mcrl2file + " " + mcrl2file.replaceAll(".mcrl2", "") + ".lps";
+			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
 			runmcrlcommand(lpsgen);
 
 			while (true) {
-				String check;
 				Set<String> datset = new HashSet<>();
 				System.out.println(
-						"Select action:\n" 
-								+ "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+						"Select action:\n" + "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
 								+ "->2 to check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
-								+ "->3 verify if there is a secret sharing violation \n"
-								+ "-> 4 exit");
+								+ "->3 verify if there is a secret sharing violation \n" + "-> 4 exit");
 				scan = new Scanner(System.in);
 				String number = scan.nextLine();
 				String partecipant;
@@ -93,14 +96,15 @@ public class IOTerminal {
 					scan = new Scanner(System.in);
 					partecipant = scan.nextLine();
 					while (!mcrl2.containt(partecipant)) {
-						System.out.println("INCORRECT INPUT: TASK DOESN'T EXIST OR THE ELEMENT IS NOT A TASK");
+						System.out.println(
+								"INCORRECT INPUT: TASK DOESN'T EXIST OR THE ELEMENT IS NOT A TASK. CHOOSE ANOTHER ONE: ");
 						scan = new Scanner(System.in);
 						partecipant = scan.nextLine();
 					}
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(scanData());
 					check = TaskFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
-					callFormula(check, filename, mcrl2);
+					callFormula(mcrl2);
 					break;
 				case 2:
 					System.out.println(mcrl2.toStringPartecipants());
@@ -110,17 +114,19 @@ public class IOTerminal {
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(scanData());
 					check = PartecipantFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
-					callFormula(check, filename, mcrl2);
+					callFormula(mcrl2);
 					break;
 				case 3:
-					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
+					this.check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
 							TextInterpreterFormula.violation);
-					if(check == null)
+					if (check == null)
 						continueOrExit();
-					callFormula(check, filename, mcrl2);
+					callFormula(mcrl2);
 					break;
-				case 4: 
-					deleteTemporaryFile(dirname.getPath() + mcrl2file, dirname.getPath()  + mcrl2file.replaceAll(".mcrl2", "") + ".lps");
+				case 4:
+					deleteTemporaryFile(mcrl2file + dotmcrl2, mcrl2file + dotlps, mcrl2file + ".pbes",
+							mcrl2file + evidencelps, mcrl2file + evidencelts, mcrl2file + evidencefsm);
+
 					System.exit(0);
 				default:
 					System.out.println("Operation not recognised");
@@ -136,50 +142,44 @@ public class IOTerminal {
 		}
 	}
 
-	private void callFormula(String check, String filename, mCRL2 mcrl2) {
-		if (check.isEmpty())
-			System.err.println("This partecipant/task never have the set of selected elements ");
-		else {
-			boolean resultbool = lps2pbes2solve2convert(filename, check);
+	private void callFormula(mCRL2 mcrl2) {
+			boolean resultbool = lps2pbes2solve2convert();
 			System.out.println(resultbool);
 			try {
-				if(resultbool) {
-					List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + filename + ".pbes.evidence.fsm", mcrl2);
-					fromPathInFSMtoJsonFile(dirname.getPath() + "json", s);
-				}
+				if (resultbool) {
+					List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
+					fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
+				} else
+					System.out.println("No JSON file generated because there isn't a path to show");
 			} catch (JSONException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			String basename = dirname.getPath() + filename;
-			deleteTemporaryFile(basename + ".pbes",basename + evidencelps, basename + evidencelts,
-					basename + evidencefsm, dirname.getPath() + check);
-		}
+		
 
 	}
 
-	private boolean lps2pbes2solve2convert(String filename, String formulafilename) {
-		String lps2pbes = "lps2pbes -c -f " + formulafilename + " " + filename + ".lps " + filename + ".pbes";
-		runmcrlcommand(lps2pbes);
-		String pbessolve = "pbessolve --file=" + filename + ".lps " + filename + ".pbes";
-		String resultsolve =runmcrlcommand(pbessolve);
-		if(resultsolve.equals("false"))
+	private boolean lps2pbes2solve2convert() {
+		String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " + mcrl2file + ".pbes";
+		System.out.println(runmcrlcommand(lps2pbes));
+		String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file + ".pbes";
+		String resultsolve = runmcrlcommand(pbessolve);
+		if (resultsolve.equals("false"))
 			return false;
-		String lps2lts = "lps2lts " + filename + evidencelps + " " + filename + evidencelts;
+		String lps2lts = "lps2lts " + mcrl2file + evidencelps + " " + mcrl2file + evidencelts;
 		runmcrlcommand(lps2lts);
-		String ltsconvert = "ltsconvert -eweak-trace " + filename + evidencelts + " " + filename + evidencefsm;
+		String ltsconvert = "ltsconvert -eweak-trace " + mcrl2file + evidencelts + " " + mcrl2file + evidencefsm;
 		runmcrlcommand(ltsconvert);
 		return true;
 	}
 
 	private String runmcrlcommand(String command) {
-		boolean isWindows = System.getProperty("os.name")
-				  .toLowerCase().startsWith("windows");
+		boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 		ProcessBuilder builder = new ProcessBuilder();
 		if (isWindows) {
-		    builder.command("cmd.exe", "/c", "cd " + dir + " &&" + command);
+			builder.command("cmd.exe", "/c", "cd " + dir + " &&" + command);
 		} else {
-		    builder.command("sh", "-c", "cd " + dir + " &&" + command);
+			builder.command("sh", "-c", "cd " + dir + " &&" + command);
 		}
 		builder.redirectErrorStream(true);
 		Process p;
@@ -196,7 +196,7 @@ public class IOTerminal {
 			}
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();	
+			e.printStackTrace();
 		}
 		return "";
 	}
@@ -220,10 +220,13 @@ public class IOTerminal {
 			System.out.println("command not available, try again ... ");
 			r = scan.nextLine();
 		}
-		if (r.equalsIgnoreCase(YES))
+		if (r.equalsIgnoreCase(YES)) {
+			deleteTemporaryFile(mcrl2file + ".pbes", mcrl2file + evidencelps, mcrl2file + evidencelts,
+					mcrl2file + evidencefsm, mcrl2file +json, check);
 			return true;
-		else {
-			deleteTemporaryFile(dirname.getPath() + mcrl2file, dirname.getPath()  + mcrl2file.replaceAll(".mcrl2", "") + ".lps");
+		} else {
+			deleteTemporaryFile(mcrl2file + dotmcrl2, mcrl2file + dotlps, mcrl2file + ".pbes", mcrl2file + evidencelps,
+					mcrl2file + evidencelts, mcrl2file + evidencefsm, mcrl2file +json, check);
 			System.exit(0);
 			return false;
 		}
@@ -240,7 +243,7 @@ public class IOTerminal {
 			// read line by line
 			String line;
 			String second = "";
-			List<Pair<String,Set<String>>> path  = new ArrayList<Pair<String,Set<String>>>();
+			List<Pair<String, Set<String>>> path = new ArrayList<Pair<String, Set<String>>>();
 			while ((line = br.readLine()) != null) {
 				if (line.matches(regex)) {
 					String[] split = line.split(" ");
@@ -264,7 +267,7 @@ public class IOTerminal {
 								tmp.add(s);
 						}
 						path.add(Pair.of(t.getAction().getId(), tmp));
-					
+
 					}
 				}
 			}
@@ -280,16 +283,13 @@ public class IOTerminal {
 	}
 
 	private void fromPathInFSMtoJsonFile(String pathfile, List<Pair<String, Set<String>>> path) throws JSONException {
-		int i = 0;
-		File file = new File(pathfile + i + ".json");
-		while (file.exists())
-			file = new File(pathfile + (i++) + ".json");
-
+		System.out.println("PATH : " + path.toString());
+		File file = new File(pathfile);
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
 			JSONObject ob = new JSONObject();
 			JSONObject obtask = new JSONObject();
-			JSONArray  arr = new JSONArray(path);
-			for (int j=0; j<path.size(); j++) {
+			JSONArray arr = new JSONArray(path);
+			for (int j = 0; j < path.size(); j++) {
 				JSONObject obdata = new JSONObject();
 				obdata.append("data", path.get(j).getRight());
 				obtask.append(path.get(j).getLeft(), obdata);
@@ -305,12 +305,12 @@ public class IOTerminal {
 
 	private void deleteTemporaryFile(String... name) {
 		for (String s : name) {
-			File f = new File(s);
+			File f = new File(dirname.getPath() + s);
 			if (f.exists())
 				f.delete();
 			else
 				continue;
 		}
-
 	}
+
 }

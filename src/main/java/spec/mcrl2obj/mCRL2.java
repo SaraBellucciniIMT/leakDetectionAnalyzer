@@ -408,8 +408,8 @@ public class mCRL2 implements ISpec {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-
-		return file.getName();
+		
+		return file.getName().replace(".mcrl2", "");
 	}
 
 	public String memoryToString() {

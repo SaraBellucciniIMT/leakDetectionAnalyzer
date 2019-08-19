@@ -33,7 +33,6 @@ public class Parout {
 						|| (ap.getClass().equals(PartecipantProcess.class)
 								&& (pair = hasParallel(ap)) != null)) {
 					parout = parallel(pair.getLeft(), pair.getRight());
-					// parout = true;
 					break;
 				}
 			}
@@ -64,12 +63,15 @@ public class Parout {
 	}
 
 	private boolean parallel(Process dad, Process child) {
+		//p1.(p2||...||.p3)
 		if (dad.getOperator().equals(Operator.DOT) && dad.getLength() > 1)
 			new Sequence().interpreter(this, dad, child);
+		//p1+(p2||...||p3)
 		else if (dad.getOperator().equals(Operator.PLUS) && dad.getLength() > 1)
 			new CHOICE().interpreter(this, dad, child);
+		//p1||(p2||...||p3)
 		else if (dad.getOperator().equals(Operator.PARALLEL))
-			return false;
+			new Parallel().interpreter(this, dad, child);
 		else {
 			dad.setOpertor(child.getOperator());
 			List<String> newchilds = new ArrayList<String>();

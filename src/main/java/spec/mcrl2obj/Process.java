@@ -78,6 +78,9 @@ public class Process extends AbstractProcess {
 		return this.op;
 	}
 
+	public List<String> getChild(){
+		return this.child;
+	}
 	public void addInsideDef(Process... p) {
 		for (Process proc : p)
 			this.insidedef.add(proc);
