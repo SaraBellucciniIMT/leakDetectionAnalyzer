@@ -78,8 +78,7 @@ public class IOTerminal {
 			mcrl2 = parout.parout(mcrl2);
 			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
 			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
-			runmcrlcommand(lpsgen);
-
+			System.out.println(runmcrlcommand(lpsgen));
 			while (true) {
 				Set<String> datset = new HashSet<>();
 				System.out.println(
