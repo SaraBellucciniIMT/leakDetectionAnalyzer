@@ -64,11 +64,13 @@ public class IOTerminal {
 		System.out.println("Insert file name");
 		scan = new Scanner(System.in);
 		String inputfile = scan.nextLine();
-		if (!inputfile.contains(".bpmn"))
-			inputfile = inputfile + ".bpmn";
 
 		File f = new File(inputfile);
-		String filename = f.getName().substring(0, f.getName().lastIndexOf("."));
+		String filename;
+		if (f.getName().contains(".bpmn"))
+			filename = f.getName().substring(0, f.getName().lastIndexOf("."));
+		else
+			filename = f.getName();
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
 			set = BpmnParser.collaborationParser(inputfile);
@@ -142,19 +144,18 @@ public class IOTerminal {
 	}
 
 	private void callFormula(mCRL2 mcrl2) {
-			boolean resultbool = lps2pbes2solve2convert();
-			System.out.println(resultbool);
-			try {
-				if (resultbool) {
-					List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
-					fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
-				} else
-					System.out.println("No JSON file generated because there isn't a path to show");
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		
+		boolean resultbool = lps2pbes2solve2convert();
+		System.out.println(resultbool);
+		try {
+			if (resultbool) {
+				List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
+				fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
+			} else
+				System.out.println("No JSON file generated because there isn't a path to show");
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 
 	}
 
@@ -221,11 +222,11 @@ public class IOTerminal {
 		}
 		if (r.equalsIgnoreCase(YES)) {
 			deleteTemporaryFile(mcrl2file + ".pbes", mcrl2file + evidencelps, mcrl2file + evidencelts,
-					mcrl2file + evidencefsm, mcrl2file +json, check);
+					mcrl2file + evidencefsm, mcrl2file + json, check);
 			return true;
 		} else {
 			deleteTemporaryFile(mcrl2file + dotmcrl2, mcrl2file + dotlps, mcrl2file + ".pbes", mcrl2file + evidencelps,
-					mcrl2file + evidencelts, mcrl2file + evidencefsm, mcrl2file +json, check);
+					mcrl2file + evidencelts, mcrl2file + evidencefsm, mcrl2file + json, check);
 			System.exit(0);
 			return false;
 		}
