@@ -8,18 +8,21 @@ import spec.mcrl2obj.mCRL2;
 
 /*
  * 1° understand who are the of parteipant name
+ * 2° return null if the partecipant doesn't exist otherwise
  */
 public class PartecipantFormula extends TextInterpreterFormula {
 
 	protected static String generatePartecipantFormula(mCRL2 mcrl2, String partecipantname, Set<String> data) {
 		Set<String> analyzedata = new HashSet<String>(data);
 		PartecipantProcess partecipant = (PartecipantProcess) mcrl2.getPartcipant(partecipantname);
-		if(partecipant == null)
+		if(partecipant == null) {
 			System.err.println("This partecipant doesn't exist");
+			return null;
+		}
 		String s = "";
-		if (analyzedata.size() > partecipant.getDimensionMemory())
-			return s;
-		else {
+		if (analyzedata.size() > partecipant.getDimensionMemory()) {
+			return "-1";
+		}else {
 			s = openpossibilityformula;
 			Set<String> parameterplu = new HashSet<String>();
 			if (analyzedata.size() < partecipant.getDimensionMemory()) {

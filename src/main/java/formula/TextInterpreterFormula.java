@@ -47,8 +47,8 @@ public abstract class TextInterpreterFormula {
 		else
 			formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
 
-		if(formula == null)
-			return null;
+		if(formula == null || formula == "-1")
+			return formula;
 		
 		File file = new File(path + idname + fileName + ".mcf");
 		while (file.exists())

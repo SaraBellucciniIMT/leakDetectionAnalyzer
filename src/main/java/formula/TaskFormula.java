@@ -12,9 +12,9 @@ public class TaskFormula extends TextInterpreterFormula {
 		TaskProcess task = identifyIdTaskFormula(mcrl2,idtaskname);
 
 		String s = "";
-		if (task == null || task.getAction().nparameter() < data.size())
-			return s;
-		else {
+		if (task == null || task.getAction().nparameter() < data.size()) {
+			return "-1";
+		}else {
 			s = openpossibilityformula;
 			Set<String> parameterplu = new HashSet<String>();
 			if (data.size() < task.getAction().nparameter()) {

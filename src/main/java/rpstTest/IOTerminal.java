@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.plaf.FileChooserUI;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
@@ -56,16 +58,27 @@ public class IOTerminal {
 	private String check;
 
 	public IOTerminal() {
+
 		// If the folder result doesn't exist it generates it
+
 		if (!dir.exists())
 			dir.mkdir();
+		for (File file : dir.listFiles()) {
+			if (!file.isDirectory())
+				file.delete();
+		}
 		dirname = dir.toURI();
-
 		System.out.println("Insert file name");
 		scan = new Scanner(System.in);
 		String inputfile = scan.nextLine();
 
 		File f = new File(inputfile);
+		while (!f.exists()) {
+			System.out.println("Incorrect input file, try again:");
+			scan = new Scanner(System.in);
+			f = new File(scan.nextLine());
+		}
+
 		String filename;
 		if (f.getName().contains(".bpmn"))
 			filename = f.getName().substring(0, f.getName().lastIndexOf("."));
@@ -105,6 +118,8 @@ public class IOTerminal {
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(scanData());
 					check = TaskFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
+					if(displayalternativeoutput(check))
+						break;
 					callFormula(mcrl2);
 					break;
 				case 2:
@@ -115,6 +130,8 @@ public class IOTerminal {
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(scanData());
 					check = PartecipantFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
+					if(displayalternativeoutput(check))
+						break;
 					callFormula(mcrl2);
 					break;
 				case 3:
@@ -157,6 +174,17 @@ public class IOTerminal {
 			e.printStackTrace();
 		}
 
+	}
+
+	// return true if an unexpected output exist, false otherwise
+	private boolean displayalternativeoutput(String s) {
+		if (s == null)
+			System.out.println("This task/partecipant doesn't exist");
+		else if (s.equals("-1"))
+			System.out.println(" NEVER HAS THIS NUMBER OF PARAMETERS");
+		else 
+			return false;
+		return true;
 	}
 
 	private boolean lps2pbes2solve2convert() {

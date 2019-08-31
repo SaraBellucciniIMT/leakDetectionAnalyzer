@@ -45,8 +45,10 @@ public class BpmnParser {
 		
 		File file = new File(s);
 		
-		if(!file.exists())
-			System.err.println(file.getName() + " doens't exist in this directory");
+		while(!file.exists()) {
+			System.err.println(file.getName() + " doens't exist in this directory, try again");
+			break;
+		}
 		Document doc = Jsoup.parse(new File(s), "UTF-8");
 
 		Elements partecipant = doc.getElementsByTag("bpmn2:process");
