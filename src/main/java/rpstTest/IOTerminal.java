@@ -76,7 +76,8 @@ public class IOTerminal {
 		while (!f.exists()) {
 			System.out.println("Incorrect input file, try again:");
 			scan = new Scanner(System.in);
-			f = new File(scan.nextLine());
+			inputfile = scan.nextLine();
+			f = new File(inputfile);
 		}
 
 		String filename;
