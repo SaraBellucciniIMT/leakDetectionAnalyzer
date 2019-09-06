@@ -19,8 +19,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.plaf.FileChooserUI;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
@@ -87,18 +85,24 @@ public class IOTerminal {
 			filename = f.getName();
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
+			long startTime= getCurrentTime();
 			set = BpmnParser.collaborationParser(inputfile);
 			CollaborativeAlg translationalg = new CollaborativeAlg(set);
 			mCRL2 mcrl2 = translationalg.getSpec();
 			Parout parout = new Parout();
 			mcrl2 = parout.parout(mcrl2);
 			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
+			long endTime = getCurrentTime();
+			System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime) + " ms");
 			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
-			System.out.println(runmcrlcommand(lpsgen));
+			runmcrlcommand(lpsgen);
+			String lpsinfo = "lpsinfo " +mcrl2file + dotlps;
+			System.out.println(runmcrlcommand(lpsinfo));
 			while (true) {
 				Set<String> datset = new HashSet<>();
 				System.out.println(
-						"Select action:\n" + "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+						"Select action:\n" 
+								+ "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
 								+ "->2 to check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
 								+ "->3 verify if there is a secret sharing violation \n" + "-> 4 exit");
 				scan = new Scanner(System.in);
@@ -162,7 +166,11 @@ public class IOTerminal {
 	}
 
 	private void callFormula(mCRL2 mcrl2) {
+		long startTime= getCurrentTime();
 		boolean resultbool = lps2pbes2solve2convert();
+		long endTime = getCurrentTime();
+		System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
+		
 		System.out.println(resultbool);
 		try {
 			if (resultbool) {
@@ -190,8 +198,11 @@ public class IOTerminal {
 
 	private boolean lps2pbes2solve2convert() {
 		String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " + mcrl2file + ".pbes";
-		System.out.println(runmcrlcommand(lps2pbes));
+		runmcrlcommand(lps2pbes);
+		String pbesinfo = "pbesinfo " + mcrl2file + ".pbes";
+		runmcrlcommand(pbesinfo);
 		String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file + ".pbes";
+	
 		String resultsolve = runmcrlcommand(pbessolve);
 		if (resultsolve.equals("false"))
 			return false;
@@ -215,14 +226,19 @@ public class IOTerminal {
 		try {
 			p = builder.start();
 			BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
-			String line;
+			String lastline = null;
+			String currentline;
+			System.out.println("----------------");
 			while (true) {
-				line = r.readLine();
-				if (line == null) {
+				currentline = r.readLine();
+				if (currentline == null) {
+					System.out.println("----------------");
 					break;
-				}
-				return line;
+				}	
+				System.out.println(currentline);
+				lastline = currentline;
 			}
+			return lastline;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -341,5 +357,14 @@ public class IOTerminal {
 				continue;
 		}
 	}
+	
+	private long getCurrentTime() {
+		return System.nanoTime();
+	}
+	
+	private long computeTimeSpanms(long startTime,long endTime) {
+		return (endTime - startTime)/1000000;
+	}
+	
 
 }

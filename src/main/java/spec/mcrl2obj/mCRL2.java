@@ -378,7 +378,7 @@ public class mCRL2 implements ISpec {
 	}
 
 	public String toStringTasks() {
-		String s = "All task in the model: ";
+		String s = "All task in the model:\n";
 		for (Action a : actions) {
 			if (a.getId() != null && !a.getId().equals(""))
 				s = s + "ID: " + a.getId() + " " + " NAME: " + a.getSecondName() + "\n";
