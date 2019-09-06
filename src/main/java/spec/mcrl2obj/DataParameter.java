@@ -41,6 +41,8 @@ public class DataParameter {
 
 	@Override
 	public String toString() {
+		if(name.contains(" "))
+			return name.replace(" ", "_");
 		return name ;
 	}
 

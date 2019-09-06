@@ -329,14 +329,15 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		Map<PET, Set<String>> map = new HashMap<PET, Set<String>>();
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			for (DataNode data : triple.getMiddle()) {
+				String dataname = data.getName().replace(" ", "_");
 				if (data.getClass().equals(PETExtendedNode.class) && ((PETExtendedNode) data).getPET() != null)
 
 					if (!map.containsKey(((PETExtendedNode) data).getPET())) {
 						Set<String> set = new HashSet<String>();
-						set.add(data.getName());
+						set.add(dataname);
 						map.put(((PETExtendedNode) data).getPET(), set);
 					} else
-						map.get(((PETExtendedNode) data).getPET()).add(data.getName());
+						map.get(((PETExtendedNode) data).getPET()).add(dataname);
 			}
 		}
 		this.mcrl2.setSensibleData(map);

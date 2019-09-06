@@ -10,7 +10,7 @@ public class TaskFormula extends TextInterpreterFormula {
 
 	protected static String generateTaskFormula(mCRL2 mcrl2, String idtaskname, Set<String> data) {
 		TaskProcess task = identifyIdTaskFormula(mcrl2,idtaskname);
-
+		
 		String s = "";
 		if (task == null || task.getAction().nparameter() < data.size()) {
 			return "-1";

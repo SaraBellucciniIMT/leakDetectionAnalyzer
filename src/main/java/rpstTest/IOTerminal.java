@@ -171,7 +171,7 @@ public class IOTerminal {
 		long endTime = getCurrentTime();
 		//System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
 		
-		//System.out.println(resultbool);
+		System.out.println(resultbool);
 		try {
 			if (resultbool) {
 				List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
@@ -235,7 +235,7 @@ public class IOTerminal {
 					//System.out.println("----------------");
 					break;
 				}	
-				System.out.println(currentline);
+				//System.out.println(currentline);
 				lastline = currentline;
 			}
 			return lastline;
@@ -252,9 +252,10 @@ public class IOTerminal {
 		scan = new Scanner(System.in);
 		String s = scan.nextLine();
 		String[] split = s.split(",");
-		for (int i = 0; i < split.length; i++)
-			datset.add(split[i]);
-
+		for (int i = 0; i < split.length; i++) {
+			String dataname = split[i].replace(" ", "_");
+			datset.add(dataname);
+		}
 		return datset;
 	}
 
