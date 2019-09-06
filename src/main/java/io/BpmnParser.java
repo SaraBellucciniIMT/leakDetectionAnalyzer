@@ -152,16 +152,16 @@ public class BpmnParser {
 							if (((SScomputation) pet).containObjRef(getIdDataNode(d)))
 								d.setPET(pet);
 						}}
-				} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
-					String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
-					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
-							.forEach(d -> d.addWritingFlowNode(f));
-					if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
+					else if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
 						for (PETExtendedNode d : datanodeset) {
 							if (getIdDataNode(d).equals(dataobjref))
 								d.setPET(pet);
 						}
 					}
+				} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
+					String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
+					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
+							.forEach(d -> d.addWritingFlowNode(f));
 				} else
 					continue;
 			}

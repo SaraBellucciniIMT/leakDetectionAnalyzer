@@ -50,6 +50,8 @@ public abstract class TextInterpreterFormula {
 		if(formula == null || formula == "-1")
 			return formula;
 		
+		if(idname.contains(" "))
+			idname = idname.replace(" ","_");
 		File file = new File(path + idname + fileName + ".mcf");
 		while (file.exists())
 			file = new File(path + idname + fileName + (id++) + ".mcf");
@@ -74,7 +76,7 @@ public abstract class TextInterpreterFormula {
 
 	protected static String sssharingChecking(mCRL2 mcrl2) {
 		Map<PET, Set<String>> map = mcrl2.getSensibleData();
-		if (map.isEmpty() || !isPET(PETLabel.SSCOMPUTATION, map) || !isPET(PETLabel.SSRECONTRUCTION, map)) {
+		if (map.isEmpty() || (!isPET(PETLabel.SSCOMPUTATION, map) && !isPET(PETLabel.SSRECONTRUCTION, map))) {
 			System.out.println("No SSsharing PET over this model");
 			return null;
 		}
@@ -99,7 +101,7 @@ public abstract class TextInterpreterFormula {
 		Set<PartecipantProcess> partecipantProcesses = mcrl2.getParcipantProcesses();
 		Set<PartecipantProcess> remove = new HashSet<PartecipantProcess>();
 		for (PartecipantProcess partecipant : partecipantProcesses) {
-			if (reconstructionPartecipant(mcrl2, partecipant.getId()))
+			if (reconstructionPartecipant(mcrl2, partecipant.getId()) || creationShareParticiapnt(mcrl2, partecipant.getId()))
 				remove.add(partecipant);
 		}
 		partecipantProcesses.removeAll(remove);
@@ -184,5 +186,19 @@ public abstract class TextInterpreterFormula {
 		}
 
 		return false;
+	}
+	private static boolean creationShareParticiapnt(mCRL2 mcrl, String name) {
+		List<String> childspartecipant = new ArrayList<String>();
+		childspartecipant.addAll(mCRL2.childTaskProcess(((PartecipantProcess) mcrl.getPartcipant(name)).getProcess(),
+				mcrl, childspartecipant));
+		for (String s : childspartecipant) {
+			for (Action ab : mcrl.getActions()) {
+				if (ab.getName().equals(s) && ab.getPet() != null && ab.getPet().equals(PETLabel.SSSHARING))
+					return true;
+			}
+		}
+
+		return false;
+
 	}
 }

@@ -64,7 +64,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		messages.forEach(pair -> this.internalCommList
 				.add(Triple.of(pair.getLeft(), findData(pair.getRight()), pair.getRight())));
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
-
+			
 			int size = triple.getMiddle().size();
 			DataParameter[] parameters = new DataParameter[size];
 			int j = 0;
@@ -79,6 +79,14 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				TaskProcess R = getProcessOfTask(triple.getRight());
 				triple.getMiddle().forEach(d -> {
 					R.addDataToAction(new DataParameter(d.getName(), getSortData()));
+				});
+				continue;
+			}
+			
+			if(triple.getRight().equals(epsilon)) {
+				TaskProcess S = getProcessOfTask(triple.getLeft());
+				triple.getMiddle().forEach(d->{
+					S.addDataToAction(new DataParameter(d.getName(),getSortData()));
 				});
 				continue;
 			}
@@ -263,6 +271,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 			for (DataNode n : b.getDataNodes()) {
 				Collection<IFlowNode> writingnodes = n.getWritingFlowNodes();
 				Collection<IFlowNode> readnodes = n.getReadingFlowNodes();
+				if(!writingnodes.isEmpty() && !readnodes.isEmpty()) {
 				writingnodes.forEach(w -> {
 					readnodes.forEach(r -> {
 						Triple<IFlowNode, Set<DataNode>, IFlowNode> triple;
@@ -275,7 +284,8 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 						}
 					});
 				});
-				if (writingnodes.isEmpty() && !readnodes.isEmpty()) {
+				}
+				else if (writingnodes.isEmpty() && !readnodes.isEmpty()) {
 					readnodes.forEach(r -> {
 						Triple<IFlowNode, Set<DataNode>, IFlowNode> triple = existingWriteReadCouple(epsilon, r);
 						if (triple != null)
@@ -287,6 +297,17 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 						}
 					});
 
+				}else if(!writingnodes.isEmpty() && readnodes.isEmpty()) {
+					writingnodes.forEach(w -> {
+						Triple<IFlowNode, Set<DataNode>, IFlowNode> triple = existingWriteReadCouple(w, epsilon);
+						if (triple != null)
+							triple.getMiddle().add(n);
+						else {
+							Set<DataNode> dataset = new HashSet<DataNode>();
+							dataset.add(n);
+							internalCommList.add(Triple.of(w, dataset, epsilon));
+						}
+					});
 				}
 			}
 		});

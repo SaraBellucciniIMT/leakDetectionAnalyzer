@@ -90,12 +90,8 @@ public class Tmcrl {
 				taskprocesses.add((TaskProcess) p);
 		});
 		for (TaskProcess t : taskprocesses) {
-			if(t.geExtendedNode().getName().equals("")){
-				if(t.geExtendedNode().getId().equals(flowNode.getId())) 
-						return t;
-				continue;
-			}
-			if (t.geExtendedNode().getName().equals(flowNode.getName()))
+
+			if (t.geExtendedNode().getId().equals(flowNode.getId()))
 				return t;
 		}
 		return null;
