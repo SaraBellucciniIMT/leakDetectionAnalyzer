@@ -23,6 +23,8 @@ public class StructSort extends Sort {
 		String s = "sort " + this.getName() + " = struct ";
 		int i =0;
 		for(String type : this.getTypes()) {
+			if(type.contains(" "))
+				type = type.replace(" ", "_");
 			s = s+ type ;
 			if(i != this.getTypes().size()-1)
 				s = s + "|";

@@ -93,11 +93,11 @@ public class IOTerminal {
 			mcrl2 = parout.parout(mcrl2);
 			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
 			long endTime = getCurrentTime();
-			System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime) + " ms");
+			//System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime) + " ms");
 			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
 			runmcrlcommand(lpsgen);
-			String lpsinfo = "lpsinfo " +mcrl2file + dotlps;
-			System.out.println(runmcrlcommand(lpsinfo));
+			//String lpsinfo = "lpsinfo " +mcrl2file + dotlps;
+			//System.out.println(runmcrlcommand(lpsinfo));
 			while (true) {
 				Set<String> datset = new HashSet<>();
 				System.out.println(
@@ -169,9 +169,9 @@ public class IOTerminal {
 		long startTime= getCurrentTime();
 		boolean resultbool = lps2pbes2solve2convert();
 		long endTime = getCurrentTime();
-		System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
+		//System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
 		
-		System.out.println(resultbool);
+		//System.out.println(resultbool);
 		try {
 			if (resultbool) {
 				List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
@@ -199,8 +199,8 @@ public class IOTerminal {
 	private boolean lps2pbes2solve2convert() {
 		String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " + mcrl2file + ".pbes";
 		runmcrlcommand(lps2pbes);
-		String pbesinfo = "pbesinfo " + mcrl2file + ".pbes";
-		runmcrlcommand(pbesinfo);
+		//String pbesinfo = "pbesinfo " + mcrl2file + ".pbes";
+		//runmcrlcommand(pbesinfo);
 		String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file + ".pbes";
 	
 		String resultsolve = runmcrlcommand(pbessolve);
@@ -228,11 +228,11 @@ public class IOTerminal {
 			BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			String lastline = null;
 			String currentline;
-			System.out.println("----------------");
+			//System.out.println("----------------");
 			while (true) {
 				currentline = r.readLine();
 				if (currentline == null) {
-					System.out.println("----------------");
+					//System.out.println("----------------");
 					break;
 				}	
 				System.out.println(currentline);
