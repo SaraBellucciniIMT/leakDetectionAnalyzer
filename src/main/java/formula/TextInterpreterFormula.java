@@ -96,8 +96,8 @@ public abstract class TextInterpreterFormula {
 			} else if (entry.getKey().getPET().equals(PETLabel.SSRECONTRUCTION))
 				recontruction.addAll(entry.getValue());
 		}
-		//System.out.println(groupcomputation.toString());
-		//System.out.println(recontruction.toString());
+		// System.out.println(groupcomputation.toString());
+		// System.out.println(recontruction.toString());
 		String formula = "";
 		Set<PartecipantProcess> partecipantProcesses = mcrl2.getParcipantProcesses();
 		Set<PartecipantProcess> remove;
@@ -106,24 +106,37 @@ public abstract class TextInterpreterFormula {
 			remove = new HashSet<PartecipantProcess>();
 			for (PartecipantProcess partecipant : partecipantProcesses) {
 				Set<String> datatoanalyze = creationShareParticiapnt(mcrl2, partecipant.getId(), entry.getValue());
-				if(!datatoanalyze.isEmpty()) {
+				if (!datatoanalyze.isEmpty()) {
 					remove.add(partecipant);
-					formula = formula + getFormulaReconstruction(datatoanalyze, formula, treshold, mcrl2, remove);
+					String tmpformula = getFormulaReconstruction(datatoanalyze, formula, treshold, mcrl2, remove);
+					if (!tmpformula.isEmpty()) {
+						if (!formula.isEmpty())
+							formula = formula + "||";
+						formula = formula + tmpformula;
+					}
+
 				}
 			}
 		}
-		//System.out.println(formula);
+		// System.out.println(formula);
 		// For reconstruction checking
-		partecipantProcesses = mcrl2.getParcipantProcesses();
-		remove = new HashSet<PartecipantProcess>();
-		for (PartecipantProcess partecipant : partecipantProcesses) {
-			if (reconstructionPartecipant(mcrl2, partecipant.getId()))
-				remove.add(partecipant);
+		if (!recontruction.isEmpty()) {
+			partecipantProcesses = mcrl2.getParcipantProcesses();
+			remove = new HashSet<PartecipantProcess>();
+			for (PartecipantProcess partecipant : partecipantProcesses) {
+				if (reconstructionPartecipant(mcrl2, partecipant.getId()))
+					remove.add(partecipant);
+			}
+			partecipantProcesses.removeAll(remove);
+			// Every participant that doens't have a reconstruction feaure then, cannot hold
+			// more that one info for the reconstruction
+			String tmpformula = getFormulaReconstruction(recontruction, formula, treshold, mcrl2, partecipantProcesses);
+			if (!tmpformula.isEmpty()) {
+				if (!formula.isEmpty())
+					formula = formula + "||";
+				formula = formula + tmpformula;
+			}
 		}
-		partecipantProcesses.removeAll(remove);
-		// Every participant that doens't have a reconstruction feaure then, cannot hold
-		// more that one info for the reconstruction
-		formula = getFormulaReconstruction(recontruction, formula, treshold, mcrl2, partecipantProcesses);
 		return formula;
 
 	}
@@ -131,12 +144,12 @@ public abstract class TextInterpreterFormula {
 	protected static String getFormulaReconstruction(Set<String> set, String currentFormula, int treshold, mCRL2 mcrl2,
 			Set<PartecipantProcess> partecipantProcesses) {
 		Set<Set<String>> listrec = Sets.powerSet(set);
-
+		String formula = currentFormula;
 		for (Set<String> d : listrec) {
 			String subformula = "";
 			if (d.size() == treshold) {
-				if (!currentFormula.isEmpty())
-					currentFormula = currentFormula + "||";
+				if (!formula.isEmpty())
+					formula = formula + "||";
 				int i = 0;
 				for (PartecipantProcess partecipant : partecipantProcesses) {
 					subformula = subformula
@@ -145,10 +158,11 @@ public abstract class TextInterpreterFormula {
 						subformula = subformula + "||";
 					i++;
 				}
+				formula = formula + subformula;
 			}
-			currentFormula = currentFormula + subformula;
+
 		}
-		return currentFormula;
+		return formula;
 	}
 
 	protected static TaskProcess identifyTaskFormula(mCRL2 mcrl, String name) {
