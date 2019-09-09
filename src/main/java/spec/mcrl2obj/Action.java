@@ -1,5 +1,8 @@
 package spec.mcrl2obj;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.commons.lang3.ArrayUtils;
 
 import io.pet.PETLabel;
@@ -180,6 +183,13 @@ public class Action {
 		}
 		return false;
 	}
+	
+	public boolean containsParameterName(String parameter) {
+		for (int i = 0; i < parameters.length; i++) {
+			if (parameters[i].toString().equals(parameter))
+				return true;
+		}
+		return false;	}
 
 	@Override
 	public boolean equals(Object obj) {

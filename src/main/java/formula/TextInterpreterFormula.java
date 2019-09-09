@@ -47,11 +47,11 @@ public abstract class TextInterpreterFormula {
 		else
 			formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
 
-		if(formula == null || formula == "-1")
+		if (formula == null || formula == "-1")
 			return formula;
-		
-		if(idname.contains(" "))
-			idname = idname.replace(" ","_");
+
+		if (idname.contains(" "))
+			idname = idname.replace(" ", "_");
 		File file = new File(path + idname + fileName + ".mcf");
 		while (file.exists())
 			file = new File(path + idname + fileName + (id++) + ".mcf");
@@ -96,44 +96,47 @@ public abstract class TextInterpreterFormula {
 			} else if (entry.getKey().getPET().equals(PETLabel.SSRECONTRUCTION))
 				recontruction.addAll(entry.getValue());
 		}
-
+		//System.out.println(groupcomputation.toString());
+		//System.out.println(recontruction.toString());
 		String formula = "";
 		Set<PartecipantProcess> partecipantProcesses = mcrl2.getParcipantProcesses();
-		Set<PartecipantProcess> remove = new HashSet<PartecipantProcess>();
+		Set<PartecipantProcess> remove;
+
+		for (Entry<Integer, Set<String>> entry : groupcomputation.entrySet()) {
+			remove = new HashSet<PartecipantProcess>();
+			for (PartecipantProcess partecipant : partecipantProcesses) {
+				Set<String> datatoanalyze = creationShareParticiapnt(mcrl2, partecipant.getId(), entry.getValue());
+				if(!datatoanalyze.isEmpty()) {
+					remove.add(partecipant);
+					formula = formula + getFormulaReconstruction(datatoanalyze, formula, treshold, mcrl2, remove);
+				}
+			}
+		}
+		//System.out.println(formula);
+		// For reconstruction checking
+		partecipantProcesses = mcrl2.getParcipantProcesses();
+		remove = new HashSet<PartecipantProcess>();
 		for (PartecipantProcess partecipant : partecipantProcesses) {
-			if (reconstructionPartecipant(mcrl2, partecipant.getId()) || creationShareParticiapnt(mcrl2, partecipant.getId()))
+			if (reconstructionPartecipant(mcrl2, partecipant.getId()))
 				remove.add(partecipant);
 		}
 		partecipantProcesses.removeAll(remove);
+		// Every participant that doens't have a reconstruction feaure then, cannot hold
+		// more that one info for the reconstruction
+		formula = getFormulaReconstruction(recontruction, formula, treshold, mcrl2, partecipantProcesses);
+		return formula;
 
-		for (Entry<Integer, Set<String>> entry : groupcomputation.entrySet()) {
-			Set<Set<String>> list = Sets.powerSet(entry.getValue());
-			for (Set<String> d : list) {
-				String subformula = "";
-				if (d.size() == treshold) {
-					if (!formula.isEmpty())
-						formula = formula + "||";
-					int i = 0;
-					for (PartecipantProcess partecipant : partecipantProcesses) {
-						subformula = subformula
-								+ PartecipantFormula.generatePartecipantFormula(mcrl2, partecipant.getId(), d);
-						if (i != partecipantProcesses.size() - 1)
-							subformula = subformula + "||";
-						i++;
-					}
-				}
-				formula = formula + subformula;
-			}
-		}
-		// Because for the moment I don't know who the id reconstruction so if you have
-		// more than one piece is not ok
-		Set<Set<String>> listrec = Sets.powerSet(recontruction);
+	}
+
+	protected static String getFormulaReconstruction(Set<String> set, String currentFormula, int treshold, mCRL2 mcrl2,
+			Set<PartecipantProcess> partecipantProcesses) {
+		Set<Set<String>> listrec = Sets.powerSet(set);
 
 		for (Set<String> d : listrec) {
 			String subformula = "";
 			if (d.size() == treshold) {
-				if (!formula.isEmpty())
-					formula = formula + "||";
+				if (!currentFormula.isEmpty())
+					currentFormula = currentFormula + "||";
 				int i = 0;
 				for (PartecipantProcess partecipant : partecipantProcesses) {
 					subformula = subformula
@@ -143,10 +146,9 @@ public abstract class TextInterpreterFormula {
 					i++;
 				}
 			}
-			formula = formula + subformula;
+			currentFormula = currentFormula + subformula;
 		}
-		return formula;
-
+		return currentFormula;
 	}
 
 	protected static TaskProcess identifyTaskFormula(mCRL2 mcrl, String name) {
@@ -187,18 +189,26 @@ public abstract class TextInterpreterFormula {
 
 		return false;
 	}
-	private static boolean creationShareParticiapnt(mCRL2 mcrl, String name) {
+
+	// It return an empty set if it generate both the share use in the computation,
+	// null means that the participant is not a generator of share
+	private static Set<String> creationShareParticiapnt(mCRL2 mcrl, String name, Set<String> datashares) {
+		Set<String> sharenotgenrated = new HashSet<String>();
 		List<String> childspartecipant = new ArrayList<String>();
 		childspartecipant.addAll(mCRL2.childTaskProcess(((PartecipantProcess) mcrl.getPartcipant(name)).getProcess(),
 				mcrl, childspartecipant));
 		for (String s : childspartecipant) {
 			for (Action ab : mcrl.getActions()) {
-				if (ab.getName().equals(s) && ab.getPet() != null && ab.getPet().equals(PETLabel.SSSHARING))
-					return true;
+				if (ab.getName().equals(s) && ab.getPet() != null && ab.getPet().equals(PETLabel.SSSHARING)) {
+					for (String namep : datashares) {
+						if (!ab.containsParameterName(namep))
+							sharenotgenrated.add(namep);
+					}
+					return sharenotgenrated;
+
+				}
 			}
 		}
-
-		return false;
-
+		return datashares;
 	}
 }
