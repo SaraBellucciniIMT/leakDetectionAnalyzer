@@ -59,7 +59,7 @@
       <bpmn2:dataOutputAssociation id="DataOutputAssociation_09vis14">
         <bpmn2:targetRef>DataObjectReference_0kzb6s2</bpmn2:targetRef>
       </bpmn2:dataOutputAssociation>
-      <pleak:SSComputation>{"groupId":"1","inputScript":"","inputs":[{"id":0,"inputs":[{"id":"DataObjectReference_1ar8k9m"}]},{"id":1,"inputs":[{"id":"DataObjectReference_1v6ricl"}]}]}</pleak:SSComputation>
+      <pleak:SSComputation>{"groupId":"1","inputScript":"","inputs":[{"id":0,"inputs":[{"id":"DataObjectReference_18y62c4"},{"id":"DataObjectReference_1ar8k9m"}]},{"id":1,"inputs":[{"id":"DataObjectReference_12f72xo"},{"id":"DataObjectReference_1v6ricl"}]}]}</pleak:SSComputation>
     </bpmn2:task>
     <bpmn2:intermediateCatchEvent id="IntermediateThrowEvent_15yww6b">
       <bpmn2:incoming>SequenceFlow_0r4o2qc</bpmn2:incoming>
@@ -166,7 +166,7 @@
       <bpmn2:dataOutputAssociation id="DataOutputAssociation_1bo24hu">
         <bpmn2:targetRef>DataObjectReference_0l045hv</bpmn2:targetRef>
       </bpmn2:dataOutputAssociation>
-      <pleak:SSComputation>{"groupId":"2","inputScript":"","inputs":[{"id":0,"inputs":[{"id":"DataObjectReference_12f72xo"}]},{"id":1,"inputs":[{"id":"DataObjectReference_18y62c4"}]}]}</pleak:SSComputation>
+      <pleak:SSComputation>{"groupId":"1","inputScript":"","inputs":[{"id":0,"inputs":[{"id":"DataObjectReference_18y62c4"},{"id":"DataObjectReference_1ar8k9m"}]},{"id":1,"inputs":[{"id":"DataObjectReference_12f72xo"},{"id":"DataObjectReference_1v6ricl"}]}]}</pleak:SSComputation>
     </bpmn2:task>
     <bpmn2:sequenceFlow id="SequenceFlow_18yg615" sourceRef="IntermediateThrowEvent_0vt4zjh" targetRef="Task_0klekzb" />
     <bpmn2:task id="Task_0tb0egl" name="Send result">

@@ -102,7 +102,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 			Process pread = null;
 			Process suminput = new Process(Action.sumAction(parameters), Operator.SUM);
 
-			if (triple.getLeft().getTag().equals(BPMNLabel.TASK) && triple.getRight().getTag().equals(BPMNLabel.TASK)) {
+			if (/*triple.getLeft().getTag().equals(BPMNLabel.TASK) &&*/ triple.getRight().getTag().equals(BPMNLabel.TASK)) {
 				// Generate buffer and add the buffer to the init set
 				generateCommunicationBuffer(i, o, parameters);
 
@@ -119,7 +119,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(send, i));
 				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(o, read));
 
-			} else if (triple.getLeft().getTag().equals(BPMNLabel.MESSAGE)) {
+			} /*else if (triple.getLeft().getTag().equals(BPMNLabel.MESSAGE)) {
 				if (!mcrl2.getInitSet().contains(S.getName()))
 					mcrl2.addInitSet(S.getName());
 				// parameters.forEach(par -> R.addDataToAction(par));
@@ -131,7 +131,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				S.addOutputAction(o);
 				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(o, i));
 
-			} else if (triple.getRight().getTag().equals(BPMNLabel.MESSAGE)) {
+			} */else if (triple.getRight().getTag().equals(BPMNLabel.MESSAGE)) {
 				if (!mcrl2.getInitSet().contains(R.getName()))
 					mcrl2.addInitSet(R.getName());
 				pread = new Process(i);

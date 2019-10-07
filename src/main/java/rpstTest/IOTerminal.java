@@ -85,14 +85,14 @@ public class IOTerminal {
 			filename = f.getName();
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
-			long startTime= getCurrentTime();
+			//long startTime= getCurrentTime();
 			set = BpmnParser.collaborationParser(inputfile);
 			CollaborativeAlg translationalg = new CollaborativeAlg(set);
 			mCRL2 mcrl2 = translationalg.getSpec();
 			Parout parout = new Parout();
 			mcrl2 = parout.parout(mcrl2);
 			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
-			long endTime = getCurrentTime();
+			//long endTime = getCurrentTime();
 			//System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime) + " ms");
 			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
 			runmcrlcommand(lpsgen);
@@ -166,9 +166,9 @@ public class IOTerminal {
 	}
 
 	private void callFormula(mCRL2 mcrl2) {
-		long startTime= getCurrentTime();
+		//long startTime= getCurrentTime();
 		boolean resultbool = lps2pbes2solve2convert();
-		long endTime = getCurrentTime();
+		//long endTime = getCurrentTime();
 		//System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
 		
 		System.out.println(resultbool);

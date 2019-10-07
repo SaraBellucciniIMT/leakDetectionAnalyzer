@@ -130,12 +130,12 @@ public abstract class TextInterpreterFormula {
 			partecipantProcesses.removeAll(remove);
 			// Every participant that doens't have a reconstruction feaure then, cannot hold
 			// more that one info for the reconstruction
-			String tmpformula = getFormulaReconstruction(recontruction, formula, treshold, mcrl2, partecipantProcesses);
-			if (!tmpformula.isEmpty()) {
+			formula = getFormulaReconstruction(recontruction, formula, treshold, mcrl2, partecipantProcesses);
+			/*if (!tmpformula.isEmpty()) {
 				if (!formula.isEmpty())
 					formula = formula + "||";
 				formula = formula + tmpformula;
-			}
+			}*/
 		}
 		return formula;
 
