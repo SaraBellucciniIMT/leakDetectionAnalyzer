@@ -64,7 +64,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		messages.forEach(pair -> this.internalCommList
 				.add(Triple.of(pair.getLeft(), findData(pair.getRight()), pair.getRight())));
 		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			//System.out.println(triple.toString());
+			System.out.println(triple.toString());
 			int size = triple.getMiddle().size();
 			DataParameter[] parameters = new DataParameter[size];
 			int j = 0;

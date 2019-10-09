@@ -14,11 +14,14 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.collections4.map.HashedMap;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
@@ -86,24 +89,24 @@ public class IOTerminal {
 			filename = f.getName();
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
-			//long startTime= getCurrentTime();
+			// long startTime= getCurrentTime();
 			set = BpmnParser.collaborationParser(inputfile);
 			CollaborativeAlg translationalg = new CollaborativeAlg(set);
 			mCRL2 mcrl2 = translationalg.getSpec();
 			Parout parout = new Parout();
 			mcrl2 = parout.parout(mcrl2);
 			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
-			//long endTime = getCurrentTime();
-			//System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime) + " ms");
+			// long endTime = getCurrentTime();
+			// System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime)
+			// + " ms");
 			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
 			runmcrlcommand(lpsgen);
-			//String lpsinfo = "lpsinfo " +mcrl2file + dotlps;
-			//System.out.println(runmcrlcommand(lpsinfo));
+			// String lpsinfo = "lpsinfo " +mcrl2file + dotlps;
+			// System.out.println(runmcrlcommand(lpsinfo));
 			while (true) {
 				Set<String> datset = new HashSet<>();
 				System.out.println(
-						"Select action:\n" 
-								+ "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+						"Select action:\n" + "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
 								+ "->2 to check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
 								+ "->3 verify if there is a secret sharing violation \n" + "-> 4 exit");
 				scan = new Scanner(System.in);
@@ -124,7 +127,7 @@ public class IOTerminal {
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(scanData());
 					check = TaskFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
-					if(displayalternativeoutput(check))
+					if (displayalternativeoutput(check))
 						break;
 					callFormula(mcrl2);
 					break;
@@ -136,7 +139,7 @@ public class IOTerminal {
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(scanData());
 					check = PartecipantFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
-					if(displayalternativeoutput(check))
+					if (displayalternativeoutput(check))
 						break;
 					callFormula(mcrl2);
 					break;
@@ -167,11 +170,12 @@ public class IOTerminal {
 	}
 
 	private void callFormula(mCRL2 mcrl2) {
-		//long startTime= getCurrentTime();
+		// long startTime= getCurrentTime();
 		boolean resultbool = lps2pbes2solve2convert();
-		//long endTime = getCurrentTime();
-		//System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
-		
+		// long endTime = getCurrentTime();
+		// System.out.println("Verification time:
+		// "+computeTimeSpanms(startTime,endTime)+" ms");
+
 		System.out.println(resultbool);
 		try {
 			if (resultbool) {
@@ -192,30 +196,33 @@ public class IOTerminal {
 			System.out.println("This task/partecipant doesn't exist");
 		else if (s.equals("-1"))
 			System.out.println(" NEVER HAS THIS NUMBER OF PARAMETERS");
-		else 
+		else
 			return false;
 		return true;
 	}
 
 	private boolean lps2pbes2solve2convert() {
-		//String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " + mcrl2file + ".pbes";
-		//runmcrlcommand(lps2pbes);
-		//String pbesinfo = "pbesinfo " + mcrl2file + ".pbes";
-		//runmcrlcommand(pbesinfo);
-		//new command
-		String lps2lts = "lps2lts " +mcrl2file + dotlps +" "+ mcrl2file + dotlts;
+		// String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " +
+		// mcrl2file + ".pbes";
+		// runmcrlcommand(lps2pbes);
+		// String pbesinfo = "pbesinfo " + mcrl2file + ".pbes";
+		// runmcrlcommand(pbesinfo);
+		// new command
+		String lps2lts = "lps2lts " + mcrl2file + dotlps + " " + mcrl2file + dotlts;
 		runmcrlcommand(lps2lts);
-		String ltsconvert = "ltsconvert -etau-star " +mcrl2file +dotlts +" " + mcrl2file + dotlts;
+		String ltsconvert = "ltsconvert -etau-star " + mcrl2file + dotlts + " " + mcrl2file + dotlts;
 		runmcrlcommand(ltsconvert);
-		String lts2pbes = "lts2pbes -c -f " + check + " " + mcrl2file + dotlts +" "+ mcrl2file + ".pbes";
+		String lts2pbes = "lts2pbes -c -f " + check + " " + mcrl2file + dotlts + " " + mcrl2file + ".pbes";
 		runmcrlcommand(lts2pbes);
-		String pbessolve = "pbessolve --file=" + mcrl2file + dotlts+ " " + mcrl2file + ".pbes"; 
-		//---
-		//String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file + ".pbes";
+		String pbessolve = "pbessolve --file=" + mcrl2file + dotlts + " " + mcrl2file + ".pbes";
+		// ---
+		// String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file +
+		// ".pbes";
 		String resultsolve = runmcrlcommand(pbessolve);
 		if (resultsolve.equals("false"))
 			return false;
-		//String lps2lts = "lps2lts " + mcrl2file + evidencelps + " " + mcrl2file + evidencelts;
+		// String lps2lts = "lps2lts " + mcrl2file + evidencelps + " " + mcrl2file +
+		// evidencelts;
 		runmcrlcommand(lps2lts);
 		String ltsconvert2 = "ltsconvert -eweak-trace " + mcrl2file + evidencelts + " " + mcrl2file + evidencefsm;
 		runmcrlcommand(ltsconvert2);
@@ -237,14 +244,14 @@ public class IOTerminal {
 			BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			String lastline = null;
 			String currentline;
-			//System.out.println("----------------");
+			// System.out.println("----------------");
 			while (true) {
 				currentline = r.readLine();
 				if (currentline == null) {
-					//System.out.println("----------------");
+					// System.out.println("----------------");
 					break;
-				}	
-				//System.out.println(currentline);
+				}
+				// System.out.println(currentline);
 				lastline = currentline;
 			}
 			return lastline;
@@ -298,15 +305,18 @@ public class IOTerminal {
 			// read line by line
 			String line;
 			String second = "";
-			List<Pair<String, Set<String>>> path = new ArrayList<Pair<String, Set<String>>>();
+			Map<Pair<Integer, Integer>, Pair<String, Set<String>>> map = new HashedMap<Pair<Integer, Integer>, Pair<String, Set<String>>>();
+			Pair<Integer, Integer> root = null;
 			while ((line = br.readLine()) != null) {
 				if (line.matches(regex)) {
 					String[] split = line.split(" ");
-					if (second.isEmpty()) {
-						second = split[0];
-					} else if (!second.equals(split[0]))
-						continue;
-					second = split[1];
+					if (root == null)
+						root = Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1]));
+					/*
+					 * if (second.isEmpty()) { second = split[0]; } else if
+					 * (!second.equals(split[0])) continue; second = split[1];
+					 */
+
 					String task = line.substring(line.indexOf("\"") + 1, line.lastIndexOf("\"")).replaceAll("\\(.*\\)",
 							"");
 					Pattern pattern = Pattern.compile("\\{.*\\}");
@@ -321,20 +331,43 @@ public class IOTerminal {
 							for (String s : splitmatch)
 								tmp.add(s);
 						}
-						path.add(Pair.of(t.getAction().getId(), tmp));
-
+						// path.add(Pair.of(t.getAction().getId(), tmp));
+						map.put(Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1])),
+								Pair.of(t.getAction().getId(), tmp));
 					}
 				}
 			}
 			br.close();
-			return path;
-
+			// List<Pair<String, Set<String>>> path = new ArrayList<Pair<String,
+			// Set<String>>>();
+			return recognizePath(map, root);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	private List<Pair<String, Set<String>>> recognizePath(Map<Pair<Integer, Integer>, Pair<String, Set<String>>> map,
+			Pair<Integer, Integer> root) {
+		List<Pair<String, Set<String>>> path = new ArrayList<Pair<String, Set<String>>>();
+		path.add(map.get(root));
+		Integer lastnum = root.getRight();
+		boolean find = true ;
+		while (find) {
+			find = false;
+			for (Entry<Pair<Integer, Integer>, Pair<String, Set<String>>> entrytwo : map.entrySet()) {
+				if (entrytwo.getKey().getLeft().equals(lastnum)) {
+					lastnum = entrytwo.getKey().getRight();
+					path.add(entrytwo.getValue());
+					find = true;
+					break;
+				} 
+			}
+		}
+
+		return path;
 	}
 
 	private void fromPathInFSMtoJsonFile(String pathfile, List<Pair<String, Set<String>>> path) throws JSONException {
@@ -367,14 +400,13 @@ public class IOTerminal {
 				continue;
 		}
 	}
-	
+
 	private long getCurrentTime() {
 		return System.nanoTime();
 	}
-	
-	private long computeTimeSpanms(long startTime,long endTime) {
-		return (endTime - startTime)/1000000;
+
+	private long computeTimeSpanms(long startTime, long endTime) {
+		return (endTime - startTime) / 1000000;
 	}
-	
 
 }
