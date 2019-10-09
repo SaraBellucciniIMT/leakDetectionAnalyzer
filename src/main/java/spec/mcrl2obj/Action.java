@@ -1,8 +1,5 @@
 package spec.mcrl2obj;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.apache.commons.lang3.ArrayUtils;
 
 import io.pet.PETLabel;
@@ -72,7 +69,8 @@ public class Action {
 	}
 
 	public static Action setMemoryAction(Sort sort) {
-		return new Action(memory + (index++), new DataParameter("m", sort));
+		DataParameter par = new DataParameter(sort);
+		return new Action(memory + (index++), par);
 	}
 
 	public static Action setSendReadAction(DataParameter... dataParameters) {

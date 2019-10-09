@@ -11,22 +11,23 @@ import java.util.List;
  */
 public class SScomputation extends PET{
 
-	private int groupId ;
+	private String groupId ;
 	List<String> objref;
 	
-	public SScomputation(int groupid,List<String> objref) {
+	public SScomputation(String groupid,List<String> objref) {
 		// TODO Auto-generated constructor stub
 		this.petname = PETLabel.SSCOMPUTATION;
 		this.groupId = groupid;
 		this.objref = objref;
 	}
+	
 	@Override
 	public PETLabel getPET() {
 		// TODO Auto-generated method stub
 		return this.petname;
 	}
 
-	public int getGroupId() {
+	public String getGroupId() {
 		return this.groupId;
 	}
 	

@@ -1,0 +1,58 @@
+sort Memory =  Set(Data);
+sort Data = struct s3|m1|m2|m3|k1|k2|k3|eps|d1|m|p|z1|y1|z2|z3|y2|y|y3|t1|s1|s2;
+map 
+union : Memory # Memory -> Memory;
+var
+m0,m4: Memory;
+eqn 
+union(m0,m4) = m0+ m4 ; 
+act
+t4,sendread,t0,t2: Bool#Data;
+memory5,Task_1ocmdja,Task_18516zy,memory1,memory3,IntermediateThrowEvent_0y7xoal,Task_1768qux,Task_0hh68k6,Task_0g5u2md,Task_0cytxzq,Task_1uo4z50,Task_0mu5trk,Task_04cuqh8,IntermediateThrowEvent_1tamh4j,IntermediateThrowEvent_1sujola,IntermediateCatchEvent_0lo9104,Task_0zyg8xa,Task_05819y8,Task_0heqwkw,IntermediateThrowEvent_19p6fhh,Task_0jjmeb9,IntermediateThrowEvent_0a62l3b,IntermediateCatchEvent_1qviwoy,Task_0tirqvx,Task_0g99iah,Task_0n9ylzo,Task_1r3ncdb: Memory;
+i71,i72,i75,i31,i30,i33,i76,o70,o73,i78,i37,i36,o74,o77,o32,o35,o79,o34,o39,i82,i81,i40,i86,o80,i85,o7,i88,i44,i43,i46,o9,o84,o83,o42,o41,o87,i49,o89,o45,o48,i90,i93,i52,i96,i55,o92,i10,i13,o51,o95,i56,o94,o53,i59,i17,o54,i16,o57,o12,o15,o58,o14,o19,o18,i60,i20,i64,i63,i21,i24,o62,i68,i67,o61,i6,o66,o65,i27,i8,o23,o26,o69,o28,sendread,o29: Data;
+proc
+P98 = sum e13: Data.i17(e13).o18(e13)+o18(eps);
+P70 = (P1.P2.P3.P8.P9.P12.t0(true,eps)); 
+P43(e2:Memory)= sum e0: Bool.sum e1: Data.t0(e0,e1).(!e0)->P43(union({e1},e2))<>memory1(e2).P43(e2);
+P34 = sum e9: Data.i37(e9).IntermediateCatchEvent_1qviwoy(union({},{e9})).o7(e9);
+P36 = sum e9: Data.i6(e9).sum e17: Data.i86(e17).sum e15: Data.i36(e15).Task_1uo4z50(union({},{e9,e15,k3,e17})).t4(false,e9).t4(false,e17).t4(false,e15).t4(false,k3).o66(k3);
+P17 = sum e10: Data.i30(e10).Task_04cuqh8(union({},{e10})).o26(e10).t2(false,e10);
+P18 = sum e17: Data.i43(e17).Task_0g99iah(union({},{e17})).o51(e17).t2(false,e17);
+P1 = Task_0hh68k6(union({},{d1,s2,s1,s3})).o15(s2).o58(s1).t0(false,s1).t0(false,d1).t0(false,s3).o70(s3).t0(false,s2);
+P12 = sum e13: Data.i20(e13).sum e14: Data.i31(e14).Task_1768qux(union({},{e13,e14,m})).t0(false,e13).t0(false,m).t0(false,e14);
+P23 = sum e12: Data.i88(e12).sum e28: Data.i96(e28).sum e18: Data.i44(e18).Task_0n9ylzo(union({},{e18,k2,e12,e28})).t2(false,e18).t2(false,e28).t2(false,e12).o80(k2).t2(false,k2);
+P24 = sum e27: Data.i81(e27).Task_1ocmdja(union({},{e27,m2,p})).t2(false,p).o84(m2).t2(false,e27).t2(false,m2);
+P72 = (P16.P17.P18.P23.P24.P25.t2(true,eps)); 
+P53(e5:Memory)= sum e3: Bool.sum e4: Data.t2(e3,e4).(!e3)->P53(union({e4},e5))<>memory3(e5).P53(e5);
+P182 = sum e23: Data.i64(e23).o65(e23)+o65(eps);
+P9 = sum e24: Data.i75(e24).Task_1r3ncdb(union({},{m1,p,e24})).t0(false,p).t0(false,e24).o19(m1).t0(false,m1);
+P16 = Task_0zyg8xa(union({},{z1,z3,t1,z2})).t2(false,t1).o95(z2).t2(false,z3).o29(z1).t2(false,z2).o42(z3).t2(false,z1);
+P155 = sum e18: Data.i52(e18).o53(e18)+o53(eps);
+P19 = sum e18: Data.i10(e18).IntermediateThrowEvent_19p6fhh(union({},{e18})).o45(e18);
+P8 = sum e21: Data.i76(e21).sum e10: Data.i8(e10).sum e20: Data.i59(e20).Task_0g5u2md(union({},{e10,e20,k1,e21})).t0(false,e10).o74(k1).t0(false,e20).t0(false,k1).t0(false,e21);
+P191 = sum e9: Data.i68(e9).o69(e9)+o69(eps);
+P137 = sum e17: Data.i40(e17).o41(e17)+o41(eps);
+P30 = sum e21: Data.i63(e21).Task_05819y8(union({},{e21})).t4(false,e21).o23(e21);
+P164 = sum e20: Data.i56(e20).o57(e20)+o57(eps);
+P89 = sum e12: Data.i13(e12).o14(e12)+o14(eps);
+P3 = sum e9: Data.i71(e9).Task_18516zy(union({},{e9})).t0(false,e9).o39(e9);
+P125 = sum e15: Data.i33(e15).o34(e15)+o34(eps);
+P113 = sum e10: Data.i27(e10).o28(e10)+o28(eps);
+P239 = sum e28: Data.i93(e28).o94(e28)+o94(eps);
+P173 = sum e21: Data.i60(e21).o61(e21)+o61(eps);
+P25 = sum e14: Data.i85(e14).Task_0tirqvx(union({},{e14})).o92(e14).t2(false,e14);
+P10 = sum e14: Data.i90(e14).IntermediateThrowEvent_1tamh4j(union({},{e14})).o32(e14);
+P212 = sum e27: Data.i78(e27).o79(e27)+o79(eps);
+P4 = sum e21: Data.i21(e21).IntermediateThrowEvent_0a62l3b(union({},{e21})).o77(e21);
+P21 = sum e12: Data.i46(e12).IntermediateCatchEvent_0lo9104(union({},{e12})).o89(e12);
+P29 = Task_0mu5trk(union({},{y3,y2,y1,y})).t4(false,y2).t4(false,y).o35(y3).o54(y2).t4(false,y1).t4(false,y3).o62(y1);
+P6 = sum e10: Data.i24(e10).IntermediateThrowEvent_0y7xoal(union({},{e10})).o9(e10);
+P221 = sum e14: Data.i82(e14).o83(e14)+o83(eps);
+P37 = sum e23: Data.i67(e23).Task_0heqwkw(union({},{m3,e23,p})).t4(false,m3).t4(false,p).t4(false,e23);
+P74 = (P29.P30.P31.P36.P37.t4(true,eps)); 
+P63(e8:Memory)= sum e6: Bool.sum e7: Data.t4(e6,e7).(!e6)->P63(union({e7},e8))<>memory5(e8).P63(e8);
+P31 = sum e18: Data.i55(e18).Task_0jjmeb9(union({},{e18})).t4(false,e18).o12(e18);
+P32 = sum e17: Data.i49(e17).IntermediateThrowEvent_1sujola(union({},{e17})).o87(e17);
+P200 = sum e24: Data.i72(e24).o73(e24)+o73(eps);
+P2 = sum e12: Data.i16(e12).Task_0cytxzq(union({},{e12})).t0(false,e12).o48(e12);
+init hide ({sendread},allow ({memory3,Task_1768qux,IntermediateThrowEvent_1tamh4j,IntermediateThrowEvent_19p6fhh,memory5,Task_0zyg8xa,Task_05819y8,IntermediateCatchEvent_0lo9104,Task_1uo4z50,Task_0heqwkw,Task_0tirqvx,IntermediateThrowEvent_1sujola,Task_0g5u2md,IntermediateThrowEvent_0y7xoal,Task_0mu5trk,sendread,Task_1r3ncdb,Task_18516zy,Task_1ocmdja,Task_0jjmeb9,Task_0hh68k6,IntermediateThrowEvent_0a62l3b,Task_0n9ylzo,IntermediateCatchEvent_1qviwoy,Task_0g99iah,memory1,Task_0cytxzq,Task_04cuqh8},comm ({o29|i27->sendread,i21|o23->sendread,i24|o26->sendread,o53|i55->sendread,o77|i76->sendread,o74|i72->sendread,t4|t4->sendread,i90|o92->sendread,o7|i6->sendread,o28|i30->sendread,o69|i71->sendread,o18|i20->sendread,o9|i8->sendread,o66|i64->sendread,o87|i86->sendread,i37|o39->sendread,o84|i82->sendread,o14|i16->sendread,o79|i81->sendread,o95|i93->sendread,o42|i40->sendread,o70|i68->sendread,o34|i36->sendread,o83|i85->sendread,o32|i31->sendread,o61|i63->sendread,o62|i60->sendread,o65|i67->sendread,o80|i78->sendread,o94|i96->sendread,t2|t2->sendread,o15|i13->sendread,i49|o51->sendread,o54|i52->sendread,i10|o12->sendread,o73|i75->sendread,o35|i33->sendread,o41|i43->sendread,o57|i59->sendread,o19|i17->sendread,o45|i44->sendread,o58|i56->sendread,o89|i88->sendread,t0|t0->sendread,i46|o48->sendread},P125||P221||P200||P53({})||P21||P89||P63({})||P173||P191||P137||P4||P155||P6||P113||P212||P70||P72||P74||P239||P98||P10||P32||P34||P19||P164||P182||P43({}))));

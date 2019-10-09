@@ -7,6 +7,7 @@ import spec.mcrl2obj.TaskProcess;
 public class CatchingEvent implements ITProcess{
 
 	@Override
+	//Before was returing a process
 	public Process interpreter(Tmcrl node) {
 		// TODO Auto-generated method stub
 

@@ -1,12 +1,20 @@
 package spec.mcrl2obj;
 
+
+/**
+ * @author sara
+ * 
+ * A data parameter ::= n | p | n{p}
+ * where n is a name, p is placeholder and n{p}  
+ * 
+ */
 public class DataParameter {
 
 	private static int index =0;
 	private String name;
 	//For temporary parameters
 	private static final String placeholderChar = "e";
-	private String placeholder;
+	private String placeholder="";
 	private Sort sort;
 	/*
 	 * Fixed data parameter
@@ -25,6 +33,8 @@ public class DataParameter {
 	}
 	
 	public String getPlaeholder() {
+		if(this.placeholder.isEmpty())
+			setPlaceHolder();
 		return this.placeholder;
 	}
 	

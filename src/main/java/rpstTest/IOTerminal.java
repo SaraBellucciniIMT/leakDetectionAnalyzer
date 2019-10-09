@@ -49,6 +49,7 @@ public class IOTerminal {
 	private final static String evidencefsm = ".pbes.evidence.fsm";
 	private final static String dotmcrl2 = ".mcrl2";
 	private final static String dotlps = ".lps";
+	private final static String dotlts = ".lts";
 	private final static String json = "json.json";
 	private File dir = new File("result_FSAT");
 	private URI dirname;
@@ -197,19 +198,27 @@ public class IOTerminal {
 	}
 
 	private boolean lps2pbes2solve2convert() {
-		String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " + mcrl2file + ".pbes";
-		runmcrlcommand(lps2pbes);
+		//String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " + mcrl2file + ".pbes";
+		//runmcrlcommand(lps2pbes);
 		//String pbesinfo = "pbesinfo " + mcrl2file + ".pbes";
 		//runmcrlcommand(pbesinfo);
-		String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file + ".pbes";
-	
+		//new command
+		String lps2lts = "lps2lts " +mcrl2file + dotlps +" "+ mcrl2file + dotlts;
+		runmcrlcommand(lps2lts);
+		String ltsconvert = "ltsconvert -etau-star " +mcrl2file +dotlts +" " + mcrl2file + dotlts;
+		runmcrlcommand(ltsconvert);
+		String lts2pbes = "lts2pbes -c -f " + check + " " + mcrl2file + dotlts +" "+ mcrl2file + ".pbes";
+		runmcrlcommand(lts2pbes);
+		String pbessolve = "pbessolve --file=" + mcrl2file + dotlts+ " " + mcrl2file + ".pbes"; 
+		//---
+		//String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file + ".pbes";
 		String resultsolve = runmcrlcommand(pbessolve);
 		if (resultsolve.equals("false"))
 			return false;
-		String lps2lts = "lps2lts " + mcrl2file + evidencelps + " " + mcrl2file + evidencelts;
+		//String lps2lts = "lps2lts " + mcrl2file + evidencelps + " " + mcrl2file + evidencelts;
 		runmcrlcommand(lps2lts);
-		String ltsconvert = "ltsconvert -eweak-trace " + mcrl2file + evidencelts + " " + mcrl2file + evidencefsm;
-		runmcrlcommand(ltsconvert);
+		String ltsconvert2 = "ltsconvert -eweak-trace " + mcrl2file + evidencelts + " " + mcrl2file + evidencefsm;
+		runmcrlcommand(ltsconvert2);
 		return true;
 	}
 

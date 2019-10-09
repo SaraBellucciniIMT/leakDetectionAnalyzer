@@ -76,17 +76,19 @@ public abstract class TextInterpreterFormula {
 
 	protected static String sssharingChecking(mCRL2 mcrl2) {
 		Map<PET, Set<String>> map = mcrl2.getSensibleData();
-		if (map.isEmpty() || (!isPET(PETLabel.SSCOMPUTATION, map) && !isPET(PETLabel.SSRECONTRUCTION, map))) {
+		if (map.isEmpty() || (!isPET(PETLabel.SSCOMPUTATION, map) && !isPET(PETLabel.SSRECONTRUCTION, map) && !isPET(PETLabel.SSSHARING, map))) {
 			System.out.println("No SSsharing PET over this model");
 			return null;
 		}
-		// check that you can really apply ss sharing
+		// check that you can really apply sssharing
 		int treshold = 0;
-		Map<Integer, Set<String>> groupcomputation = new HashMap<Integer, Set<String>>();
+		Set<Set<String>> sssharing = new HashSet<Set<String>>();
+		Map<String, Set<String>> groupcomputation = new HashMap<String, Set<String>>();
 		Set<String> recontruction = new HashSet<String>();
 		for (Entry<PET, Set<String>> entry : map.entrySet()) {
 			if (entry.getKey().getPET().equals(PETLabel.SSSHARING)) {
 				treshold = ((SSsharing) entry.getKey()).getTreshold();
+				sssharing.add(entry.getValue());
 			} else if (entry.getKey().getPET().equals(PETLabel.SSCOMPUTATION)) {
 				if (groupcomputation.containsKey(((SScomputation) entry.getKey()).getGroupId())) {
 					groupcomputation.get(((SScomputation) entry.getKey()).getGroupId()).addAll(entry.getValue());
@@ -96,23 +98,35 @@ public abstract class TextInterpreterFormula {
 			} else if (entry.getKey().getPET().equals(PETLabel.SSRECONTRUCTION))
 				recontruction.addAll(entry.getValue());
 		}
-		// System.out.println(groupcomputation.toString());
-		// System.out.println(recontruction.toString());
-		String formula = "";
+		List<String> formula = new ArrayList<String>();
+		
 		Set<PartecipantProcess> partecipantProcesses = mcrl2.getParcipantProcesses();
 		Set<PartecipantProcess> remove;
+		for(Set<String> ssshares : sssharing) {
+			remove = new HashSet<PartecipantProcess>();
+			for(PartecipantProcess partecipant : partecipantProcesses) {
+				Set<String> datatoanalyze = creationShareParticiapnt(mcrl2, partecipant.getId(), ssshares);
+				if (!datatoanalyze.isEmpty()) {
+					remove.add(partecipant);
+					List<String> tmpformula = getFormulaReconstruction(datatoanalyze, formula, treshold, mcrl2, remove);
+					if (!tmpformula.isEmpty() && !formula.containsAll(tmpformula))
+						formula.addAll(tmpformula);
+					
+				}
 
-		for (Entry<Integer, Set<String>> entry : groupcomputation.entrySet()) {
+			}
+		}
+		
+		//-----Computation side-----
+		for (Entry<String, Set<String>> entry : groupcomputation.entrySet()) {
 			remove = new HashSet<PartecipantProcess>();
 			for (PartecipantProcess partecipant : partecipantProcesses) {
 				Set<String> datatoanalyze = creationShareParticiapnt(mcrl2, partecipant.getId(), entry.getValue());
 				if (!datatoanalyze.isEmpty()) {
 					remove.add(partecipant);
-					String tmpformula = getFormulaReconstruction(datatoanalyze, formula, treshold, mcrl2, remove);
-					if (!tmpformula.isEmpty()) {
-						if (!formula.isEmpty())
-							formula = formula + "||";
-						formula = formula + tmpformula;
+					List<String> tmpformula = getFormulaReconstruction(datatoanalyze, formula, treshold, mcrl2, remove);
+					if (!tmpformula.isEmpty()&& !formula.containsAll(tmpformula)) {
+						formula.addAll(tmpformula);
 					}
 
 				}
@@ -137,28 +151,30 @@ public abstract class TextInterpreterFormula {
 				formula = formula + tmpformula;
 			}*/
 		}
-		return formula;
+		
+		String resultformula = "" ;
+		int i=0;
+		for(String f : formula) {
+			resultformula = resultformula + f;
+			if(i!= formula.size()-1)
+				resultformula = resultformula + "||";
+			i++;
+		}
+		return resultformula;
 
 	}
 
-	protected static String getFormulaReconstruction(Set<String> set, String currentFormula, int treshold, mCRL2 mcrl2,
+	protected static List<String> getFormulaReconstruction(Set<String> set, List<String> currentFormula, int treshold, mCRL2 mcrl2,
 			Set<PartecipantProcess> partecipantProcesses) {
 		Set<Set<String>> listrec = Sets.powerSet(set);
-		String formula = currentFormula;
+		List<String> formula = currentFormula;
 		for (Set<String> d : listrec) {
-			String subformula = "";
 			if (d.size() == treshold) {
-				if (!formula.isEmpty())
-					formula = formula + "||";
-				int i = 0;
 				for (PartecipantProcess partecipant : partecipantProcesses) {
-					subformula = subformula
-							+ PartecipantFormula.generatePartecipantFormula(mcrl2, partecipant.getId(), d);
-					if (i != partecipantProcesses.size() - 1)
-						subformula = subformula + "||";
-					i++;
+					String f = PartecipantFormula.generatePartecipantFormula(mcrl2, partecipant.getId(), d);
+					if(!formula.contains(f))
+						formula.add(f);
 				}
-				formula = formula + subformula;
 			}
 
 		}

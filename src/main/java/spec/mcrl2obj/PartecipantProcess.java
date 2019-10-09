@@ -77,13 +77,17 @@ public class PartecipantProcess extends Process {
 		return this.maxdim;
 	}
 	
+	//It will be just one parameter because the memory action takes as input only one element of type Memory 
+	public String retriveDataMemoryName() {	
+		DataParameter[] d =this.memoryAction.getParameters();
+		return d[0].getName();
+	}
 	
-
 	@Override
 	public String toString() {
 		String s = p.toString() + "; \n";
 		if (memory != null) {
-			s = s + memory.getName() + "(m:Memory)= ";
+			s = s + memory.getName() + "("+retriveDataMemoryName()+":Memory)= ";
 			for (int i = 0; i < memory.getLength(); i++) {
 				Process p = memory.getInsideDef(memory.getChildName(i));
 				s = s + p.toString();

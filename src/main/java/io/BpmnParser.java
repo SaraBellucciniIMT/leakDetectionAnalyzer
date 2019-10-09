@@ -152,16 +152,22 @@ public class BpmnParser {
 							if (((SScomputation) pet).containObjRef(getIdDataNode(d)))
 								d.setPET(pet);
 						}}
-					else if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
+					/*else if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
 						for (PETExtendedNode d : datanodeset) {
 							if (getIdDataNode(d).equals(dataobjref))
 								d.setPET(pet);
 						}
-					}
+					}*/
 				} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
 					String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
 					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 							.forEach(d -> d.addWritingFlowNode(f));
+					 if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
+							for (PETExtendedNode d : datanodeset) {
+								if (getIdDataNode(d).equals(dataobjref))
+									d.setPET(pet);
+							}
+						}
 				} else
 					continue;
 			}
@@ -184,7 +190,7 @@ public class BpmnParser {
 			} else if (child.tagName().equals("pleak:sscomputation")) {
 				String computation = child.getElementsByTag("pleak:sscomputation").text();
 				JSONObject obj = new JSONObject(computation);
-				int index = obj.getInt("groupId");
+				String index = obj.getString("groupId");
 				JSONArray arr = obj.getJSONArray("inputs");
 				List<String> listobjref = new ArrayList<String>();
 				for (int i = 0; i < arr.length(); i++) {
@@ -193,7 +199,6 @@ public class BpmnParser {
 						for (int j = 0; j < ar.length(); j++)
 							listobjref.add(ar.getJSONObject(j).getString("id"));
 					}
-
 				}
 				return new SScomputation(index, listobjref);
 			} else if (child.tagName().equalsIgnoreCase("pleak:SSReconstruction")) {

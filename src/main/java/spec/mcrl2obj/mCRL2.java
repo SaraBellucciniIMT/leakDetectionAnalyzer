@@ -413,8 +413,29 @@ public class mCRL2 implements ISpec {
 	}
 
 	public String memoryToString() {
+		//action names
+		int i=0;
+		String a1 = "m"+i;
+		Sort data = null;
+		for (Sort sort : sorts) {
+			if (sort.getName().equalsIgnoreCase("Data")) {
+				data = sort;
+				continue;
+			}
+		}
+		while(data.getTypes().contains(a1)) {
+			i++;
+			a1 = "m" + i;
+		}
+		String a2 = "m" + (i+1);
+		while(data.getTypes().contains(a2)) {
+			i++;
+			a2 = "m" + (i+1);
+			
+		}
+			
 		String s = "map \r\n" + "union : Memory # Memory -> Memory;\r\n" + "var\r\n"
-				+ "m1,m2: Memory;\r\n" + "eqn \r\n" + "union(m1,m2) = m1 + m2 ; \n";
+				+ a1+","+a2+": Memory;\r\n" + "eqn \r\n" + "union("+a1+","+a2+") = "+a1+"+ "+a2+" ; \n";
 		return s;
 	}
 
