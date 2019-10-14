@@ -283,12 +283,12 @@ public class IOTerminal {
 			r = scan.nextLine();
 		}
 		if (r.equalsIgnoreCase(YES)) {
-			deleteTemporaryFile(mcrl2file + ".pbes", mcrl2file + evidencelps, mcrl2file + evidencelts,
+			deleteTemporaryFile(mcrl2file + ".pbes", mcrl2file + evidencelps,mcrl2file+dotlts, mcrl2file + evidencelts,
 					mcrl2file + evidencefsm, mcrl2file + json, check);
 			return true;
 		} else {
 			deleteTemporaryFile(mcrl2file + dotmcrl2, mcrl2file + dotlps, mcrl2file + ".pbes", mcrl2file + evidencelps,
-					mcrl2file + evidencelts, mcrl2file + evidencefsm, mcrl2file + json, check);
+					mcrl2file + evidencelts, mcrl2file + evidencefsm, mcrl2file+dotlts, mcrl2file + json, check);
 			System.exit(0);
 			return false;
 		}
@@ -297,14 +297,11 @@ public class IOTerminal {
 	public List<Pair<String, Set<String>>> scanFSMfile(String fileName, mCRL2 mcrl) {
 		try {
 			FileReader fileReader = new FileReader(fileName);
-
 			// Always wrap FileReader in BufferedReader.
 			BufferedReader br = new BufferedReader(fileReader);
-
 			String regex = "[0-9]+ [0-9]+ \"(.)+\"";
 			// read line by line
 			String line;
-			String second = "";
 			Map<Pair<Integer, Integer>, Pair<String, Set<String>>> map = new HashedMap<Pair<Integer, Integer>, Pair<String, Set<String>>>();
 			Pair<Integer, Integer> root = null;
 			while ((line = br.readLine()) != null) {
@@ -312,10 +309,6 @@ public class IOTerminal {
 					String[] split = line.split(" ");
 					if (root == null)
 						root = Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1]));
-					/*
-					 * if (second.isEmpty()) { second = split[0]; } else if
-					 * (!second.equals(split[0])) continue; second = split[1];
-					 */
 
 					String task = line.substring(line.indexOf("\"") + 1, line.lastIndexOf("\"")).replaceAll("\\(.*\\)",
 							"");
@@ -331,15 +324,12 @@ public class IOTerminal {
 							for (String s : splitmatch)
 								tmp.add(s);
 						}
-						// path.add(Pair.of(t.getAction().getId(), tmp));
 						map.put(Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1])),
 								Pair.of(t.getAction().getId(), tmp));
 					}
 				}
 			}
 			br.close();
-			// List<Pair<String, Set<String>>> path = new ArrayList<Pair<String,
-			// Set<String>>>();
 			return recognizePath(map, root);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
