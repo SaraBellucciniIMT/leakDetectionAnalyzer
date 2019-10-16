@@ -414,30 +414,13 @@ public class mCRL2 implements ISpec {
 	}
 
 	public String memoryToString() {
-		// action names
-		int i = 0;
-		String a1 = "m" + i;
-		Sort data = null;
-		for (Sort sort : sorts) {
-			if (sort.getName().equalsIgnoreCase("Data")) {
-				data = sort;
-				continue;
-			}
-		}
-		while (data.getTypes().contains(a1)) {
-			i++;
-			a1 = "m" + i;
-		}
-		String a2 = "m" + (i + 1);
-		while (data.getTypes().contains(a2)) {
-			i++;
-			a2 = "m" + (i + 1);
-
-		}
-
-		String s = "map \r\n" + "union : Memory # Memory -> Memory;\r\n "+"empty : Memory -> Bool;" + "var\r\n" + a1 + "," + a2 + ": Memory;\r\n"
+		
+		String a1 =Action.setTemporaryAction().getName();
+		String a2 = Action.setTemporaryAction().getName();
+		String a3 = Action.setTemporaryAction().getName();
+		String s = "map \r\n" + "union : Memory # Memory -> Memory;\r\n "+"empty : Memory -> Bool;\r\n" + "var\r\n" + a1 + "," + a2 + ": Memory;\r\n"
 				+ "eqn \r\n" + "union(" + a1 + "," + a2 + ") = " + a1 + "+ " + a2 + " ; \n" + "empty(" + a1
-				+ ") = {d :Data | ({d}*" + a1 + "!={})&&(d!=" + StructSort.empty + ")} == {};\r\n";
+				+ ") = {"+a3+" :Data | ({"+a3+"}*" + a1 + "!={})&&("+a3+"!=" + StructSort.empty + ")} == {};\r\n";
 		return s;
 	}
 
