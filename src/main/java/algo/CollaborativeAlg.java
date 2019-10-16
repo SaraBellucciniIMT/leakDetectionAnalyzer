@@ -19,7 +19,6 @@ import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.jbpt.pm.bpmn.Task;
 
 import algo.interpreter.Tmcrl;
-import io.BPMNLabel;
 import io.PETExtendedNode;
 import io.pet.PET;
 import spec.mcrl2obj.AbstractProcess;
@@ -40,7 +39,7 @@ import spec.mcrl2obj.mCRL2;
 public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	private Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmn;
-	private Set<Triple<IFlowNode, Set<DataNode>, IFlowNode>> internalCommList;
+	private Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> internalCommList;
 	private static final FlowNode epsilon = new Task();
 
 	private Set<Pair<FlowNode, FlowNode>> messages;
@@ -61,10 +60,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	protected void analyzeData() {
 		generateInternalCommunicationlist();
 		assignPlaceholder();
-		messages.forEach(pair -> this.internalCommList
-				.add(Triple.of(pair.getLeft(), findData(pair.getRight()), pair.getRight())));
-		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			//System.out.println(triple.toString());
+		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			int size = triple.getMiddle().size();
 			DataParameter[] parameters = new DataParameter[size];
 			int j = 0;
@@ -73,45 +69,57 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 						getSortData());
 				j++;
 			}
-
 			// Update the storage of the right side Process
-			if (triple.getLeft().equals(epsilon)) {
+			if (triple.getLeft().contains(epsilon)) {
 				TaskProcess R = getProcessOfTask(triple.getRight());
-				triple.getMiddle().forEach(d -> {
-					R.addDataToAction(new DataParameter(d.getName(), getSortData()));
-				});
-				// System.out.println("epsilon "+ R.toString());
-				continue;
-
-			}
-
-			if (triple.getRight().equals(epsilon)) {
-				TaskProcess S = getProcessOfTask(triple.getLeft());
-				triple.getMiddle().forEach(d -> {
-					S.addDataToAction(new DataParameter(d.getName(), getSortData()));
-				});
-				// System.out.println(S.toString() + " EPSILON");
+				triple.getMiddle().forEach(d -> R.addDataToAction(new DataParameter(d.getName(), getSortData())));
 				continue;
 			}
+			// System.out.println(triple.toString());
+			Action send = null;
+			DataParameter[] parametertosend = null;
+			for (IFlowNode left : triple.getLeft()) {
+				TaskProcess S = getProcessOfTask(left);
+				if (send != null) {
+					S.addOutputAction(send);
+					for (int k = 0; k < parametertosend.length; k++) {
+						if (!S.getAction().containsParameter(parametertosend[k]))
+							S.getAction().addDataParameter(parametertosend[k]);
+					}
+					continue;
+				}
+				parametertosend = createOutputChannel(triple, left);
+				if (triple.getRight().equals(epsilon)) {
+					triple.getMiddle().forEach(d -> {
+						S.addDataToAction(new DataParameter(d.getName(), getSortData()));
+					});
+					// System.out.println(S.toString() + " EPSILON");
+					continue;
+				}
+				// Generate i(e_1,...,e_n)
+				Action i = Action.inputAction(parameters);
+				// Generate o(e_1,...,e_n)
+				Action o = Action.outputAction(parameters);
+				// Generate process for the intermediate message event
+				TaskProcess R = getProcessOfTask(triple.getRight());
+				Process pread = null;
+				Process suminput = new Process(Action.sumAction(parameters), Operator.SUM);
+				for (PartecipantProcess p : collectPartecipants()) {
+					List<String> childs = new ArrayList<String>();
+					childs.addAll(mCRL2.childTaskProcess(p.getProcess(), mcrl2, childs));
+					if (childs.contains(S.getAction().getName()) && childs.contains(R.getAction().getName())) {
+						generateCommunicationBufferNonBLocking(i, o, parameters);
+						break;
+					} else if (childs.contains(S.getAction().getName()) && !childs.contains(R.getAction().getName())
+							|| (childs.contains(R.getAction().getName())
+									&& !childs.contains(S.getAction().getName()))) {
+						generateCommunicationBufferBLocking(i, o, parameters);
+						break;
+					}
+				}
 
-			// Generate i(e_1,...,e_n)
-			Action i = Action.inputAction(parameters);
-			// Generate o(e_1,...,e_n)
-			Action o = Action.outputAction(parameters);
-
-			// Generate process for the intermediate message event
-			TaskProcess S = getProcessOfTask(triple.getLeft());
-			TaskProcess R = getProcessOfTask(triple.getRight());
-			Process pread = null;
-			Process suminput = new Process(Action.sumAction(parameters), Operator.SUM);
-
-			if ( triple.getLeft().getTag().equals(BPMNLabel.TASK) && triple.getRight().getTag()
-					.equals(BPMNLabel.TASK)) {
-				// Generate buffer and add the buffer to the init set
-				generateCommunicationBuffer(i, o, parameters);
-
-				DataParameter[] parametertosend = createOutputChannel(triple);
-				Action send = Action.outputAction(parametertosend);
+				send = Action.outputAction(parametertosend);
+				// Update internal memory
 				for (int k = 0; k < parametertosend.length; k++) {
 					if (!S.getAction().containsParameter(parametertosend[k]))
 						S.getAction().addDataParameter(parametertosend[k]);
@@ -119,45 +127,16 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				S.addOutputAction(send);
 				Action read = Action.inputAction(parameters);
 				pread = new Process(read);
-
 				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(send, i));
 				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(o, read));
-
-			} else if (triple.getLeft().getTag().equals(BPMNLabel.MESSAGE)) {
-				if (!mcrl2.getInitSet().contains(S.getName()))
-					mcrl2.addInitSet(S.getName());
-				//parameters.forEach(par -> R.addDataToAction(par));
-				pread = new Process(i);
-				for (int k = 0; k < parameters.length; k++) {
-					if (!S.getAction().containsParameter(parameters[k]))
-						S.getAction().addDataParameter(parameters[k]);
+				for (DataParameter d : parameters) {
+					if (!R.getAction().containsParameter(d))
+						R.addDataToAction(d);
 				}
-				S.addOutputAction(o);
-				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(o, i));
-
-			} else if (triple.getRight().getTag().equals(BPMNLabel.MESSAGE)) {
-				if (!mcrl2.getInitSet().contains(R.getName()))
-					mcrl2.addInitSet(R.getName());
-				pread = new Process(i);
-				DataParameter[] parametertosend = createOutputChannel(triple);
-				Action send = Action.outputAction(parametertosend);
-				S.addOutputAction(send);
-				for (int k = 0; k < parametertosend.length; k++) {
-					if (!S.getAction().containsParameter(parametertosend[k]))
-						S.getAction().addDataParameter(parametertosend[k]);
-				}
-				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(i, send));
+				Process seqsuminput = new Process(Operator.DOT, suminput.getName(), pread.getName());
+				R.addInputAction(seqsuminput, suminput, pread);
 			}
-
-			for (DataParameter d : parameters) {
-				if (!R.getAction().containsParameter(d))
-					R.addDataToAction(d);
-			}
-			Process seqsuminput = new Process(Operator.DOT, suminput.getName(), pread.getName());
-			R.addInputAction(seqsuminput, suminput, pread);
-			// System.out.println(S.toString() + " " + R.toString());
 		}
-
 	}
 
 	private CommunicationFunction createSendReadCommunication(Action a, Action b) {
@@ -173,10 +152,11 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		mcrl2.addHide(a);
 	}
 
-	private DataParameter[] createOutputChannel(Triple<IFlowNode, Set<DataNode>, IFlowNode> triple) {
+	private DataParameter[] createOutputChannel(Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple,
+			IFlowNode node) {
 		List<DataParameter> parametertosend = new ArrayList<DataParameter>();
 		triple.getMiddle().forEach(d -> {
-			if (isitFirst(triple.getLeft(), d)) {
+			if (isitFirst(node, d)) {
 				parametertosend.add(new DataParameter(d.getName(), getSortData()));
 				getSortData().addType(d.getName());
 			} else
@@ -196,7 +176,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	private void assignPlaceholder() {
 		this.dataplaceholder = new HashMap<String, DataParameter>();
-		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
+		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			triple.getMiddle().forEach(d -> {
 				if (!dataplaceholder.containsKey(d.getName())) {
 					DataParameter dp = new DataParameter(d.getName(), getSortData());
@@ -209,13 +189,11 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	}
 
 	private boolean isitFirst(IFlowNode node, DataNode data) {
-		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
-
+		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			for (DataNode datanode : triple.getMiddle()) {
 				if (datanode.getName().equals(data.getName())) {
-					if (triple.getRight().equals(node) && !triple.getLeft().equals(epsilon)) {
+					if (triple.getRight().equals(node) && !triple.getLeft().contains(epsilon))
 						return false;
-					}
 				}
 			}
 		}
@@ -231,35 +209,70 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return null;
 	}
 
-	private void generateCommunicationBuffer(Action i, Action o, DataParameter[] parameters) {
-
-		TaskProcess buffer = new TaskProcess();
+	private void generateCommunicationBufferNonBLocking(Action i, Action o, DataParameter[] parameters) {
+		Buffer sumprocess = new Buffer(parameters, getSortData());
+		sumprocess.setBufferName();
+		TaskProcess bufferl = new TaskProcess();
 		// generate i(e1,...,e_n)
 		// Generate the sum : e1,...en:Data
 		Process sum = new Process(Action.sumAction(parameters), Operator.SUM);
 		Process input = new Process(i);
-
 		Process seqinputsum = new Process(Operator.DOT, sum.getName(), input.getName());
-		buffer.addInputAction(seqinputsum, input, sum);
-		buffer.addOutputAction(o);
-		buffer.setBufferName();
-		Action a = new Action(o.getName(), new DataParameter(StructSort.empty, getSortData()));
-		this.mcrl2.addAction(a);
-		Process p = new Process(a);
+		bufferl.addInputAction(seqinputsum, input, sum);
 
-		Buffer sumprocess = new Buffer(buffer, p);
-		sumprocess.setBufferName();
+		Action a = new Action(o.getName(), sumprocess.getInitialParameters());
+		this.mcrl2.addAction(a);
+		Process bufferr = new Process(a);
+
+		sumprocess.setOperant(bufferl, bufferr);
 		this.mcrl2.addProcess(sumprocess);
-		this.mcrl2.addInitSet(buffer.getName());
+		String eps = "";
+		for (int j = 0; j < sumprocess.getInitialParameters().length; j++) {
+			eps = eps + StructSort.empty;
+			if (j != sumprocess.getInitialParameters().length - 1)
+				eps = eps + ",";
+		}
+		this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")");
+	}
+
+	private void generateCommunicationBufferBLocking(Action i, Action o, DataParameter[] parameters) {
+
+		Buffer sumprocess = new Buffer(parameters, getSortData());
+		sumprocess.setBufferName();
+		TaskProcess bufferl = new TaskProcess();
+		// generate i(e1,...,e_n)
+		// Generate the sum : e1,...en:Data
+		Process sum = new Process(Action.sumAction(parameters), Operator.SUM);
+		Process input = new Process(i);
+		Process seqinputsum = new Process(Operator.DOT, sum.getName(), input.getName());
+		bufferl.addInputAction(seqinputsum, input, sum);
+
+		Action a = new Action(o.getName(), sumprocess.getInitialParameters());
+		this.mcrl2.addAction(a);
+		Process outpuprocess = new Process(a);
+		Action actionempty = new Action("!empty", sumprocess.getInitialParameters());
+		Process processempty = new Process(actionempty);
+		Process ifp = new Process(Operator.IF, processempty.getName(), outpuprocess.getName());
+		ifp.addInsideDef(processempty, outpuprocess);
+
+		sumprocess.setOperant(bufferl, ifp);
+		this.mcrl2.addProcess(sumprocess);
+		String eps = "";
+		for (int j = 0; j < sumprocess.getInitialParameters().length; j++) {
+			eps = eps + StructSort.empty;
+			if (j != sumprocess.getInitialParameters().length - 1)
+				eps = eps + ",";
+		}
+		this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")");
 	}
 
 	// What is in output from a Intermediate Message Event is the data that was
 	// sended
-	private Set<DataNode> findData(IFlowNode f) {
+	private Set<DataNode> findData(IFlowNode f, Set<Triple<IFlowNode, DataNode, IFlowNode>> tmpinternalCommList) {
 		Set<DataNode> set = new HashSet<DataNode>();
-		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
+		for (Triple<IFlowNode, DataNode, IFlowNode> triple : tmpinternalCommList) {
 			if (triple.getLeft().equals(f)) {
-				set.addAll(triple.getMiddle());
+				set.add(triple.getMiddle());
 			}
 		}
 		return set;
@@ -270,69 +283,81 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	private void generateInternalCommunicationlist() {
 		epsilon.setTag("epsilon");
 		epsilon.setName("epsilon");
-		this.internalCommList = new HashSet<Triple<IFlowNode, Set<DataNode>, IFlowNode>>();
+		Set<Triple<IFlowNode, DataNode, IFlowNode>> tmpInternalCommList = new HashSet<Triple<IFlowNode, DataNode, IFlowNode>>();
 		bpmn.forEach(b -> {
 			for (DataNode n : b.getDataNodes()) {
-				// System.out.println(n.toString());
 				Collection<IFlowNode> writingnodes = n.getWritingFlowNodes();
 				Collection<IFlowNode> readnodes = n.getReadingFlowNodes();
 				if (!writingnodes.isEmpty() && !readnodes.isEmpty()) {
 					writingnodes.forEach(w -> {
-						readnodes.forEach(r -> {
-							Triple<IFlowNode, Set<DataNode>, IFlowNode> triple;
-							if ((triple = existingWriteReadCouple(w, r)) != null)
-								triple.getMiddle().add(n);
-							else {
-								Set<DataNode> dataset = new HashSet<DataNode>();
-								dataset.add(n);
-								internalCommList.add(Triple.of(w, dataset, r));
-							}
-						});
+						readnodes.forEach(r -> tmpInternalCommList.add(Triple.of(w, n, r)));
 					});
 				} else if (writingnodes.isEmpty() && !readnodes.isEmpty()) {
-					readnodes.forEach(r -> {
-						Triple<IFlowNode, Set<DataNode>, IFlowNode> triple = existingWriteReadCouple(epsilon, r);
-						if (triple != null)
-							triple.getMiddle().add(n);
-						else {
-							Set<DataNode> dataset = new HashSet<DataNode>();
-							dataset.add(n);
-							internalCommList.add(Triple.of(epsilon, dataset, r));
-						}
-					});
-
+					readnodes.forEach(r -> tmpInternalCommList.add(Triple.of(epsilon, n, r)));
 				} else if (!writingnodes.isEmpty() && readnodes.isEmpty()) {
-					writingnodes.forEach(w -> {
-						Triple<IFlowNode, Set<DataNode>, IFlowNode> triple = existingWriteReadCouple(w, epsilon);
-						if (triple != null)
-							triple.getMiddle().add(n);
-						else {
-							Set<DataNode> dataset = new HashSet<DataNode>();
-							dataset.add(n);
-							internalCommList.add(Triple.of(w, dataset, epsilon));
-						}
-					});
+					writingnodes.forEach(w -> tmpInternalCommList.add(Triple.of(w, n, epsilon)));
 				}
 			}
 		});
+		messages.forEach(pair -> {
+			Set<DataNode> set = findData(pair.getRight(), tmpInternalCommList);
+			for (DataNode d : set) {
+				tmpInternalCommList.add(Triple.of(pair.getLeft(), d, pair.getRight()));
+			}
+		});
+		combiningbyData(combiningbyDataReceiver(tmpInternalCommList));
 	}
 
 	/*
-	 * Check if already exist a couple send-receive that send a different data w.r.t
-	 * to the one that we are considering now
+	 * It combines the triple that have the same Sender and Receiver
 	 */
-	private Triple<IFlowNode, Set<DataNode>, IFlowNode> existingWriteReadCouple(IFlowNode writer, IFlowNode reader) {
-		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> t : internalCommList) {
-			if (t.getLeft().equals(writer) && t.getRight().equals(reader))
-				return t;
+	private void combiningbyData(Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> tmpintermalcommlist) {
+		this.internalCommList = new HashSet<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>>();
+		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : tmpintermalcommlist) {
+			boolean find = false;
+			for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> t : this.internalCommList) {
+				if (t.getRight().equals(triple.getRight()) && t.getLeft().equals(triple.getLeft())) {
+					t.getMiddle().addAll(triple.getMiddle());
+					find = true;
+					break;
+				}
+			}
+			if (!find)
+				this.internalCommList.add(triple);
 		}
-		return null;
+	}
+
+	/*
+	 * It combines the triples that have the same Data and the same Receiver
+	 */
+	private Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> combiningbyDataReceiver(
+			Set<Triple<IFlowNode, DataNode, IFlowNode>> set) {
+		Set<Triple<IFlowNode, DataNode, IFlowNode>> copyset = new HashSet<Triple<IFlowNode, DataNode, IFlowNode>>(set);
+		Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> tmpintermalcommlist = new HashSet<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>>();
+		for (Triple<IFlowNode, DataNode, IFlowNode> entry : set) {
+			DataNode d = entry.getMiddle();
+			if (!copyset.contains(entry))
+				continue;
+			Set<IFlowNode> senderset = new HashSet<IFlowNode>();
+			senderset.add(entry.getLeft());
+			Set<DataNode> datanodeset = new HashSet<DataNode>();
+			datanodeset.add(entry.getMiddle());
+			for (Triple<IFlowNode, DataNode, IFlowNode> entry2 : set) {
+				if (!entry.equals(entry2) && d.equals(entry2.getMiddle())
+						&& entry.getRight().equals(entry2.getRight())) {
+					senderset.add(entry2.getLeft());
+					copyset.remove(entry2);
+				}
+			}
+			tmpintermalcommlist.add(Triple.of(senderset, datanodeset, entry.getRight()));
+		}
+		return tmpintermalcommlist;
 	}
 
 	// Generate a Map PET - Data , to distinguish SSsharing we can
 	private void checkSensibleData() {
 		Map<PET, Set<String>> map = new HashMap<PET, Set<String>>();
-		for (Triple<IFlowNode, Set<DataNode>, IFlowNode> triple : internalCommList) {
+		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			for (DataNode data : triple.getMiddle()) {
 				String dataname = data.getName().replace(" ", "_");
 				if (data.getClass().equals(PETExtendedNode.class) && ((PETExtendedNode) data).hasPET())
@@ -381,7 +406,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		Process sumbool = new Process(Action.sumAction(parbool), Operator.SUM);
 		// ----
 		// sum d:Data
-		DataParameter pardata = new DataParameter(getSortData());
+		DataParameter pardata = new DataParameter(getSortMemory());
 		Process sumdata = new Process(Action.sumAction(pardata), Operator.SUM);
 		// ---
 		// s(b,d) also added to the action
@@ -395,7 +420,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		Action memp = Action.setMemoryAction(getSortMemory());
 		p.setActionMemory(memp);
 		Process thenp = new Process(
-				new Action(notcomplete.getName() + "(union({" + pardata + "}," + p.retriveDataMemoryName() + "))"));
+				new Action(notcomplete.getName() + "(union(" + pardata + "," + p.retriveDataMemoryName() + "))"));
 		mcrl2.addAction(memp, s);
 		mcrl2.addAllow(memp);
 		Process elsepmep = new Process(memp);
@@ -416,7 +441,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	public TaskProcess identiyTaskProcessName(String name) {
 		Set<TaskProcess> tasks = getTaskProcessesInsideProcesses();
 		for (TaskProcess t : tasks) {
-			if (t.getAction().getName().equalsIgnoreCase(name))
+			if (t.getAction() != null && t.getAction().getName().equalsIgnoreCase(name))
 				return t;
 		}
 		return null;
@@ -424,16 +449,17 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	// Qui è definito la dimensione massima che la memoria raggiungerà
 	private void addConnectionToMemory() {
-		Action codomain = Action.setSendReadAction(new DataParameter(getSortBool()), new DataParameter(getSortData()));
+		Action codomain = Action.setSendReadAction(new DataParameter(getSortBool()), new DataParameter(getSortMemory()));
 		for (PartecipantProcess partecipant : collectPartecipants()) {
 			Set<String> sendedtomemory = new HashSet<String>();
 			List<String> childspartecipant = mCRL2.childTaskProcess(partecipant.getProcess(), mcrl2,
 					new ArrayList<String>());
 			for (String s : childspartecipant) {
 				TaskProcess t = identiyTaskProcessName(s);
+				Action output = new Action(partecipant.getActionToMemory(), new DataParameter("false", getSortBool()));
+				output.setTemporaty();
 				for (DataParameter d : t.getAction().getParameters()) {
-					Action output = new Action(partecipant.getActionToMemory(),
-							new DataParameter("false", getSortBool()), d);
+					output.addDataParameter(d);
 					t.addOutputAction(output);
 					String myData = "";
 					for (Entry<String, DataParameter> entry : dataplaceholder.entrySet()) {
@@ -443,7 +469,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 							break;
 						}
 					}
-
+					//defining the maximum memory of a participant
 					if (!sendedtomemory.contains(myData))
 						sendedtomemory.add(myData);
 				}
@@ -469,8 +495,9 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 			Process newpartecipant = new Process(Operator.DOT);
 			for (int i = 0; i < p.getProcess().getLength(); i++)
 				newpartecipant.addChild(p.getProcess().getChildName(i));
-			Process lastsend = new Process(new Action(p.getActionToMemory(), new DataParameter("true", getSortBool()),
-					new DataParameter(StructSort.empty, getSortData())));
+			Action a =new Action(p.getActionToMemory(), new DataParameter("true", getSortBool()),new DataParameter(StructSort.empty, getSortData()));
+			a.setTemporaty();
+			Process lastsend = new Process(a);
 			newpartecipant.addChild(lastsend.getName());
 			newpartecipant.addInsideDef(lastsend);
 			newpartecipant.addInsideDef(p.getProcess().getAllInsideDef().toArray(new Process[] {}));

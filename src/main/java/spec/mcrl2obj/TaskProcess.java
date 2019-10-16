@@ -21,7 +21,6 @@ public class TaskProcess extends AbstractProcess {
 	private Set<Action> outputAction;
 	private Action action;
 
-
 	public TaskProcess(Action a, ExtendedNode en) {
 		setName();
 		this.action = a;
@@ -44,15 +43,17 @@ public class TaskProcess extends AbstractProcess {
 	public ExtendedNode geExtendedNode() {
 		return this.extendednode;
 	}
+
 	public void setBufferName() {
 		setName();
 	}
+
 	public Action getAction() {
 		return this.action;
 	}
 
 	public void addDataToAction(DataParameter d) {
-		if(!this.action.containsParameter(d))
+		if (!this.action.containsParameter(d))
 			this.action.addDataParameter(d);
 	}
 
@@ -64,10 +65,13 @@ public class TaskProcess extends AbstractProcess {
 		return this.outputAction;
 	}
 
-	public void addInputAction(Process i, Process in1, Process in2) {
+	public void addInputAction(Process i, Process... in1) {
 		this.inputAction.add(i);
-		this.insidedef.add(in1);
-		this.insidedef.add(in2);
+		if (in1.length != 0) {
+			for (int j = 0; j < in1.length; j++)
+				this.insidedef.add(in1[j]);
+		}
+
 	}
 
 	public void addOutputAction(Action o) {
@@ -78,8 +82,6 @@ public class TaskProcess extends AbstractProcess {
 		return this.extendednode.getTag();
 	}
 
-	
-
 	private Process getInsideDef(String name) {
 		for (Process p : insidedef) {
 			if (p.getName().equals(name))
@@ -88,21 +90,20 @@ public class TaskProcess extends AbstractProcess {
 		return null;
 	}
 
-	@Override
-	public String toString() {
-		
-		String s =getName()+" = ";
+	public String toStringinputAction() {
+		String s = "";
 		if (!inputAction.isEmpty()) {
 			for (Process inputp : inputAction) {
-				s = s + getInsideDef(inputp.getChildName(0)).toString() + ".";
-				s = s + getInsideDef(inputp.getChildName(1)).toString() + ".";
+				for (int i = 0; i < inputp.getLength(); i++) {
+					s = s + getInsideDef(inputp.getChildName(i)).toString() + ".";
+				}
 			}
 		}
-		if (action != null) {
-			s = s + action.toString();
-			if (!outputAction.isEmpty())
-				s = s + ".";
-		}
+		return s;
+	}
+
+	public String toStringoutputAction() {
+		String s = "";
 		if (!outputAction.isEmpty()) {
 			int i = 0;
 			for (Action out : outputAction) {
@@ -113,6 +114,21 @@ public class TaskProcess extends AbstractProcess {
 			}
 		}
 		return s;
+	}
+
+	@Override
+	public String toString() {
+		String s = getName() + " = ";
+
+		s = s + toStringinputAction();
+		if (action != null) {
+			s = s + action.toString();
+			if (!outputAction.isEmpty())
+				s = s + ".";
+		}
+		s = s + toStringoutputAction();
+		return s;
+
 	}
 
 }

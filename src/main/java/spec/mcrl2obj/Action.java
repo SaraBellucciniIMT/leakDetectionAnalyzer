@@ -23,6 +23,7 @@ public class Action {
 	private static final String output = "o";
 	private static final String sendread = "sendread";
 	private static final String temporary = "t";
+	private boolean isTemporary = false;
 	private static final String memory = "memory";
 	private boolean istau = false;
 	private PETLabel pet;
@@ -46,18 +47,25 @@ public class Action {
 	public void setPet(PETLabel pet) {
 		this.pet = pet;
 	}
-	
+
 	public PETLabel getPet() {
 		return this.pet;
 	}
+
 	public void setSecondName(String secondName) {
 		this.secondName = secondName;
 	}
+
 	public String getSecondName() {
 		return this.secondName;
 	}
+
 	public String getId() {
 		return this.id;
+	}
+
+	public void setTemporaty() {
+		this.isTemporary = true;
 	}
 
 	// An action that has only parameters is used to represent sum: e1,...en : Data
@@ -129,9 +137,9 @@ public class Action {
 	 * Add 1 parameter to this action
 	 */
 	public void addDataParameter(DataParameter parameter) {
-		if (!istau)
+		if (!istau) {
 			this.parameters = ArrayUtils.add(this.parameters, parameter);
-		else
+		} else
 			System.err.println("You cannot add parameters to a TAU action");
 	}
 
@@ -154,6 +162,18 @@ public class Action {
 				return s + "({})";
 		} else if (isParameter) {
 			return organizeParameterAsString() + ": " + parameters[0].getSort().getName();
+		}else if(isTemporary) {
+				String s = name;
+				s = s+"("+ parameters[0].toString() +",{";
+				for(int i=1 ; i<parameters.length; i++) {
+					s = s + parameters[i];
+					if(i!= parameters.length-1)
+						s = s + ",";
+				}
+				return s + "})";
+			}
+		 else if (parameters.length != 0 && !this.name.isEmpty() && this.name.equals("!empty")) {
+			return name + "({" + organizeParameterAsString() + "})";
 		} else if (parameters.length != 0 && !this.name.isEmpty())
 			return name + "(" + organizeParameterAsString() + ")";
 		else
@@ -181,13 +201,14 @@ public class Action {
 		}
 		return false;
 	}
-	
+
 	public boolean containsParameterName(String parameter) {
 		for (int i = 0; i < parameters.length; i++) {
 			if (parameters[i].toString().equals(parameter))
 				return true;
 		}
-		return false;	}
+		return false;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
