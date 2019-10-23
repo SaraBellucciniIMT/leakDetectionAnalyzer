@@ -3,7 +3,10 @@
  */
 package io.pet;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * @author sara
@@ -11,44 +14,54 @@ import java.util.List;
  */
 public class SScomputation extends PET{
 
-	private String groupId ;
-	List<String> objref;
+	private Map<String,List<String>> map = new HashMap<String,List<String>>();
 	
-	public SScomputation(String groupid,List<String> objref) {
+	public SScomputation(Map<String,List<String>> map) {
 		// TODO Auto-generated constructor stub
 		this.petname = PETLabel.SSCOMPUTATION;
-		this.groupId = groupid;
-		this.objref = objref;
+		this.map = map;
 	}
 	
+	public void addSScomputationGroup(String groupid,List<String> objref) {
+		// TODO Auto-generated constructor stub
+		this.map.put(groupid, objref);
+	}
+	
+	public Map<String,List<String>> getGroups(){
+		return this.map;
+	}
 	@Override
 	public PETLabel getPET() {
 		// TODO Auto-generated method stub
 		return this.petname;
 	}
-
-	public String getGroupId() {
-		return this.groupId;
+	
+	
+	public void changeMyName(String myname,String myid) {
+		for(Entry<String,List<String>> entry : map.entrySet()) {
+			for(String s : entry.getValue()) {
+				if(s.equals(myid)) {
+					entry.getValue().remove(s);
+					entry.getValue().add(adjustname(myname));
+					return;
+				}
+			}
+		}
+		
 	}
 	
+	private String adjustname(String s) {
+		if(s.contains(" "))
+			s = s.replaceAll(" ","_");
+		return s;
+	}
 	public boolean containObjRef(String s) {
-		if(objref.contains(s))
-			return true;
+		for(Entry<String,List<String>> entry : map.entrySet()) {
+			if(entry.getValue().contains(s))
+				return true;
+		}
 		return false;
 	}
 	
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		SScomputation other = (SScomputation) obj;
-		if (groupId != other.groupId)
-			return false;
-		return true;
-	}
 	
 }

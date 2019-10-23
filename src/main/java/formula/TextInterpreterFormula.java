@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import javax.swing.text.Utilities;
+
 import com.google.common.collect.Sets;
 
 import io.pet.PET;
@@ -47,7 +50,7 @@ public abstract class TextInterpreterFormula {
 		else
 			formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
 
-		if (formula == null || formula == "-1")
+		if (formula == null || formula == "-1" || formula.equals(""))
 			return formula;
 
 		if (idname.contains(" "))
@@ -91,10 +94,15 @@ public abstract class TextInterpreterFormula {
 				treshold = ((SSsharing) entry.getKey()).getTreshold();
 				sssharing.add(entry.getValue());
 			} else if (entry.getKey().getPET().equals(PETLabel.SSCOMPUTATION)) {
-				if (groupcomputation.containsKey(((SScomputation) entry.getKey()).getGroupId())) {
-					groupcomputation.get(((SScomputation) entry.getKey()).getGroupId()).addAll(entry.getValue());
-				} else {
-					groupcomputation.put(((SScomputation) entry.getKey()).getGroupId(), entry.getValue());
+				for (String s : entry.getValue()) {
+					for (Entry<String, List<String>> groups : ((SScomputation) entry.getKey()).getGroups().entrySet()) {
+						if (groups.getValue().contains(s)) {
+							if (groupcomputation.containsKey(groups.getKey()))
+								groupcomputation.get(groups.getKey()).add(s);
+							else
+								groupcomputation.put(groups.getKey(), Sets.newHashSet(s));
+						}
+					}
 				}
 			} else if (entry.getKey().getPET().equals(PETLabel.SSRECONTRUCTION))
 				recontruction.addAll(entry.getValue());
@@ -143,13 +151,15 @@ public abstract class TextInterpreterFormula {
 			partecipantProcesses = mcrl2.getParcipantProcesses();
 			remove = new HashSet<PartecipantProcess>();
 			for (PartecipantProcess partecipant : partecipantProcesses) {
-				if (reconstructionPartecipant(mcrl2, partecipant.getId()))
+				if (reconstructionPartecipant(mcrl2, partecipant.getId())
+						|| (creationShareParticiapnt(mcrl2, partecipant.getId(), recontruction).isEmpty()))
 					remove.add(partecipant);
 			}
 			partecipantProcesses.removeAll(remove);
 			// Every participant that doens't have a reconstruction feaure then, cannot hold
 			// more that one info for the reconstruction
-			List<String> tmpformula =getFormulaReconstruction(recontruction, formula, treshold, mcrl2, partecipantProcesses);
+			List<String> tmpformula = getFormulaReconstruction(recontruction, formula, treshold, mcrl2,
+					partecipantProcesses);
 			if (!tmpformula.isEmpty()) {
 				for (String ff : tmpformula) {
 					if (!formula.contains(ff))
@@ -166,6 +176,8 @@ public abstract class TextInterpreterFormula {
 				resultformula = resultformula + "||";
 			i++;
 		}
+		if (resultformula.equals(""))
+			return null;
 		return resultformula;
 
 	}
@@ -232,6 +244,8 @@ public abstract class TextInterpreterFormula {
 	// null means that the participant is not a generator of share
 	private static Set<String> creationShareParticiapnt(mCRL2 mcrl, String name, Set<String> datashares) {
 		Set<String> sharenotgenrated = new HashSet<String>();
+		if (reconstructionPartecipant(mcrl, name))
+			return sharenotgenrated;
 		List<String> childspartecipant = new ArrayList<String>();
 		childspartecipant.addAll(mCRL2.childTaskProcess(((PartecipantProcess) mcrl.getPartcipant(name)).getProcess(),
 				mcrl, childspartecipant));

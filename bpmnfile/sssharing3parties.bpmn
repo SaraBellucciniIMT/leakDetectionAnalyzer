@@ -32,7 +32,7 @@
       <bpmn2:dataOutputAssociation id="DataOutputAssociation_13ga5o1">
         <bpmn2:targetRef>DataObjectReference_12gp3tt</bpmn2:targetRef>
       </bpmn2:dataOutputAssociation>
-      <pleak:SSSharing>{"treshold":2,"computationParties":2}</pleak:SSSharing>
+      <pleak:SSSharing>{"treshold":3,"computationParties":3}</pleak:SSSharing>
     </bpmn2:task>
     <bpmn2:sequenceFlow id="SequenceFlow_1qgf5fg" sourceRef="StartEvent_0157f2t" targetRef="Task_10o2wmd" />
     <bpmn2:sequenceFlow id="SequenceFlow_0d6fft0" sourceRef="Task_10o2wmd" targetRef="ExclusiveGateway_0y39lyn" />

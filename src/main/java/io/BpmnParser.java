@@ -4,9 +4,11 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
@@ -42,10 +44,10 @@ public class BpmnParser {
 	public static Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> collaborationParser(
 			String s) throws IOException {
 		Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmnSet = new HashSet<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>();
-		
+
 		File file = new File(s);
-		
-		while(!file.exists()) {
+
+		while (!file.exists()) {
 			System.err.println(file.getName() + " doens't exist in this directory, try again");
 			break;
 		}
@@ -134,7 +136,7 @@ public class BpmnParser {
 		try {
 			PET pet = null;
 			pet = detectePet(childrens);
-			if(pet!= null)
+			if (pet != null)
 				f.setDescription(pet.getPET().toString());
 			for (Element child : childrens) {
 				if (child.tagName().equals("bpmn2:datainputassociation")) {
@@ -148,26 +150,31 @@ public class BpmnParser {
 						}
 					} else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION)) {
 						for (PETExtendedNode d : datanodeset) {
-							//if (getIdDataNode(d).equals(dataobjref) && ((SScomputation) pet).containObjRef(dataobjref))
-							if (((SScomputation) pet).containObjRef(getIdDataNode(d)))
+							if (((SScomputation) pet).containObjRef(getIdDataNode(d))) {
+								((SScomputation) pet).changeMyName(d.getName(), getIdDataNode(d));
 								d.setPET(pet);
-						}}
-					/*else if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
-						for (PETExtendedNode d : datanodeset) {
-							if (getIdDataNode(d).equals(dataobjref))
-								d.setPET(pet);
+							}
+
 						}
-					}*/
+					}
 				} else if (child.tagName().equals("bpmn2:dataoutputassociation")) {
 					String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
 					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 							.forEach(d -> d.addWritingFlowNode(f));
-					 if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
-							for (PETExtendedNode d : datanodeset) {
-								if (getIdDataNode(d).equals(dataobjref))
-									d.setPET(pet);
+
+					if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
+						for (PETExtendedNode d : datanodeset) {
+							if (getIdDataNode(d).equals(dataobjref))
+								d.setPET(pet);
+						}
+					} else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION)) {
+						for (PETExtendedNode e : datanodeset) {
+							if (getIdDataNode(e).equals(dataobjref)) {
+								e.setPET(new SSreconstruction());
 							}
 						}
+					}
+
 				} else
 					continue;
 			}
@@ -188,19 +195,22 @@ public class BpmnParser {
 
 				return new SSsharing(treshold, computation);
 			} else if (child.tagName().equals("pleak:sscomputation")) {
+				Map<String, List<String>> sscomputationmap = new HashMap<String, List<String>>();
 				String computation = child.getElementsByTag("pleak:sscomputation").text();
 				JSONObject obj = new JSONObject(computation);
-				String index = obj.getString("groupId");
-				JSONArray arr = obj.getJSONArray("inputs");
+				JSONArray objarray = obj.getJSONArray("inputs");
+				String index = "";
 				List<String> listobjref = new ArrayList<String>();
-				for (int i = 0; i < arr.length(); i++) {
-					JSONArray ar;
-					if ((ar = arr.getJSONObject(i).getJSONArray("inputs")) != null) {
-						for (int j = 0; j < ar.length(); j++)
-							listobjref.add(ar.getJSONObject(j).getString("id"));
+				for (int i = 0; i < objarray.length(); i++) {
+					index = objarray.getJSONObject(i).getString("id");
+					JSONArray arr = objarray.getJSONObject(i).getJSONArray("inputs");
+					listobjref = new ArrayList<String>();
+					for (int j = 0; j < arr.length(); j++) {
+						listobjref.add(arr.getJSONObject(j).getString("id"));
 					}
+					sscomputationmap.put(index, listobjref);
 				}
-				return new SScomputation(index, listobjref);
+				return new SScomputation(sscomputationmap);
 			} else if (child.tagName().equalsIgnoreCase("pleak:SSReconstruction")) {
 				return new SSreconstruction();
 			}
@@ -242,7 +252,7 @@ public class BpmnParser {
 
 	private static Set<PETExtendedNode> detectDataObject(Elements dataobref) {
 		Set<PETExtendedNode> datanodeSet = new HashSet<PETExtendedNode>();
-		dataobref.forEach(d -> {
+		for(Element  d : dataobref) {
 			String name = d.attr("name");
 
 			name = name.replace(".", "_");
@@ -254,7 +264,7 @@ public class BpmnParser {
 				datanodeSet.add(dn);
 				dataobjrefMap.add(Pair.of(d.attr("id"), name));
 			}
-		});
+	}
 		return datanodeSet;
 	}
 
@@ -265,7 +275,7 @@ public class BpmnParser {
 			f.setName(name);
 		}
 		f.setId(e.attr("id"));
-	
+
 	}
 
 	/*

@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -89,15 +90,15 @@ public class IOTerminal {
 			filename = f.getName();
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
-			// long startTime= getCurrentTime();
+			//long startTime= getCurrentTime();		
 			set = BpmnParser.collaborationParser(inputfile);
 			CollaborativeAlg translationalg = new CollaborativeAlg(set);
 			mCRL2 mcrl2 = translationalg.getSpec();
 			Parout parout = new Parout();
 			mcrl2 = parout.parout(mcrl2);
 			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
-			// long endTime = getCurrentTime();
-			// System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime)
+			//long endTime = getCurrentTime();
+			//System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime)
 			// + " ms");
 			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
 			runmcrlcommand(lpsgen);
@@ -146,7 +147,7 @@ public class IOTerminal {
 				case 3:
 					this.check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
 							TextInterpreterFormula.violation);
-					if (check == null)
+					if (displayalternativeoutputsssharing(check))
 						continueOrExit();
 					callFormula(mcrl2);
 					break;
@@ -170,17 +171,20 @@ public class IOTerminal {
 	}
 
 	private void callFormula(mCRL2 mcrl2) {
-		// long startTime= getCurrentTime();
+		//long startTime= getCurrentTime();
+		//System.out.println(java.time.LocalTime.now());
 		boolean resultbool = lps2pbes2solve2convert();
-		// long endTime = getCurrentTime();
-		// System.out.println("Verification time:
-		// "+computeTimeSpanms(startTime,endTime)+" ms");
+		//long endTime = getCurrentTime();
+		//System.out.println("Verification time: "+computeTimeSpans(startTime,endTime)+" s");
 
 		System.out.println(resultbool);
 		try {
 			if (resultbool) {
+				//startTime = getCurrentTime();
 				List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
 				fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
+				//endTime = getCurrentTime();
+				//System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
 			} else
 				System.out.println("No JSON file generated because there isn't a path to show");
 		} catch (JSONException e) {
@@ -200,29 +204,27 @@ public class IOTerminal {
 			return false;
 		return true;
 	}
+	
+	private boolean displayalternativeoutputsssharing(String s) {
+			if (s == null)
+				System.out.println("never violated");
+			else
+				return false;
+			return true;
+		
+	}
 
 	private boolean lps2pbes2solve2convert() {
-		// String lps2pbes = "lps2pbes -c -f " + check + " " + mcrl2file + ".lps " +
-		// mcrl2file + ".pbes";
-		// runmcrlcommand(lps2pbes);
-		// String pbesinfo = "pbesinfo " + mcrl2file + ".pbes";
-		// runmcrlcommand(pbesinfo);
-		// new command
 		String lps2lts = "lps2lts " + mcrl2file + dotlps + " " + mcrl2file + dotlts;
 		runmcrlcommand(lps2lts);
 		String ltsconvert = "ltsconvert -etau-star " + mcrl2file + dotlts + " " + mcrl2file + dotlts;
 		runmcrlcommand(ltsconvert);
 		String lts2pbes = "lts2pbes -c -f " + check + " " + mcrl2file + dotlts + " " + mcrl2file + ".pbes";
 		runmcrlcommand(lts2pbes);
-		String pbessolve = "pbessolve --file=" + mcrl2file + dotlts + " " + mcrl2file + ".pbes";
-		// ---
-		// String pbessolve = "pbessolve --file=" + mcrl2file + ".lps " + mcrl2file +
-		// ".pbes";
+		String pbessolve = "pbessolve -s1 --file=" + mcrl2file + dotlts + " " + mcrl2file + ".pbes";
 		String resultsolve = runmcrlcommand(pbessolve);
 		if (resultsolve.equals("false"))
 			return false;
-		// String lps2lts = "lps2lts " + mcrl2file + evidencelps + " " + mcrl2file +
-		// evidencelts;
 		runmcrlcommand(lps2lts);
 		String ltsconvert2 = "ltsconvert -eweak-trace " + mcrl2file + evidencelts + " " + mcrl2file + evidencefsm;
 		runmcrlcommand(ltsconvert2);
@@ -396,7 +398,11 @@ public class IOTerminal {
 	}
 
 	private long computeTimeSpanms(long startTime, long endTime) {
-		return (endTime - startTime) / 1000000;
+		return TimeUnit.NANOSECONDS.toMillis(endTime - startTime);
+	}
+	
+	private long computeTimeSpans(long startTime, long endTime) {
+		return TimeUnit.NANOSECONDS.toSeconds(endTime - startTime);
 	}
 
 }
