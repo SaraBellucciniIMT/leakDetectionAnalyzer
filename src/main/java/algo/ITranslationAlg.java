@@ -8,5 +8,5 @@ public interface ITranslationAlg {
 	/*
 	 * It gives a specification as result
 	 */
-	public ISpec getSpec();
+	public ISpec getSpec(int id_spec);
 }

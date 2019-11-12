@@ -12,8 +12,9 @@ public class Sort {
 		this.name = name;
 	}
 
-	public void addType(String type) {
-		this.types.add(type);
+	public void addType(String... type) {
+		for(int i=0; i<type.length; i++)
+			this.types.add(type[i]);
 
 	}
 
@@ -27,11 +28,17 @@ public class Sort {
 
 	@Override
 	public String toString() {
-		String s = "sort " + getName() + " = ";
+		String s = getName() + " = ";
 		for (String t : types) {
 			s = s + t;
 		}
 		return s;
+	}
+	
+	public boolean isEmpty() {
+		if(types.isEmpty())
+			return true;
+		return false;
 	}
 
 	@Override

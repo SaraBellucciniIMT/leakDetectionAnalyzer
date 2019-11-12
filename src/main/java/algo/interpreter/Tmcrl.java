@@ -6,14 +6,13 @@ import java.util.Set;
 import org.jbpt.algo.tree.tctree.TCType;
 import org.jbpt.pm.IFlowNode;
 
-import algo.interpreter.StartEvent;
 import io.BPMNLabel;
 import io.ExploitedRPST;
 import io.ExtendedNode;
 import spec.mcrl2obj.AbstractProcess;
-import spec.mcrl2obj.Process;
 import spec.mcrl2obj.Action;
 import spec.mcrl2obj.PartecipantProcess;
+import spec.mcrl2obj.Process;
 import spec.mcrl2obj.TaskProcess;
 
 public class Tmcrl {
@@ -22,14 +21,13 @@ public class Tmcrl {
 	private ExtendedNode currentNode;
 	private Set<Action> actions;
 	private Set<AbstractProcess> processes = new HashSet<AbstractProcess>();
-	private String firstProcess;
+	private PartecipantProcess partecipantProcess;
 
 	public Tmcrl(ExploitedRPST rpst, String bpmnname,String bpmnid) {
 		this.rpst = rpst;
 		actions = new HashSet<Action>();
 	
-		PartecipantProcess partecipantProcess = new PartecipantProcess((Process)applyT(rpst.getRoot()),bpmnname);
-		firstProcess = partecipantProcess.getName();
+		this.partecipantProcess = new PartecipantProcess((Process)applyT(rpst.getRoot()),bpmnname);
 		partecipantProcess.setId(bpmnid);
 		processes.add(partecipantProcess);
 	}
@@ -79,8 +77,8 @@ public class Tmcrl {
 		return this.actions;
 	}
 
-	public String getFirstProcess() {
-		return firstProcess;
+	public PartecipantProcess getFirstProcess() {
+		return partecipantProcess;
 	}
 
 	public TaskProcess getProcessOfTask(IFlowNode flowNode) {

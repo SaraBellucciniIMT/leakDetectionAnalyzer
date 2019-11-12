@@ -118,7 +118,7 @@ public class TaskProcess extends AbstractProcess {
 
 	@Override
 	public String toString() {
-		String s = getName() + " = ";
+		String s = getName() + "("+ AbstractProcess.id+":Nat) = ";
 
 		s = s + toStringinputAction();
 		if (action != null) {

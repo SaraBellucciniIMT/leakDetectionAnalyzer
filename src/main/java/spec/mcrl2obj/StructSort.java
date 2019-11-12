@@ -3,17 +3,23 @@
  */
 package spec.mcrl2obj;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import org.apache.commons.lang3.tuple.Triple;
+
 /**
  * @author sara
  *
  */
 public class StructSort extends Sort {
 
-	public static final String empty = "eps";
+	//public static final String empty = "eps";
+	
+	private Set<Triple<String,Boolean,Integer>> triple = new HashSet<Triple<String,Boolean,Integer>>();
 	
 	public StructSort(String name) {
 		super(name);
-		this.addType(empty);
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -31,6 +37,19 @@ public class StructSort extends Sort {
 			i++;
 		}
 		return s;
+	}
+	
+	public void addTriple(Triple<String, Boolean,Integer> t) {
+		this.triple.add(t);
+	}
+	
+	public Set<Triple<String,Boolean,Integer>> getTripleByName(String name) {
+		Set<Triple<String,Boolean,Integer>> triplename = new HashSet<Triple<String,Boolean,Integer>>();
+		for(Triple<String,Boolean,Integer> t : triple) {
+			if(t.getLeft().equals(name))
+				triplename.add(t);
+		}
+		return triplename;
 	}
 
 }

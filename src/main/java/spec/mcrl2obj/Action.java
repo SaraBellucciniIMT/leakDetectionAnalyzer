@@ -157,23 +157,23 @@ public class Action {
 		else if (id != null) {
 			String s = name;
 			if (parameters != null && parameters.length != 0)
-				return s + "(union({},{" + organizeParameterAsString() + "}))";
+				return s + "(union([],[" + organizeParameterAsString() + "]))";
 			else
-				return s + "({})";
+				return s + "([])";
 		} else if (isParameter) {
 			return organizeParameterAsString() + ": " + parameters[0].getSort().getName();
 		}else if(isTemporary) {
 				String s = name;
-				s = s+"("+ parameters[0].toString() +",{";
+				s = s+"("+ parameters[0].toString() +",[";
 				for(int i=1 ; i<parameters.length; i++) {
 					s = s + parameters[i];
 					if(i!= parameters.length-1)
 						s = s + ",";
 				}
-				return s + "})";
+				return s + "])";
 			}
 		 else if (parameters.length != 0 && !this.name.isEmpty() && this.name.equals("!empty")) {
-			return name + "({" + organizeParameterAsString() + "})";
+			return name + "(" + organizeParameterAsString() + ")";
 		} else if (parameters.length != 0 && !this.name.isEmpty())
 			return name + "(" + organizeParameterAsString() + ")";
 		else

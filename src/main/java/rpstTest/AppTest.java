@@ -37,38 +37,7 @@ public class AppTest extends TestCase {
 		return new TestSuite(AppTest.class);
 	}
 
-	public void testcolseq() {
-		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
-		try {
-			set = BpmnParser.collaborationParser("C:\\Users\\sara\\eclipse-workspace\\rpstTest\\bpmnfile\\colseq.bpmn");
 
-			CollaborativeAlg translationalg = new CollaborativeAlg(set);
-			mCRL2 mcrl2 = translationalg.getSpec();
-			mcrl2.taureduction();
-			mcrl2.toFile("provacolseq");
-			System.out.println("TEST COLSEQ DONE");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-	
-	public void test2ucolseq() {
-		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
-		try {
-			set = BpmnParser.collaborationParser("C:\\Users\\sara\\eclipse-workspace\\rpstTest\\bpmnfile\\2ucolseq.bpmn");
-
-			CollaborativeAlg translationalg = new CollaborativeAlg(set);
-			mCRL2 mcrl2 = translationalg.getSpec();
-			mcrl2.taureduction();
-			mcrl2.toFile("prova2ucolseq");
-			System.out.println("TEST 2UCOLSEQ DONE");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
-	}
 
 	/**
 	 * Rigourous Test :-)

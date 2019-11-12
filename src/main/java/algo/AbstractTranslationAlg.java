@@ -29,20 +29,33 @@ public abstract class AbstractTranslationAlg implements ITranslationAlg {
 
 	protected abstract void analyzeData();
 
-	private Sort sortData = new StructSort("Data");
-	private Sort sortMemory = new Sort("Memory");
-	private Sort sortBool = new Sort("Bool");
+	private static Sort sortData = new StructSort("Data");
+	private static Sort sortMemory = new Sort("Memory");
+	private static Sort sortBool = new Sort("Bool");
+	private static StructSort sortEvalData = new StructSort("EvalData");
+	public static final String empty = "eps";
 	
+//Data = struct data1 |... | datan;
 	protected Sort getSortData() {
-		return this.sortData;
+		return sortData;
 	}
-	protected Sort getSortMemory() {
-		if(sortMemory.getTypes().isEmpty())
-			sortMemory.addType(" Set(Data)");
-		return this.sortMemory;
+	
+	//Memory = List(EvalData);
+	public static Sort getSortMemory() {
+		if(sortMemory.isEmpty())
+			sortMemory.addType(" List(EvalData)");
+		return sortMemory;
 	}
 
-	protected Sort getSortBool() {
-		return this.sortBool;
+	//Predefined mcrl2 sort
+	public static Sort getSortBool() {
+		return sortBool;
+	}
+	
+	//EvalData = struct triple(fst:Data,snd:Bool,trd:Nat)|eps;
+	public static StructSort getSortEvalData() {
+		if(sortEvalData.isEmpty())
+			sortEvalData.addType("triple(fst:Data,snd:Bool,trd:Nat)",empty);
+		return sortEvalData;
 	}
 }

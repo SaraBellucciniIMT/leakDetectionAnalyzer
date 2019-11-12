@@ -3,6 +3,7 @@
  */
 package spec.mcrl2obj;
 
+import algo.AbstractTranslationAlg;
 
 /**
  * @author sara
@@ -32,7 +33,7 @@ public class Buffer extends TaskProcess {
 	
 	@Override
 	public String toString() {
-		String s = getName().toString() + "(" +organizeParameterAsString(initialParameters) + ":Data) = ";
+		String s = getName().toString() + "(" +organizeParameterAsString(initialParameters) + ":"+AbstractTranslationAlg.getSortEvalData().getName()+") = ";
 		s = s+ "("+operand1.toStringinputAction() + getName().toString() + "(" + organizeParameterAsString(givenParameters) +")" +")";
 		s = s+ op.getValue() +"(" + operand2.toString();
 		s = s+"." + getName().toString() + "(" + organizeParameterAsString(initialParameters)+")"+")";

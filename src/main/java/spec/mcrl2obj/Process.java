@@ -171,7 +171,7 @@ public class Process extends AbstractProcess {
 			return toStringIf();
 		
 		if (getName() != null && (op == null || !op.equals(Operator.SUM)) && (action == null || action.isTau()))
-			s = s + getName() + " = ";
+			s = s + getName() + "("+ AbstractProcess.id+":Nat)= ";
 
 		if (op != null && op.equals(Operator.SUM))
 			return s + Operator.SUM.getValue() + " " + action.toString();
@@ -182,7 +182,7 @@ public class Process extends AbstractProcess {
 			for (int i = 0; i < child.size(); i++) {
 				Process p;
 				if ((p = inInsideDef(child.get(i))) == null) {
-					s = s + child.get(i);
+					s = s + child.get(i)+ "(" + AbstractProcess.id +")" ;
 				} else
 					s = s + p.toString();
 				if (i != child.size() - 1)

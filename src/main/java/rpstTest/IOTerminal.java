@@ -63,9 +63,9 @@ public class IOTerminal {
 	public IOTerminal() {
 
 		// If the folder result doesn't exist it generates it
-
 		if (!dir.exists())
 			dir.mkdir();
+		//Clean the current directory from all the file already there
 		for (File file : dir.listFiles()) {
 			if (!file.isDirectory())
 				file.delete();
@@ -74,7 +74,6 @@ public class IOTerminal {
 		System.out.println("Insert file name");
 		scan = new Scanner(System.in);
 		String inputfile = scan.nextLine();
-
 		File f = new File(inputfile);
 		while (!f.exists()) {
 			System.out.println("Incorrect input file, try again:");
@@ -82,39 +81,30 @@ public class IOTerminal {
 			inputfile = scan.nextLine();
 			f = new File(inputfile);
 		}
-
 		String filename;
 		if (f.getName().contains(".bpmn"))
 			filename = f.getName().substring(0, f.getName().lastIndexOf("."));
 		else
 			filename = f.getName();
+		
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
-		try {
-			//long startTime= getCurrentTime();		
+		try {		
 			set = BpmnParser.collaborationParser(inputfile);
 			CollaborativeAlg translationalg = new CollaborativeAlg(set);
-			mCRL2 mcrl2 = translationalg.getSpec();
-			Parout parout = new Parout();
-			mcrl2 = parout.parout(mcrl2);
-			mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
-			//long endTime = getCurrentTime();
-			//System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime)
-			// + " ms");
-			String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
-			runmcrlcommand(lpsgen);
-			// String lpsinfo = "lpsinfo " +mcrl2file + dotlps;
-			// System.out.println(runmcrlcommand(lpsinfo));
 			while (true) {
 				Set<String> datset = new HashSet<>();
 				System.out.println(
-						"Select action:\n" + "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+						"Select action:\n" 
+								+ "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
 								+ "->2 to check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
 								+ "->3 verify if there is a secret sharing violation \n" + "-> 4 exit");
 				scan = new Scanner(System.in);
 				String number = scan.nextLine();
 				String partecipant;
+				mCRL2 mcrl2;
 				switch (Integer.valueOf(number)) {
 				case 1:
+					mcrl2 = generatespecandlps(translationalg, 1, filename);
 					System.out.println(mcrl2.toStringTasks());
 					System.out.println("Choose task: ");
 					scan = new Scanner(System.in);
@@ -133,6 +123,7 @@ public class IOTerminal {
 					callFormula(mcrl2);
 					break;
 				case 2:
+					mcrl2 = generatespecandlps(translationalg, 2, filename);
 					System.out.println(mcrl2.toStringPartecipants());
 					System.out.println("Choose partecipant: ");
 					scan = new Scanner(System.in);
@@ -145,6 +136,7 @@ public class IOTerminal {
 					callFormula(mcrl2);
 					break;
 				case 3:
+					mcrl2 = generatespecandlps(translationalg, 3, filename);
 					this.check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
 							TextInterpreterFormula.violation);
 					if (displayalternativeoutputsssharing(check))
@@ -170,28 +162,36 @@ public class IOTerminal {
 		}
 	}
 
+	private mCRL2 generatespecandlps(CollaborativeAlg col, int id_op, String filename) {
+		long startTime= getCurrentTime();
+		mCRL2 mcrl2 = col.getSpec(id_op);
+		Parout parout = new Parout();
+		mcrl2 = parout.parout(mcrl2);
+		mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
+		long endTime = getCurrentTime();
+		System.out.println("Traduction time: "+computeTimeSpanms(startTime, endTime)+ " ms");
+		String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
+		runmcrlcommand(lpsgen);
+		return mcrl2;
+	}
 	private void callFormula(mCRL2 mcrl2) {
-		//long startTime= getCurrentTime();
-		//System.out.println(java.time.LocalTime.now());
+		long startTime= getCurrentTime();
 		boolean resultbool = lps2pbes2solve2convert();
-		//long endTime = getCurrentTime();
-		//System.out.println("Verification time: "+computeTimeSpans(startTime,endTime)+" s");
 
 		System.out.println(resultbool);
 		try {
 			if (resultbool) {
-				//startTime = getCurrentTime();
 				List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
 				fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
-				//endTime = getCurrentTime();
-				//System.out.println("Verification time: "+computeTimeSpanms(startTime,endTime)+" ms");
 			} else
 				System.out.println("No JSON file generated because there isn't a path to show");
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
+		
+		long endTime = getCurrentTime();
+		System.out.println("Verification time: "+computeTimeSpans(startTime,endTime)+" s");
 	}
 
 	// return true if an unexpected output exist, false otherwise
@@ -246,14 +246,10 @@ public class IOTerminal {
 			BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			String lastline = null;
 			String currentline;
-			// System.out.println("----------------");
 			while (true) {
 				currentline = r.readLine();
-				if (currentline == null) {
-					// System.out.println("----------------");
+				if (currentline == null) 
 					break;
-				}
-				// System.out.println(currentline);
 				lastline = currentline;
 			}
 			return lastline;

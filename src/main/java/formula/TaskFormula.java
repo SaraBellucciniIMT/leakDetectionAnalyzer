@@ -3,6 +3,7 @@ package formula;
 import java.util.HashSet;
 import java.util.Set;
 
+import algo.AbstractTranslationAlg;
 import spec.mcrl2obj.TaskProcess;
 import spec.mcrl2obj.mCRL2;
 
@@ -27,13 +28,13 @@ public class TaskFormula extends TextInterpreterFormula {
 						s = s + ",";
 					i++;
 				}
-				s = s + ":Data.";
+				s = s + ":"+AbstractTranslationAlg.getSortEvalData().getName()+".";
 			}
 
 			//s = s + "(";
 			if (!parameterplu.isEmpty())
 				data.addAll(parameterplu);
-			s = s + task.getAction().getName() + "({";
+			s = s + task.getAction().getName() + "([";
 			int i=0;
 			for(String d : data) {
 				s = s + d;
@@ -41,7 +42,7 @@ public class TaskFormula extends TextInterpreterFormula {
 					s =s + ",";
 				i++;
 			}
-			s = s + "})" + closepossibilityformula;
+			s = s + "])" + closepossibilityformula;
 		}
 		return s;
 	}

@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import algo.AbstractTranslationAlg;
+import algo.IDOperaion;
 import io.pet.PET;
 import spec.ISpec;
 
@@ -28,8 +30,9 @@ public class mCRL2 implements ISpec {
 	private Set<String> initSet;
 	private static int id = 0;
 	private Map<PET, Set<String>> sensibledata;
-
-	public mCRL2() {
+	private int id_op;
+	
+	public mCRL2(int id_op) {
 		this.actions = new HashSet<Action>();
 		this.allow = new HashSet<Action>();
 		this.comm = new HashSet<CommunicationFunction>();
@@ -37,7 +40,7 @@ public class mCRL2 implements ISpec {
 		this.hide = new HashSet<Action>();
 		this.processes = new HashSet<AbstractProcess>();
 		this.initSet = new HashSet<String>();
-
+		this.id_op = id_op;
 	}
 
 	public void addCommunicaitonFunction(CommunicationFunction f) {
@@ -73,10 +76,6 @@ public class mCRL2 implements ISpec {
 			this.sorts.add(sorts[i]);
 	}
 
-	public Set<Action> getAllow() {
-		return allow;
-	}
-
 	public void addAllow(Action... allow) {
 		for (Action a : allow) {
 			boolean t = false;
@@ -89,16 +88,8 @@ public class mCRL2 implements ISpec {
 		}
 	}
 
-	public Set<CommunicationFunction> getComm() {
-		return comm;
-	}
-
 	public void setComm(CommunicationFunction comm) {
 		this.comm.add(comm);
-	}
-
-	public Set<Action> getHide() {
-		return hide;
 	}
 
 	public void addHide(Action... hide) {
@@ -142,10 +133,6 @@ public class mCRL2 implements ISpec {
 		this.processes.addAll(processes);
 	}
 
-	public Set<String> getInitSet() {
-		return initSet;
-	}
-
 	public void addInitSet(String... initSet) {
 		for (String s : initSet)
 			this.initSet.add(s);
@@ -157,7 +144,7 @@ public class mCRL2 implements ISpec {
 
 	@Override
 	public String toString() {
-		String s = "";
+		String s = "sort ";
 		for (Sort sort : sorts) {
 			if (!sort.getName().equalsIgnoreCase("bool"))
 				s = s + sort.toString() + ";\n";
@@ -409,18 +396,52 @@ public class mCRL2 implements ISpec {
 		} catch (Exception e) {
 			// TODO: handle exception
 		}
-
 		return file.getName().replace(".mcrl2", "");
 	}
 
-	public String memoryToString() {
-		
-		String a1 =Action.setTemporaryAction().getName();
-		String a2 = Action.setTemporaryAction().getName();
-		String a3 = Action.setTemporaryAction().getName();
-		String s = "map \r\n" + "union : Memory # Memory -> Memory;\r\n "+"empty : Memory -> Bool;\r\n" + "var\r\n" + a1 + "," + a2 + ": Memory;\r\n"
-				+ "eqn \r\n" + "union(" + a1 + "," + a2 + ") = " + a1 + "+ " + a2 + " ; \n" + "empty(" + a1
-				+ ") = {"+a3+" :Data | ({"+a3+"}*" + a1 + "!={})&&("+a3+"!=" + StructSort.empty + ")} == {};\r\n";
+	//Print in output of all the function in map, var and eqn, remember to modify 1 with the real thresold value
+	private String memoryToString() {
+		String m1 = Action.setTemporaryAction().getName();
+		String m2 = Action.setTemporaryAction().getName();
+		String list = Action.setTemporaryAction().getName();
+		String d = Action.setTemporaryAction().getName();
+		String b = Action.setTemporaryAction().getName();
+		String n = Action.setTemporaryAction().getName();
+		String id = Action.setTemporaryAction().getName();
+		String e = Action.setTemporaryAction().getName();
+		String s = "map \r\n" + 
+				"union : Memory # Memory -> Memory;\r\n "+
+				"empty : EvalData -> Bool;\r\n" ;
+		if(id_op == IDOperaion.SSSHARING.getVal()) {
+			s = s+	"sssharingviolation : Nat # Memory -> Bool;"+
+				"sssprivatelist : Nat # Memory # Memory -> Memory;\r\n";}
+		s = s+"var\r\n" + 
+				m1 + "," + m2 + "," + list +": Memory;\r\n" +
+				d + ": Data; \r\n" +
+				b + ": Bool; \r\n" ;
+		if(id_op == IDOperaion.SSSHARING.getVal())
+			s = s + n +"," + id + ": Nat;\r\n";
+		else
+			s = s+ n + ":Nat;\r\n";
+		s = s +
+				e + ": EvalData;\r\n" +
+				"eqn \r\n" + 
+				"fst(triple("+d+","+b+","+n+"))=" + d +";\r\n"+
+				"snd(triple("+d+","+b+","+n+"))=" + b + ";\r\n"+
+				"trd(triple("+d+","+b+","+n+"))=" + n + ";\r\n"+
+				"(head(" + m2 + ") in " + m1+ ") -> union(" + m1 + "," + m2 +") = union("+m1+",tail("+m2+"));\r\n"+
+				"(!(head(" + m2 + ") in " + m1 + ")) -> union("+m1+","+m2+") = union("+m1+"<|head("+m2+"),tail("+m2+"));\r\n"+
+				"("+ m2 +"==[]) -> union(" + m1+","+m2+") = " + m1 +"; \r\n"+
+				"(" + e + "== " +AbstractTranslationAlg.empty +") -> empty("+e +") = true;\r\n"+
+				"(" +e+"!=" + AbstractTranslationAlg.empty + ") -> empty(" +e+") = false; \r\n";
+		if(id_op == IDOperaion.SSSHARING.getVal())
+			s = s +
+				"sssprivatelist("+id+","+m1+",[])>=1) -> sssharingviolation("+id+","+m1 +")= true;\r\n" +
+				"sssprivatelist("+id+","+m1+",[])<1) -> sssharingviolation("+id+","+m1+")= false;\r\n"+
+				"(trd(head("+ m1 + ")) != " + id + ") -> sssprivatelist("+id +","+m1+","+list+")=sssprivatelist("+ id+",tail("+ m1+"),"+ list +"<|head("+ m1 + "));\r\n"+
+				"trd(head("+m1+")) == "+id+") -> sssprivatelist("+id+","+m1+","+list+")=sssprivatelist("+id+",tail("+m1+"),"+list+");\r\n"+
+				"("+m1+"==[]) -> sssprivatelist("+id+","+m1+","+list+") = " +list +";\r\n";
+				
 		return s;
 	}
 

@@ -23,7 +23,7 @@ public class SingleAlg extends AbstractTranslationAlg{
 	
 	
 	@Override
-	public ISpec getSpec() {
+	public ISpec getSpec(int id_op) {
 		this.tmcrl = analyzeControlFlow(bpmn);
 		analyzeData();
 		return null;

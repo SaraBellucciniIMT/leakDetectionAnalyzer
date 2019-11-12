@@ -199,14 +199,6 @@ public abstract class TextInterpreterFormula {
 		return formula;
 	}
 
-	protected static TaskProcess identifyTaskFormula(mCRL2 mcrl, String name) {
-		for (AbstractProcess ab : mcrl.getProcesses()) {
-			if (ab.getClass().equals(TaskProcess.class) && ((TaskProcess) ab).getAction().getName().equals(name))
-				return (TaskProcess) ab;
-		}
-		return null;
-	}
-
 	public static TaskProcess identifyIdTaskFormula(mCRL2 mcrl, String idtask) {
 		for (AbstractProcess ab : mcrl.getProcesses()) {
 			if (ab.getClass().equals(TaskProcess.class) && ((TaskProcess) ab).getAction() != null
