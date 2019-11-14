@@ -78,7 +78,8 @@ public abstract class TextInterpreterFormula {
 	};
 
 	protected static String sssharingChecking(mCRL2 mcrl2) {
-		Map<PET, Set<String>> map = mcrl2.getSensibleData();
+		
+	Map<PET, Set<String>> map = mcrl2.getSensibleData();
 		if (map.isEmpty() || (!isPET(PETLabel.SSCOMPUTATION, map) && !isPET(PETLabel.SSRECONTRUCTION, map)
 				&& !isPET(PETLabel.SSSHARING, map))) {
 			System.out.println("No SSsharing PET over this model");

@@ -3,12 +3,10 @@
  */
 package io;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.jbpt.pm.DataNode;
 
 import io.pet.PET;
+import io.pet.PETLabel;
 
 /**
  * @author sara
@@ -16,22 +14,31 @@ import io.pet.PET;
  */
 public class PETExtendedNode extends DataNode{
 
-	private List<PET> pet;
+	private PET pet;
 	
 	public PETExtendedNode() {
-		this.pet = new ArrayList<PET>();
+		this.pet = null;
 	}
 	
-	public List<PET> getPET() {
-		return this.pet;
+	public PET getPET() {
+		if(hasPET())
+		 return this.pet;
+		else
+			return null;
 	}
-	
+
+	public PETLabel getPetName() {
+		if(hasPET())
+			return this.pet.getPET();
+		else 
+			return null;
+	}
 	public void setPET(PET pet) {
-		this.pet.add(pet);
+		this.pet = pet;
 	}
 	
 	public boolean hasPET() {
-		if(pet.isEmpty())
+		if(pet == null)
 			return false;
 		return true;
 	}

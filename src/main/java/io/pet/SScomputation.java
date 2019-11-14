@@ -16,6 +16,7 @@ public class SScomputation extends PET{
 
 	private Map<String,List<String>> map = new HashMap<String,List<String>>();
 	
+	
 	public SScomputation(Map<String,List<String>> map) {
 		// TODO Auto-generated constructor stub
 		this.petname = PETLabel.SSCOMPUTATION;
@@ -35,7 +36,6 @@ public class SScomputation extends PET{
 		// TODO Auto-generated method stub
 		return this.petname;
 	}
-	
 	
 	public void changeMyName(String myname,String myid) {
 		for(Entry<String,List<String>> entry : map.entrySet()) {

@@ -35,6 +35,8 @@ public class mCRL2 implements ISpec {
 	public mCRL2(int id_op) {
 		this.actions = new HashSet<Action>();
 		this.allow = new HashSet<Action>();
+		if(id_op == IDOperaion.SSSHARING.getVal())
+			this.allow.add(Action.setVIOLATOINAction());
 		this.comm = new HashSet<CommunicationFunction>();
 		this.sorts = new HashSet<Sort>();
 		this.hide = new HashSet<Action>();
@@ -151,6 +153,8 @@ public class mCRL2 implements ISpec {
 		}
 		s = s + memoryToString();
 		s = s + "act" + "\n";
+		if(id_op == IDOperaion.SSSHARING.getVal())
+			s = s+ "VIOLATION;\n";
 		Map<String, Set<String>> classact = classifyaction();
 		for (Entry<String, Set<String>> entry : classact.entrySet()) {
 			int i = 0;
@@ -413,7 +417,7 @@ public class mCRL2 implements ISpec {
 				"union : Memory # Memory -> Memory;\r\n "+
 				"empty : EvalData -> Bool;\r\n" ;
 		if(id_op == IDOperaion.SSSHARING.getVal()) {
-			s = s+	"sssharingviolation : Nat # Memory -> Bool;"+
+			s = s+"sssharingviolation : Nat # Memory # Nat-> Bool;\r\n"+
 				"sssprivatelist : Nat # Memory # Memory -> Memory;\r\n";}
 		s = s+"var\r\n" + 
 				m1 + "," + m2 + "," + list +": Memory;\r\n" +
@@ -436,10 +440,10 @@ public class mCRL2 implements ISpec {
 				"(" +e+"!=" + AbstractTranslationAlg.empty + ") -> empty(" +e+") = false; \r\n";
 		if(id_op == IDOperaion.SSSHARING.getVal())
 			s = s +
-				"sssprivatelist("+id+","+m1+",[])>=1) -> sssharingviolation("+id+","+m1 +")= true;\r\n" +
-				"sssprivatelist("+id+","+m1+",[])<1) -> sssharingviolation("+id+","+m1+")= false;\r\n"+
-				"(trd(head("+ m1 + ")) != " + id + ") -> sssprivatelist("+id +","+m1+","+list+")=sssprivatelist("+ id+",tail("+ m1+"),"+ list +"<|head("+ m1 + "));\r\n"+
-				"trd(head("+m1+")) == "+id+") -> sssprivatelist("+id+","+m1+","+list+")=sssprivatelist("+id+",tail("+m1+"),"+list+");\r\n"+
+				"(#sssprivatelist("+id+","+m1+",[])>="+n+") -> sssharingviolation("+id+","+m1 +","+n+")= true;\r\n" +
+				"(#sssprivatelist("+id+","+m1+",[])<"+n+") -> sssharingviolation("+id+","+m1+","+n+")= false;\r\n"+
+				"(trd(head("+ m1 + ")) == " + id + ") -> sssprivatelist("+id +","+m1+","+list+")=sssprivatelist("+ id+",tail("+ m1+"),"+ list +"<|head("+ m1 + "));\r\n"+
+				"(trd(head("+m1+")) != "+id+") -> sssprivatelist("+id+","+m1+","+list+")=sssprivatelist("+id+",tail("+m1+"),"+list+");\r\n"+
 				"("+m1+"==[]) -> sssprivatelist("+id+","+m1+","+list+") = " +list +";\r\n";
 				
 		return s;

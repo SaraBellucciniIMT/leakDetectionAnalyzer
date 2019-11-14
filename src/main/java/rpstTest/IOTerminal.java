@@ -16,9 +16,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.TimeUnit;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -32,6 +32,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import algo.CollaborativeAlg;
+import algo.IDOperaion;
 import formula.PartecipantFormula;
 import formula.TaskFormula;
 import formula.TextInterpreterFormula;
@@ -55,6 +56,7 @@ public class IOTerminal {
 	private final static String dotlps = ".lps";
 	private final static String dotlts = ".lts";
 	private final static String json = "json.json";
+	private final static String dottrc = ".trc";
 	private File dir = new File("result_FSAT");
 	private URI dirname;
 	private String mcrl2file;
@@ -137,11 +139,12 @@ public class IOTerminal {
 					break;
 				case 3:
 					mcrl2 = generatespecandlps(translationalg, 3, filename);
-					this.check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
+					/*this.check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), "", datset,
 							TextInterpreterFormula.violation);
 					if (displayalternativeoutputsssharing(check))
 						continueOrExit();
-					callFormula(mcrl2);
+					callFormula(mcrl2);*/
+					lps2lts();
 					break;
 				case 4:
 					deleteTemporaryFile(mcrl2file + dotmcrl2, mcrl2file + dotlps, mcrl2file + ".pbes",
@@ -177,7 +180,6 @@ public class IOTerminal {
 	private void callFormula(mCRL2 mcrl2) {
 		long startTime= getCurrentTime();
 		boolean resultbool = lps2pbes2solve2convert();
-
 		System.out.println(resultbool);
 		try {
 			if (resultbool) {
@@ -186,10 +188,8 @@ public class IOTerminal {
 			} else
 				System.out.println("No JSON file generated because there isn't a path to show");
 		} catch (JSONException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
 		long endTime = getCurrentTime();
 		System.out.println("Verification time: "+computeTimeSpans(startTime,endTime)+" s");
 	}
@@ -205,15 +205,57 @@ public class IOTerminal {
 		return true;
 	}
 	
-	private boolean displayalternativeoutputsssharing(String s) {
+	/*private boolean displayalternativeoutputsssharing(String s) {
 			if (s == null)
-				System.out.println("never violated");
+				System.out.println("NEVER VIOLATED");
 			else
 				return false;
 			return true;
 		
-	}
+	}*/
 
+	private void lps2lts() {
+		String lps2lts = "lps2lts -aVIOLATION -t1 " +mcrl2file+dotlps;
+		runmcrlcommand(lps2lts);
+		String path="";
+		File dir = new File(dirname);
+	    String[] children = dir.list();
+	    if (children != null) {
+	        for (int i = 0; i < children.length; i++) {
+	            // Get filename of file or directory
+	            String filename = children[i];
+	            File file = new File(dirname + File.separator + filename);
+	            if (!file.isDirectory() && file.getName().endsWith(dottrc)) {
+	                String tracepp = "tracepp "+filename + " " + filename.replace(dottrc, dotmcrl2);
+	                runmcrlcommand(tracepp);
+	                FileReader fileReader;
+					try {
+						fileReader = new FileReader(dirname.getPath() + filename.replace(dottrc, dotmcrl2));
+						BufferedReader br = new BufferedReader(fileReader);
+		    			String line;
+		    			while ((line = br.readLine()) != null) {
+		    				if(!line.equals("tau")) {
+		    					if(path.isEmpty())
+		    						path = line;
+		    					else
+		    						path = path + ","+ line;
+		    				}
+		    			}
+		    			br.close();
+					} catch (IOException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}			
+	                break;
+	            } 
+	        }
+	    }
+	    if(path.isEmpty())
+	    	System.out.println(IDOperaion.SSSHARING +" IS PRESERVED");
+	    else
+	    	System.out.println(path);
+	    
+	}
 	private boolean lps2pbes2solve2convert() {
 		String lps2lts = "lps2lts " + mcrl2file + dotlps + " " + mcrl2file + dotlts;
 		runmcrlcommand(lps2lts);

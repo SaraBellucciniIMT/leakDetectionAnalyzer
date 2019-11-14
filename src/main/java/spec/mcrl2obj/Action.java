@@ -19,6 +19,7 @@ public class Action {
 	// e1...en :Data
 	private boolean isParameter = false;
 	private static final String tau = "tau";
+	private static final String violation = "VIOLATION";
 	private static final String input = "i";
 	private static final String output = "o";
 	private static final String sendread = "sendread";
@@ -79,6 +80,10 @@ public class Action {
 	public static Action setMemoryAction(Sort sort) {
 		DataParameter par = new DataParameter(sort);
 		return new Action(memory + (index++), par);
+	}
+	
+	public static Action setVIOLATOINAction() {
+		return new Action(violation);
 	}
 
 	public static Action setSendReadAction(DataParameter... dataParameters) {

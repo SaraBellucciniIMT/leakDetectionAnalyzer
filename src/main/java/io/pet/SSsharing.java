@@ -5,17 +5,17 @@ package io.pet;
 
 /**
  * @author sara
- *
+ * it can be 
  */
+
 public class SSsharing extends PET{
 
 	private int treshold;
-	private int computation;
 	
-	public SSsharing(int treshold,int computation) {
+	public SSsharing(int treshold) {
 		this.petname = PETLabel.SSSHARING;
 		this.treshold = treshold;
-		this.computation = computation;
+		//this.computation = computation;
 				
 	}
 	@Override
@@ -25,10 +25,6 @@ public class SSsharing extends PET{
 	
 	public int getTreshold() {
 		return this.treshold;
-	}
-	
-	public int getComputation() {
-		return this.computation;
 	}
 
 }

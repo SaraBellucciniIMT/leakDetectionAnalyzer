@@ -8,6 +8,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Triple;
 
+import io.pet.PET;
+
 /**
  * @author sara
  *
@@ -16,7 +18,7 @@ public class StructSort extends Sort {
 
 	//public static final String empty = "eps";
 	
-	private Set<Triple<String,Boolean,Integer>> triple = new HashSet<Triple<String,Boolean,Integer>>();
+	private Set<Triple<String,PET,Integer>> triple = new HashSet<Triple<String,PET,Integer>>();
 	
 	public StructSort(String name) {
 		super(name);
@@ -39,17 +41,25 @@ public class StructSort extends Sort {
 		return s;
 	}
 	
-	public void addTriple(Triple<String, Boolean,Integer> t) {
+	public void addTriple(Triple<String, PET,Integer> t) {
 		this.triple.add(t);
 	}
 	
-	public Set<Triple<String,Boolean,Integer>> getTripleByName(String name) {
+	public Set<Triple<String,PET,Integer>> getPrivateTriple(){
+		Set<Triple<String,PET,Integer>> privatetriple = new HashSet<Triple<String,PET,Integer>>();
+		for(Triple<String,PET,Integer> t : triple) {
+			if(!t.getMiddle().isempty())
+				privatetriple.add(t);
+		}
+		return privatetriple;
+	}
+	/*public Set<Triple<String,Boolean,Integer>> getTripleByName(String name) {
 		Set<Triple<String,Boolean,Integer>> triplename = new HashSet<Triple<String,Boolean,Integer>>();
 		for(Triple<String,Boolean,Integer> t : triple) {
 			if(t.getLeft().equals(name))
 				triplename.add(t);
 		}
 		return triplename;
-	}
+	}*/
 
 }
