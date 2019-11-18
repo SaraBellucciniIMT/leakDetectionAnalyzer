@@ -17,7 +17,7 @@ public class TaskProcess extends AbstractProcess {
 	private ExtendedNode extendednode;
 	// Because of sum e1...en : Data;
 	private Set<Process> inputAction;
-	private Set<Process> insidedef;
+	//private Set<Process> insidedef;
 	private Set<Action> outputAction;
 	private Action action;
 
@@ -57,14 +57,6 @@ public class TaskProcess extends AbstractProcess {
 			this.action.addDataParameter(d);
 	}
 
-	public Set<Process> getInputAction() {
-		return this.inputAction;
-	}
-
-	public Set<Action> getOutputAction() {
-		return this.outputAction;
-	}
-
 	public void addInputAction(Process i, Process... in1) {
 		this.inputAction.add(i);
 		if (in1.length != 0) {
@@ -76,18 +68,6 @@ public class TaskProcess extends AbstractProcess {
 
 	public void addOutputAction(Action o) {
 		this.outputAction.add(o);
-	}
-
-	public Object getTag() {
-		return this.extendednode.getTag();
-	}
-
-	private Process getInsideDef(String name) {
-		for (Process p : insidedef) {
-			if (p.getName().equals(name))
-				return p;
-		}
-		return null;
 	}
 
 	public String toStringinputAction() {

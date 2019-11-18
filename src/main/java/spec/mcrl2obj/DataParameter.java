@@ -12,8 +12,6 @@ package spec.mcrl2obj;
 public class DataParameter {
 
 	private static int index =0;
-	//private String name;
-	//private Triple<String,Boolean,Integer> data ;
 	private String data="";
 	private boolean isprivate=false;
 	private String id = "";

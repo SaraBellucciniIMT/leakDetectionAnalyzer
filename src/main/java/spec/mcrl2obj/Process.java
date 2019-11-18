@@ -13,7 +13,7 @@ public class Process extends AbstractProcess {
 	protected Operator op;
 	protected List<String> child = new ArrayList<String>();
 	// Definitio of processes s.t: P = t0 .
-	private Set<Process> insidedef;
+	
 
 	// private Process[] processes;
 	protected Process() {}
@@ -67,13 +67,6 @@ public class Process extends AbstractProcess {
 		return action;
 	}
 
-	public boolean isProcess() {
-		if (this.action == null)
-			return true;
-		else
-			return false;
-	}
-
 	public Operator getOperator() {
 		return this.op;
 	}
@@ -109,20 +102,10 @@ public class Process extends AbstractProcess {
 		return this.child.get(i);
 	}
 
-	protected List<String> childs(){
-		return this.child;
-	}
 	public Set<Process> getAllInsideDef() {
 		return this.insidedef;
 	}
 
-	public Process getInsideDef(String name) {
-		for (Process p : this.insidedef) {
-			if (p.getName().equals(name))
-				return p;
-		}
-		return null;
-	}
 
 	public int getLength() {
 		if (!child.isEmpty())
@@ -133,17 +116,8 @@ public class Process extends AbstractProcess {
 			return -1;
 	}
 
-	public Process inInsideDef(String name) {
-		for (Process p : insidedef) {
-			if (p.getName().equals(name))
-				return p;
-		}
-		return null;
-	}
-
 	private String toStringIf() {
 		String s = "";
-
 		for (int i = 0; i < this.getLength(); i++) {
 			if (i == 1)
 				s = s + "->";
@@ -157,7 +131,6 @@ public class Process extends AbstractProcess {
 				}
 				continue;
 			}
-				
 			s = s + this.getInsideDef(getChildName(i)).toString();
 		}
 
@@ -181,7 +154,7 @@ public class Process extends AbstractProcess {
 				s = s + "(";
 			for (int i = 0; i < child.size(); i++) {
 				Process p;
-				if ((p = inInsideDef(child.get(i))) == null) {
+				if ((p = getInsideDef(child.get(i))) == null) {
 					s = s + child.get(i)+ "(" + AbstractProcess.id +")" ;
 				} else
 					s = s + p.toString();

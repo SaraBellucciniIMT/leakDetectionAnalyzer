@@ -5,8 +5,6 @@ import org.jbpt.algo.tree.tctree.TCType;
 import org.jbpt.pm.ControlFlow;
 import org.jbpt.pm.FlowNode;
 
-import io.pet.PETLabel;
-
 public class ExtendedNode {
 
 	private FlowNode singleNode;
@@ -62,16 +60,10 @@ public class ExtendedNode {
 			return this.singleNode.getName();
 	}
 
-	public PETLabel getPet() {
-		if(this.singleNode != null && this.singleNode.getDescription()!= null) {
-			String petstring = this.singleNode.getDescription();
-			if(petstring.equals(PETLabel.SSCOMPUTATION.toString()))
-				return PETLabel.SSCOMPUTATION;
-			else if(petstring.equals(PETLabel.SSRECONTRUCTION.toString()))
-				return PETLabel.SSRECONTRUCTION;
-			else if(petstring.equals(PETLabel.SSSHARING.toString()))
-				return PETLabel.SSSHARING;
-		}
+	public String getPet() {
+		if(this.singleNode != null && this.singleNode.getDescription()!= null)
+			return this.singleNode.getDescription();
+		
 		return null;
 	}
 	

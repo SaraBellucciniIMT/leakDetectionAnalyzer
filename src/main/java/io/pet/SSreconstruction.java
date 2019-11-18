@@ -4,13 +4,14 @@ public class SSreconstruction extends PET {
 
 	public SSreconstruction() {
 		this.petname = PETLabel.SSRECONTRUCTION;
+		setID_protection();
 	}
-
-	@Override
-	public PETLabel getPET() {
-		// TODO Auto-generated method stub
-		return this.petname;
+	
+	public void setTreshold(int i) {
+		if(this.treshold ==-1 || this.treshold>i)
+		this.treshold = i;
 	}
+	
 
 	
 }

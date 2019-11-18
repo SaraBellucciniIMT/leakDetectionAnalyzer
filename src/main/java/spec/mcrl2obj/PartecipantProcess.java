@@ -3,6 +3,8 @@
  */
 package spec.mcrl2obj;
 
+import rpstTest.Utils;
+
 /**
  * @author sara 
  * Every partecipant has: 1-name 2-personal memory 3-dimension of
@@ -23,7 +25,7 @@ public class PartecipantProcess extends Process {
 	public PartecipantProcess(Process p, String namepartecipant) {
 		this.p = p;
 		this.namepartecipant = namepartecipant;
-		this.id_party = setIdParty();
+		this.id_party = Utils.getId();
 		// TODO Auto-generated constructor stub
 	}
 
@@ -50,10 +52,6 @@ public class PartecipantProcess extends Process {
 	}
 	public void setMemory(Process memory) {
 		this.memory = memory;
-	}
-
-	public Process getMemory() {
-		return this.memory;
 	}
 
 	public String getActionToMemory() {

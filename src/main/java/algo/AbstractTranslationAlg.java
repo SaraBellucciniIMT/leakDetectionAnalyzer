@@ -24,38 +24,44 @@ import spec.mcrl2obj.StructSort;
 public abstract class AbstractTranslationAlg implements ITranslationAlg {
 
 	protected Tmcrl analyzeControlFlow(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn) {
-		return new Tmcrl(new ExploitedRPST(new RPST<ControlFlow<FlowNode>, FlowNode>(bpmn)), bpmn.getName(), bpmn.getId());
+		return new Tmcrl(new ExploitedRPST(new RPST<ControlFlow<FlowNode>, FlowNode>(bpmn)), bpmn.getName(),
+				bpmn.getId());
 	}
 
 	protected abstract void analyzeData();
 
+	public static int id_op;
 	private static Sort sortData = new StructSort("Data");
 	private static Sort sortMemory = new Sort("Memory");
 	private static Sort sortBool = new Sort("Bool");
 	private static StructSort sortEvalData = new StructSort("EvalData");
 	public static final String empty = "eps";
-	
-//Data = struct data1 |... | datan;
-	protected Sort getSortData() {
+
+	// Data = struct data1 |... | datan;
+	public static Sort getSortData() {
 		return sortData;
 	}
-	
-	//Memory = List(EvalData);
+
+	// Memory = List(EvalData);
 	public static Sort getSortMemory() {
-		if(sortMemory.isEmpty())
-			sortMemory.addType(" List(EvalData)");
+		if (sortMemory.isEmpty()) {
+			if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal())
+				sortMemory.addType(" Set(EvalData)");
+			else if (id_op == IDOperaion.SSSHARING.getVal())
+				sortMemory.addType(" List(EvalData)");
+		}
 		return sortMemory;
 	}
 
-	//Predefined mcrl2 sort
+	// Predefined mcrl2 sort
 	public static Sort getSortBool() {
 		return sortBool;
 	}
-	
-	//EvalData = struct triple(fst:Data,snd:Bool,trd:Nat)|eps;
+
+	// EvalData = struct triple(fst:Data,snd:Bool,trd:Nat)|eps;
 	public static StructSort getSortEvalData() {
-		if(sortEvalData.isEmpty())
-			sortEvalData.addType("triple(fst:Data,snd:Bool,trd:Nat)",empty);
+		if (sortEvalData.isEmpty())
+			sortEvalData.addType("triple(fst:Data,snd:Bool,trd:Nat)", empty);
 		return sortEvalData;
 	}
 }

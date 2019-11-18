@@ -4,6 +4,7 @@
 package spec.mcrl2obj;
 
 import algo.AbstractTranslationAlg;
+import rpstTest.Utils;
 
 /**
  * @author sara
@@ -33,27 +34,16 @@ public class Buffer extends TaskProcess {
 	
 	@Override
 	public String toString() {
-		String s = getName().toString() + "(" +organizeParameterAsString(initialParameters) + ":"+AbstractTranslationAlg.getSortEvalData().getName()+") = ";
-		s = s+ "("+operand1.toStringinputAction() + getName().toString() + "(" + organizeParameterAsString(givenParameters) +")" +")";
+		String s = getName().toString() + "(" + Utils.organizeParameterAsString(initialParameters) + ":"+AbstractTranslationAlg.getSortEvalData().getName()+") = ";
+		s = s+ "("+operand1.toStringinputAction() + getName().toString() + "(" + Utils.organizeParameterAsString(givenParameters) +")" +")";
 		s = s+ op.getValue() +"(" + operand2.toString();
-		s = s+"." + getName().toString() + "(" + organizeParameterAsString(initialParameters)+")"+")";
+		s = s+"." + getName().toString() + "(" + Utils.organizeParameterAsString(initialParameters)+")"+")";
 		return s;
 	}
 	
 	public DataParameter[] getInitialParameters() {
 		return this.initialParameters;
 	}
-	
-	private String organizeParameterAsString(DataParameter[] d) {
-		String s = "";
-		for (int i = 0; i < d.length; i++) {
-			s = s + d[i];
-			if (i != d.length - 1)
-				s = s + ",";
-		}
-		return s;
-	}
-	
 	
 
 }

@@ -50,7 +50,7 @@ public class Parout {
 		if (p.getAction() != null)
 			return null;
 		for (int i = 0; i < p.getLength(); i++) {
-			if (p.inInsideDef(p.getChildName(i)) != null)
+			if (p.getInsideDef(p.getChildName(i)) != null)
 				continue;
 			AbstractProcess child = mcrl2.identifyAbstractProcess(p.getChildName(i));
 

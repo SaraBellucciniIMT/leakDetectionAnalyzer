@@ -22,6 +22,11 @@ public class Sort {
 		return this.types;
 	}
 
+	public boolean containtType(String t) {
+		if(types.contains(t))
+			return true;
+		return false;
+	}
 	public String getName() {
 		return this.name;
 	}

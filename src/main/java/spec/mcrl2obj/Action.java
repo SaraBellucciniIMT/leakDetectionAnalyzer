@@ -2,7 +2,10 @@ package spec.mcrl2obj;
 
 import org.apache.commons.lang3.ArrayUtils;
 
-import io.pet.PETLabel;
+import algo.AbstractTranslationAlg;
+import algo.IDOperaion;
+import io.pet.PET;
+import rpstTest.Utils;
 
 public class Action {
 
@@ -27,7 +30,7 @@ public class Action {
 	private boolean isTemporary = false;
 	private static final String memory = "memory";
 	private boolean istau = false;
-	private PETLabel pet;
+	private String pet="";
 
 	public Action(String name, DataParameter... dataParameters) {
 		this.name = name;
@@ -45,11 +48,17 @@ public class Action {
 		this.id = id;
 	}
 
-	public void setPet(PETLabel pet) {
+	public void setPet(String pet) {
 		this.pet = pet;
 	}
 
-	public PETLabel getPet() {
+	public boolean equalPet(PET p) {
+		String[] split = this.pet.split("-");
+		if(p.getPET().name().equals(split[0]) && p.getID_protection() == Integer.valueOf(split[1]))
+			return true;
+		return false;
+	}
+	public String getPet() {
 		return this.pet;
 	}
 
@@ -148,55 +157,56 @@ public class Action {
 			System.err.println("You cannot add parameters to a TAU action");
 	}
 
-	public boolean isParametrized() {
-		if (this.parameters.length == 0)
-			return false;
-		else
-			return true;
-	}
-
 	@Override
 	public String toString() {
+		String rp = setRightParenthesis();
+		String lp = setLeftParenthesis();
 		if (istau)
 			return tau;
 		else if (id != null) {
 			String s = name;
 			if (parameters != null && parameters.length != 0)
-				return s + "(union([],[" + organizeParameterAsString() + "]))";
+				return s + "(union("+lp+rp+","+lp+  Utils.organizeParameterAsString(parameters) + rp+"))";
 			else
-				return s + "([])";
+				return s + "("+lp+rp+")";
 		} else if (isParameter) {
-			return organizeParameterAsString() + ": " + parameters[0].getSort().getName();
+			return Utils.organizeParameterAsString(parameters) + ": " + parameters[0].getSort().getName();
 		}else if(isTemporary) {
 				String s = name;
-				s = s+"("+ parameters[0].toString() +",[";
+				s = s+"("+ parameters[0].toString() +","+lp;
 				for(int i=1 ; i<parameters.length; i++) {
 					s = s + parameters[i];
 					if(i!= parameters.length-1)
 						s = s + ",";
 				}
-				return s + "])";
+				return s + rp +")";
 			}
 		 else if (parameters.length != 0 && !this.name.isEmpty() && this.name.equals("!empty")) {
-			return name + "(" + organizeParameterAsString() + ")";
+			return name + "(" + Utils.organizeParameterAsString(parameters) + ")";
 		} else if (parameters.length != 0 && !this.name.isEmpty())
-			return name + "(" + organizeParameterAsString() + ")";
+			return name + "(" + Utils.organizeParameterAsString(parameters) + ")";
 		else
 			return name;
 	}
 
-	public boolean isTau() {
-		return istau;
+	public static String setRightParenthesis() {
+		if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
+			return "}";
+		else if(AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal())
+			return "]";
+		return null;
+	}
+	
+	public static String setLeftParenthesis() {
+		if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
+			return "{";
+		else if(AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal())
+			return "[";
+		return null;
 	}
 
-	private String organizeParameterAsString() {
-		String s = "";
-		for (int i = 0; i < parameters.length; i++) {
-			s = s + parameters[i];
-			if (i != parameters.length - 1)
-				s = s + ",";
-		}
-		return s;
+	public boolean isTau() {
+		return istau;
 	}
 
 	public boolean containsParameter(DataParameter d) {
@@ -206,15 +216,6 @@ public class Action {
 		}
 		return false;
 	}
-
-	public boolean containsParameterName(String parameter) {
-		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i].toString().equals(parameter))
-				return true;
-		}
-		return false;
-	}
-
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

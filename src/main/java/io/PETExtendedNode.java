@@ -4,9 +4,7 @@
 package io;
 
 import org.jbpt.pm.DataNode;
-
 import io.pet.PET;
-import io.pet.PETLabel;
 
 /**
  * @author sara
@@ -26,13 +24,7 @@ public class PETExtendedNode extends DataNode{
 		else
 			return null;
 	}
-
-	public PETLabel getPetName() {
-		if(hasPET())
-			return this.pet.getPET();
-		else 
-			return null;
-	}
+	
 	public void setPET(PET pet) {
 		this.pet = pet;
 	}

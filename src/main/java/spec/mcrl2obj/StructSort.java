@@ -16,8 +16,6 @@ import io.pet.PET;
  */
 public class StructSort extends Sort {
 
-	//public static final String empty = "eps";
-	
 	private Set<Triple<String,PET,Integer>> triple = new HashSet<Triple<String,PET,Integer>>();
 	
 	public StructSort(String name) {
@@ -48,18 +46,18 @@ public class StructSort extends Sort {
 	public Set<Triple<String,PET,Integer>> getPrivateTriple(){
 		Set<Triple<String,PET,Integer>> privatetriple = new HashSet<Triple<String,PET,Integer>>();
 		for(Triple<String,PET,Integer> t : triple) {
-			if(!t.getMiddle().isempty())
+			if(t.getMiddle() != null)
 				privatetriple.add(t);
 		}
 		return privatetriple;
 	}
-	/*public Set<Triple<String,Boolean,Integer>> getTripleByName(String name) {
-		Set<Triple<String,Boolean,Integer>> triplename = new HashSet<Triple<String,Boolean,Integer>>();
-		for(Triple<String,Boolean,Integer> t : triple) {
+	
+	public Triple<String,PET,Integer> getTripleByName(String name) {
+		for(Triple<String, PET, Integer> t : triple) {
 			if(t.getLeft().equals(name))
-				triplename.add(t);
+				return t;
 		}
-		return triplename;
-	}*/
+		return null;
+	}
 
 }

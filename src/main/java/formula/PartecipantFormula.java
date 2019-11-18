@@ -3,6 +3,10 @@ package formula;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.commons.lang3.tuple.Triple;
+
+import algo.AbstractTranslationAlg;
+import io.pet.PET;
 import spec.mcrl2obj.PartecipantProcess;
 import spec.mcrl2obj.mCRL2;
 
@@ -21,7 +25,7 @@ public class PartecipantFormula extends TextInterpreterFormula {
 		}
 		String s = "";
 		if (analyzedata.size() > partecipant.getDimensionMemory()) {
-			return "-1";
+			return null;
 		}else {
 			s = openpossibilityformula;
 			Set<String> parameterplu = new HashSet<String>();
@@ -35,18 +39,26 @@ public class PartecipantFormula extends TextInterpreterFormula {
 						s = s + ",";
 					i++;
 				}
-				s = s + ":Data.";
+				s = s + ":"+AbstractTranslationAlg.getSortEvalData().getName()+".";
 			}
-			if (!parameterplu.isEmpty())
-				analyzedata.addAll(parameterplu);
+			
 			s = s + partecipant.getActionMemory().getName() + "({";
+			if (!parameterplu.isEmpty()) {
+				for(String par : parameterplu)
+					s = s + par +",";
+			}
 			int i=0;
 			for(String d : analyzedata) {
-				s = s + d;
-				if(i != analyzedata.size()-1)
+				Triple<String,PET,Integer> triple =AbstractTranslationAlg.getSortEvalData().getTripleByName(d);
+				if(triple.getMiddle() == null)
+					s = s + "triple("+ triple.getLeft() + "," + false +"," + triple.getRight()+")";
+				else
+					s = s + "triple("+ triple.getLeft() + "," + true +"," + triple.getRight()+")";
+				if(i != data.size()-1)
 					s =s + ",";
 				i++;
 			}
+
 			s = s + "})" + closepossibilityformula;
 		
 		}

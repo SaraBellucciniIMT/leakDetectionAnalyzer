@@ -17,12 +17,10 @@ import org.jbpt.pm.IFlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.jbpt.pm.bpmn.Task;
-
 import algo.interpreter.Tmcrl;
 import io.PETExtendedNode;
 import io.pet.PET;
 import io.pet.PETLabel;
-import io.pet.SSsharing;
 import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Action;
 import spec.mcrl2obj.Buffer;
@@ -43,12 +41,10 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	private Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> internalCommList;
 	private static final FlowNode epsilon = new Task();
 
-	
 	private Set<Pair<FlowNode, FlowNode>> messages;
 	private Set<Tmcrl> tmcrl2;
 	private mCRL2 mcrl2;
-	private int id_op;
-
+	
 	public CollaborativeAlg(Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> pair) {
 		this.bpmn = pair.getLeft();
 		this.messages = pair.getRight();
@@ -59,6 +55,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		generateInternalCommunicationlist();
 		assignPlaceholder();
 		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
+			//System.out.println(triple.toString());
 			int size = triple.getMiddle().size();
 			DataParameter[] parameters = new DataParameter[size];
 			int j = 0;
@@ -97,7 +94,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 						dataparameter.setId(AbstractProcess.id);
 						S.addDataToAction(dataparameter);
 					});
-					// System.out.println(S.toString() + " EPSILON");
 					continue;
 				}
 				// Generate i(e_1,...,e_n)
@@ -156,37 +152,28 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		mcrl2.addHide(a);
 	}
 
-	private PartecipantProcess identifyParticipant(IFlowNode node) {
-		TaskProcess t = getProcessOfTask(node);
-		for (PartecipantProcess party : collectPartecipants()) {
-			List<String> childspartecipant = mCRL2.childTaskProcess(party.getProcess(), mcrl2, new ArrayList<String>());
-			
-			if (childspartecipant.contains(t.getAction().getName()))
-				return party;
-		}
-		return null;
-	}
-
 	private DataParameter[] createOutputChannel(Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple,
 			IFlowNode node) {
 		List<DataParameter> parametertosend = new ArrayList<DataParameter>();
-		triple.getMiddle().forEach(d -> {
+		for(DataNode d : triple.getMiddle()) {
 			if (isitFirst(node, d)) {
 				DataParameter dataparameter = new DataParameter(d.getName(), getSortEvalData());
-				dataparameter.setId(AbstractProcess.id);
 				if (d.getClass().equals(PETExtendedNode.class) && ((PETExtendedNode) d).hasPET()) {
-					identifyParticipant(node).getIdParty();
-					getSortEvalData().addTriple(
-							Triple.of(d.getName(), ((PETExtendedNode) d).getPET(), identifyParticipant(node).getIdParty()));
+					getSortEvalData().addTriple(Triple.of(d.getName(), ((PETExtendedNode) d).getPET(),
+							((PETExtendedNode) d).getPET().getID_protection()));
+					dataparameter.setId(String.valueOf(((PETExtendedNode) d).getPET().getID_protection()));
 					dataparameter.setPrivate();
-				}
+				}else {
+					dataparameter.setId(AbstractProcess.id);
+					getSortEvalData().addTriple(Triple.of(d.getName(), null, mcrl2.identifyMyParticipant(getProcessOfTask(node)).getIdParty()));
+				}	
 				parametertosend.add(dataparameter);
 				getSortData().addType(d.getName());
 			} else
 				parametertosend
 						.add(new DataParameter(dataplaceholder.get(d.getName()).getPlaeholder(), getSortEvalData()));
 
-		});
+		}
 		return parametertosend.toArray(new DataParameter[] {});
 	}
 
@@ -274,15 +261,14 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		Action a = new Action(o.getName(), sumprocess.getInitialParameters());
 		this.mcrl2.addAction(a);
 		Process outpuprocess = new Process(a);
-		String emptyness = "(!empty("+sumprocess.getInitialParameters()[0].getPlaeholder()+")";
-		for(int j =1; j<sumprocess.getInitialParameters().length; j++)
-			emptyness = emptyness + "&& !empty(" + sumprocess.getInitialParameters()[j].getPlaeholder()+")";
-		//Action actionempty = new Action("!empty", sumprocess.getInitialParameters());
-		Action actionempty = new Action(emptyness+")");
+		String emptyness = "(!empty(" + sumprocess.getInitialParameters()[0].getPlaeholder() + ")";
+		for (int j = 1; j < sumprocess.getInitialParameters().length; j++)
+			emptyness = emptyness + "&& !empty(" + sumprocess.getInitialParameters()[j].getPlaeholder() + ")";
+		// Action actionempty = new Action("!empty", sumprocess.getInitialParameters());
+		Action actionempty = new Action(emptyness + ")");
 		Process processempty = new Process(actionempty);
 		Process ifp = new Process(Operator.IF, processempty.getName(), outpuprocess.getName());
 		ifp.addInsideDef(processempty, outpuprocess);
-
 		sumprocess.setOperant(bufferl, ifp);
 		this.mcrl2.addProcess(sumprocess);
 		String eps = "";
@@ -314,6 +300,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		Set<Triple<IFlowNode, DataNode, IFlowNode>> tmpInternalCommList = new HashSet<Triple<IFlowNode, DataNode, IFlowNode>>();
 		bpmn.forEach(b -> {
 			for (DataNode n : b.getDataNodes()) {
+
 				Collection<IFlowNode> writingnodes = n.getWritingFlowNodes();
 				Collection<IFlowNode> readnodes = n.getReadingFlowNodes();
 				if (!writingnodes.isEmpty() && !readnodes.isEmpty()) {
@@ -382,53 +369,55 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return tmpintermalcommlist;
 	}
 
-	// Generate a Map PET - Data , to distinguish SSsharing we can
-
-	/*private void checkSensibleData() {
-
-		Map<PET, Set<String>> map = new HashMap<PET, Set<String>>();
-		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			for (DataNode data : triple.getMiddle()) {
-				System.out.println(data.getName());
-				String dataname = data.getName().replace(" ", "_");
-				if (data.getClass().equals(PETExtendedNode.class) && ((PETExtendedNode) data).hasPET())
-					if (!map.containsKey(((PETExtendedNode) data).getPET())) {
-						Set<String> set = new HashSet<String>();
-						set.add(dataname);
-						map.put(((PETExtendedNode) data).getPET(), set);
-					} else
-						map.get(((PETExtendedNode) data).getPET()).add(dataname);
-
+	/*
+	 * Econde ssharing violation action only if your are not creating that shares
+	 */
+	private String encodePetInsideMemory(PartecipantProcess p, int id_party, String m, DataParameter e) {
+		Set<Triple<String, PET, Integer>> triple = getSortEvalData().getPrivateTriple();
+		Set<Triple<String, PET, Integer>> tripletocheck = getSortEvalData().getPrivateTriple();
+		String s = "";
+		List<String> childspartecipant = new ArrayList<String>();
+		childspartecipant.addAll(mCRL2.childTaskProcess(p.getProcess(), mcrl2, childspartecipant));
+		for (String child : childspartecipant) {
+			Action action = mcrl2.getActionByName(child);
+			if (!action.getPet().isEmpty()) {
+				String[] petstring = action.getPet().split("-");
+				if (petstring[0].equals(PETLabel.SSRECONTRUCTION.name()))
+					return s;
 			}
 		}
-		this.mcrl2.setSensibleData(map);
-	}*/
-
-	private String encodePetInsideMemory(int id_party, String m, DataParameter e) {
-		Set<Triple<String, PET, Integer>> triple = getSortEvalData().getPrivateTriple();
-		String s = "";
-		List<Integer> id_alreadychecked = new ArrayList<Integer>();
+		
 		for (Triple<String, PET, Integer> t : triple) {
-			if (t.getMiddle().getPET().equals(PETLabel.SSSHARING)) {
-				if (t.getRight() != id_party && !id_alreadychecked.contains(t.getRight())) {
-					if(!s.isEmpty())
-						s = s+ "||";
-					else
-						s = "(";
-					s = s + "sssharingviolation(" + t.getRight() + ",union(" + m + "," + e + "),"
-							+ ((SSsharing) t.getMiddle()).getTreshold() + ")";
-					id_alreadychecked.add(t.getRight());
+			for (String child : childspartecipant) {
+				Action action = mcrl2.getActionByName(child);
+				PETLabel name = t.getMiddle().getPET();
+				if (action.getPet() != null && name.equals(PETLabel.SSSHARING) && action.equalPet(t.getMiddle())) {
+					tripletocheck.remove(t);
+					break;
 				}
 			}
 		}
-		if(!s.isEmpty())
-			s = s+ ")->VIOLATION.delta";
+		List<Integer> id_alreadychecked = new ArrayList<Integer>();
+		for (Triple<String, PET, Integer> tt : tripletocheck) {
+			if (!id_alreadychecked.contains(tt.getRight())) {
+				if (!s.isEmpty())
+					s = s + "||";
+				else
+					s = "(";
+				s = s + "sssharingviolation(" + tt.getRight() + ",union(" + m + "," + e + "),"
+						+ tt.getMiddle().getTreshold() + ")";
+				id_alreadychecked.add(tt.getRight());
+			}
+		}
+
+		if (!s.isEmpty())
+			s = s + ")->VIOLATION.delta";
 		return s;
 	}
 
 	@Override
 	public mCRL2 getSpec(int id_op) {
-		this.id_op = id_op;
+		AbstractTranslationAlg.id_op = id_op;
 		tmcrl2 = new HashSet<Tmcrl>();
 		for (Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : bpmn)
 			tmcrl2.add(analyzeControlFlow(b));
@@ -447,7 +436,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		for (PartecipantProcess p : partecipant)
 			generateProcessMemory(p);
 		changePartecipants();
-		//checkSensibleData();
+		// checkSensibleData();
 		mcrl2.taureduction();
 		addConnectionToMemory();
 		return mcrl2;
@@ -477,13 +466,13 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 			thenp = new Process(new Action(notcomplete.getName() + "(union(" + p.retriveDataMemoryName() + "," + pardata
 					+ ")," + AbstractProcess.id + ")"));
 		else if (id_op == IDOperaion.SSSHARING.getVal()) {
-			String encoding = encodePetInsideMemory(p.getIdParty(), p.retriveDataMemoryName(), pardata);
-			if(encoding.isEmpty())
-				thenp = new Process(new Action(notcomplete.getName() + "(union(" + p.retriveDataMemoryName() + "," + pardata
-						+ ")," + AbstractProcess.id + ")"));
+			String encoding = encodePetInsideMemory(p, p.getIdParty(), p.retriveDataMemoryName(), pardata);
+			if (encoding.isEmpty())
+				thenp = new Process(new Action(notcomplete.getName() + "(union(" + p.retriveDataMemoryName() + ","
+						+ pardata + ")," + AbstractProcess.id + ")"));
 			else
-				thenp = new Process(new Action(encoding + "<>"+notcomplete.getName()+"(union(" + p.retriveDataMemoryName() + "," + pardata
-						+ ")," + AbstractProcess.id + ")"));
+				thenp = new Process(new Action(encoding + "<>" + notcomplete.getName() + "(union("
+						+ p.retriveDataMemoryName() + "," + pardata + ")," + AbstractProcess.id + ")"));
 		}
 		mcrl2.addAction(memp, s);
 		mcrl2.addAllow(memp);
@@ -499,8 +488,8 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		notcomplete.addInsideDef(sumbool, sumdata, processs, ifthen);
 		p.setMemory(notcomplete);
 		p.setActionToMemory(s.getName());
-
-		mcrl2.addInitSet(notcomplete.getName() + "([]," + p.getIdParty() + ")");
+		
+		mcrl2.addInitSet(notcomplete.getName() + "("+Action.setLeftParenthesis() + Action.setRightParenthesis()+"," + p.getIdParty() + ")");
 	}
 
 	// Identify the task process using is task/activity name
