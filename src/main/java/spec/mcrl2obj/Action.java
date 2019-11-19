@@ -58,6 +58,8 @@ public class Action {
 			return true;
 		return false;
 	}
+	
+	//PET is given by petname-id_protection, example SSHARING-(no threshold but id of the privacy label)
 	public String getPet() {
 		return this.pet;
 	}

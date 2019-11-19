@@ -8,6 +8,10 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.HashSet;
 import java.util.Set;
+import com.google.common.collect.Sets;
+
+import algo.IDOperaion;
+import io.BpmnParser;
 import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.TaskProcess;
 import spec.mcrl2obj.mCRL2;
@@ -20,20 +24,34 @@ public abstract class TextInterpreterFormula {
 
 	protected static final String openpossibilityformula = "<true*.";
 	protected static final String closepossibilityformula = ">true";
+	protected static final String openallformula = "[true*.";
+	protected static final String closeallformula = "]true";
 	private static final String fileName = "formula";
 	private static int id = 0;
 	private static String parameter = "p";
 
-	public static String toFile(mCRL2 mcrl2, String path, String idname, Set<String> data, String tag) {
-		String formula;
-		if (identifyIdTaskFormula(mcrl2, idname) != null)
-			formula = TaskFormula.generateTaskFormula(mcrl2, idname, data);
-		else
+	public static String toFile(mCRL2 mcrl2, String path, String idname, Set<String> data, int id_case) {
+		String formula = "";
+		if (id_case == IDOperaion.TASK.getVal())
+			formula = TaskFormula.generateTaskFormula(mcrl2, identifyIdTaskFormula(mcrl2, idname), data,
+					openpossibilityformula, closepossibilityformula);
+		else if (id_case == IDOperaion.PARTICIPANT.getVal())
 			formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
+		else if (id_case == IDOperaion.RECONSTRUCTION.getVal()) {
+			int th = BpmnParser.uniquereconstruction.getTreshold();
+			Set<Set<String>> powerset = Sets.powerSet(data);
+			for (Set<String> set : powerset) {
+				if (set.size() == th) {
+					if (!formula.isEmpty())
+						formula = formula + "||";
+					formula = formula + TaskFormula.generateTaskFormula(mcrl2, identifyIdTaskFormula(mcrl2, idname),
+							set, openallformula, closeallformula);
+				}
+			}
+		}
 
 		if (formula == null || formula.equals(""))
 			return formula;
-
 		if (idname.contains(" "))
 			idname = idname.replace(" ", "_");
 		File file = new File(path + idname + fileName + ".mcf");

@@ -12,14 +12,13 @@ import spec.mcrl2obj.mCRL2;
 
 public class TaskFormula extends TextInterpreterFormula {
 
-	protected static String generateTaskFormula(mCRL2 mcrl2, String idtaskname, Set<String> data) {
-		TaskProcess task = identifyIdTaskFormula(mcrl2,idtaskname);
-		
+	protected static String generateTaskFormula(mCRL2 mcrl2, TaskProcess task, Set<String> data,String openf,String closef) {
+		//TaskProcess task = identifyIdTaskFormula(mcrl2,idtaskname);
 		String s = "";
 		if (task == null || task.getAction().nparameter() < data.size()) {
 			return null;
 		}else {
-			s = openpossibilityformula;
+			s = openf;
 			Set<String> parameterplu = new HashSet<String>();
 			if (data.size() < task.getAction().nparameter()) {
 				parameterplu = generatePar(task.getAction().nparameter() - data.size());
@@ -50,7 +49,7 @@ public class TaskFormula extends TextInterpreterFormula {
 					s =s + ",";
 				i++;
 			}
-			s = s + "})" + closepossibilityformula;
+			s = s + "})" + closef;
 		}
 		return s;
 	}

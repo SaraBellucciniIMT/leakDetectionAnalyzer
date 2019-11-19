@@ -10,8 +10,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
+import org.apache.commons.lang3.tuple.Triple;
+
 import algo.AbstractTranslationAlg;
 import algo.IDOperaion;
+import io.pet.PET;
+import io.pet.PETLabel;
 import spec.ISpec;
 
 /*
@@ -431,7 +436,7 @@ public class mCRL2 implements ISpec {
 				+ "))=" + n + ";\r\n" + "(" + e + "== " + AbstractTranslationAlg.empty + ") -> empty(" + e
 				+ ") = true;\r\n" + "(" + e + "!=" + AbstractTranslationAlg.empty + ") -> empty(" + e
 				+ ") = false; \r\n";
-		if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal())
+		if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal() || id_op == IDOperaion.RECONSTRUCTION.getVal())
 			s = s + "union(" + m1 + "," + m2 + ")= " + m1 + "+" + m2 + ";\r\n";
 		else if (id_op == IDOperaion.SSSHARING.getVal())
 			s = s + "(head(" + m2 + ") in " + m1 + ") -> union(" + m1 + "," + m2 + ") = union(" + m1 + ",tail(" + m2
@@ -474,4 +479,28 @@ public class mCRL2 implements ISpec {
 		}
 		return null;
 	}
+	
+	public Action identifyRecostructionTask() {
+		for(Action a : actions) {
+			if(!a.getPet().isEmpty()) {
+				//System.out.println(a.getPet());
+				String[] petname = a.getPet().split("-"); 
+				if(petname[0].equals(PETLabel.SSRECONTRUCTION.name()))
+					return a;
+			}
+		}
+		return null;
+	}
+	
+	public Set<String> identifyReconstructionData(){
+		Set<String> reconstructiondata = new HashSet<String>();
+		Set<Triple<String,PET,Integer>> triple = AbstractTranslationAlg.getSortEvalData().getPrivateTriple();
+		for(Triple<String,PET,Integer> t : triple) {
+			if(t.getMiddle().getPET().equals(PETLabel.SSRECONTRUCTION)) {
+				reconstructiondata.add(t.getLeft());
+			}
+		}
+		return reconstructiondata;
+	}
+	
 }

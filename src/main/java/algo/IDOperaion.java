@@ -4,7 +4,8 @@ public enum IDOperaion {
 
 	TASK(1),
 	PARTICIPANT(2),
-	SSSHARING(3);
+	SSSHARING(3),
+	RECONSTRUCTION(4);
 	
 	private final int i;
 	IDOperaion(int i) {

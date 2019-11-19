@@ -300,7 +300,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		Set<Triple<IFlowNode, DataNode, IFlowNode>> tmpInternalCommList = new HashSet<Triple<IFlowNode, DataNode, IFlowNode>>();
 		bpmn.forEach(b -> {
 			for (DataNode n : b.getDataNodes()) {
-
 				Collection<IFlowNode> writingnodes = n.getWritingFlowNodes();
 				Collection<IFlowNode> readnodes = n.getReadingFlowNodes();
 				if (!writingnodes.isEmpty() && !readnodes.isEmpty()) {
@@ -436,7 +435,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		for (PartecipantProcess p : partecipant)
 			generateProcessMemory(p);
 		changePartecipants();
-		// checkSensibleData();
 		mcrl2.taureduction();
 		addConnectionToMemory();
 		return mcrl2;
@@ -462,7 +460,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		Action memp = Action.setMemoryAction(getSortMemory());
 		p.setActionMemory(memp);
 		Process thenp = null;
-		if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal())
+		if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal() || id_op == IDOperaion.RECONSTRUCTION.getVal())
 			thenp = new Process(new Action(notcomplete.getName() + "(union(" + p.retriveDataMemoryName() + "," + pardata
 					+ ")," + AbstractProcess.id + ")"));
 		else if (id_op == IDOperaion.SSSHARING.getVal()) {

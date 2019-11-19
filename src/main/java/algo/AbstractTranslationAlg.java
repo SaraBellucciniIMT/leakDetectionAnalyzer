@@ -44,8 +44,8 @@ public abstract class AbstractTranslationAlg implements ITranslationAlg {
 
 	// Memory = List(EvalData);
 	public static Sort getSortMemory() {
-		if (sortMemory.isEmpty()) {
-			if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal())
+		if(sortMemory.isEmpty()) {
+			if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal() || id_op == IDOperaion.RECONSTRUCTION.getVal())
 				sortMemory.addType(" Set(EvalData)");
 			else if (id_op == IDOperaion.SSSHARING.getVal())
 				sortMemory.addType(" List(EvalData)");
@@ -63,5 +63,12 @@ public abstract class AbstractTranslationAlg implements ITranslationAlg {
 		if (sortEvalData.isEmpty())
 			sortEvalData.addType("triple(fst:Data,snd:Bool,trd:Nat)", empty);
 		return sortEvalData;
+	}
+	
+	public static void cleanSorts() {
+		sortMemory.clean();
+		sortData.clean();
+		sortBool.clean();
+		sortEvalData.clean();
 	}
 }

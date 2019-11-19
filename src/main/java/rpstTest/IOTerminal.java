@@ -34,11 +34,11 @@ import org.json.JSONObject;
 import algo.AbstractTranslationAlg;
 import algo.CollaborativeAlg;
 import algo.IDOperaion;
-import formula.PartecipantFormula;
 import formula.TaskFormula;
 import formula.TextInterpreterFormula;
 import io.BpmnParser;
 import pcrrlalgoelement.Parout;
+import spec.mcrl2obj.Action;
 import spec.mcrl2obj.TaskProcess;
 import spec.mcrl2obj.mCRL2;
 
@@ -92,9 +92,9 @@ public class IOTerminal {
 			while (true) {
 				Set<String> datset = new HashSet<>();
 				System.out.println(
-						"Select action:\n" + "->1 to check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
-								+ "->2 to check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
-								+ "->3 verify if there is a secret sharing violation \n" + "-> 4 exit");
+						"Select action:\n" + "->1 Check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+								+ "->2 Check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
+								+ "->3 verify secret sharing violation \n" + "->4 verify if RECONSTRUCTION is ALWAYS possible\n"+"-> 5 exit");
 				scan = new Scanner(System.in);
 				String number = scan.nextLine();
 				String partecipant;
@@ -112,7 +112,7 @@ public class IOTerminal {
 					}
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(dataexist());
-					check = TaskFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
+					check = TaskFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, 1);
 					if (displayalternativeoutput(check))
 						break;
 					callFormula(mcrl2);
@@ -129,7 +129,7 @@ public class IOTerminal {
 					}
 					System.out.println(mcrl2.toStringData());
 					datset.addAll(dataexist());
-					check = PartecipantFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, "");
+					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, 2);
 					if (displayalternativeoutput(check))
 						break;
 					callFormula(mcrl2);
@@ -139,6 +139,22 @@ public class IOTerminal {
 					lps2lts();
 					break;
 				case 4:
+					mcrl2 = generateSpecLps(translationalg, 1, filename);
+					Action reconstruct = mcrl2.identifyRecostructionTask();
+					if(reconstruct == null) {
+						System.out.println("NO RECOSTRUCTION ACTION APPEAR IN THE MODEL");
+						break;
+					}
+					partecipant = reconstruct.getName();
+					datset.addAll(mcrl2.identifyReconstructionData());
+					if(datset.isEmpty()) {
+						System.out.println("NO RECONSTRUCTION DATA ");
+						break;
+					}
+					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, 4);
+					callFormula(mcrl2);
+					break;
+				case 5:
 					cleanDirectory();
 					System.exit(0);
 				default:
@@ -339,9 +355,10 @@ public class IOTerminal {
 			r = scan.nextLine();
 		}
 		cleanDirectory();
-		if (r.equalsIgnoreCase(YES))
+		if (r.equalsIgnoreCase(YES)) {
+			AbstractTranslationAlg.cleanSorts();
 			return;
-		else
+		}else
 			System.exit(0);
 
 	}
@@ -377,10 +394,6 @@ public class IOTerminal {
 								if (!match[i].isEmpty())
 									tmp.add(match[i].substring(1, match[i].indexOf(",")));
 							}
-							/*
-							 * String[] splitmatch = match.split(","); for (String s : splitmatch)
-							 * tmp.add(s);
-							 */
 						}
 						map.put(Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1])),
 								Pair.of(t.getAction().getId(), tmp));

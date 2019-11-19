@@ -30,7 +30,10 @@ public class Sort {
 	public String getName() {
 		return this.name;
 	}
-
+	
+	public void clean() {
+		this.types.clear();
+	}
 	@Override
 	public String toString() {
 		String s = getName() + " = ";

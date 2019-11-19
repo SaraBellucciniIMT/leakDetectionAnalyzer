@@ -3,12 +3,17 @@ package io;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+
 import org.apache.commons.lang3.tuple.Pair;
 import org.jbpt.pm.DataNode;
 import org.jbpt.pm.FlowNode;
+import org.jbpt.pm.NonFlowNode;
 import org.jbpt.pm.bpmn.AlternativeGateway;
 import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
@@ -22,6 +27,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+
 import io.pet.PET;
 import io.pet.PETLabel;
 import io.pet.SScomputation;
@@ -41,6 +47,9 @@ public class BpmnParser {
 	private final static String dataoutput = "bpmn2:dataoutputassociation";
 	private final static String attrid = "id";
 	private final static String attrname = "name";
+	public  static SSreconstruction uniquereconstruction = null;
+	private static Set<SSsharing> setssharing = new HashSet<SSsharing>();
+	private static Set<SScomputation> setsscomputation = new HashSet<SScomputation>();
 
 	public static Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> collaborationParser(
 			String s) throws IOException {
@@ -57,7 +66,6 @@ public class BpmnParser {
 
 		for (int i = 0; i < partecipant.size(); i++) {
 			Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn = new Bpmn<BpmnControlFlow<FlowNode>, FlowNode>();
-
 			Element el = partecipant.get(i);
 			String idpartecipant = el.attr(attrid);
 			String namepartecipant = el.attr(attrname);
@@ -119,20 +127,32 @@ public class BpmnParser {
 				}
 			}
 		});
-
+		correctData(bpmnSet);
 		return Pair.of(bpmnSet, messageflow);
 	}
 
 	private static void setTresholdRecostruction() {
 		if (uniquereconstruction != null) {
-			for (SSsharing s : setssharing) 
+			for (SSsharing s : setssharing)
 				uniquereconstruction.setTreshold(s.getTreshold());
 		}
-		for(SScomputation sc : setsscomputation) {
-			for(SSsharing s : setssharing)
+		for (SScomputation sc : setsscomputation) {
+			for (SSsharing s : setssharing)
 				sc.setTreshold(s.getTreshold());
 		}
-		
+	}
+	
+	private static void correctData(Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> setbpmns) {
+		for(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : setbpmns) {
+			for(NonFlowNode n: b.getNonFlowNodes()) {
+				PETExtendedNode pet = (PETExtendedNode)n;
+				for(Entry<String,PET> entry : dataobjrefMap.entrySet()) {
+					if(entry.getKey().equals(pet.getName())) {
+						pet.setPET(entry.getValue());
+					}
+				}
+			}	
+		}
 	}
 
 	private static Pair<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>, FlowNode> detectSenderReceiver(
@@ -159,8 +179,10 @@ public class BpmnParser {
 
 					if (pet != null && pet.getPET().equals(PETLabel.SSRECONTRUCTION)) {
 						for (PETExtendedNode e : datanodeset) {
-							if (getIdDataNode(e).equals(dataobjref))
+							if (getIdDataNode(e).equals(dataobjref)) {
 								e.setPET(pet);
+								addtoDaraObjMap(e.getName(), pet);
+							}
 						}
 					}
 
@@ -171,13 +193,16 @@ public class BpmnParser {
 
 					if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
 						for (PETExtendedNode d : datanodeset) {
-							if (getIdDataNode(d).equals(dataobjref))
+							if (getIdDataNode(d).equals(dataobjref)) {
 								d.setPET(pet);
+								addtoDaraObjMap(d.getName(), pet);
+							}
 						}
 					} else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION)) {
 						for (PETExtendedNode e : datanodeset) {
-							if (getIdDataNode(e).equals(dataobjref)) {
+							if (getIdDataNode(e).equals(dataobjref) && !e.hasPET()) {
 								e.setPET(pet);
+								addtoDaraObjMap(e.getName(), pet);
 							}
 						}
 					}
@@ -190,9 +215,6 @@ public class BpmnParser {
 
 	}
 
-	private static SSreconstruction uniquereconstruction = null;
-	private static Set<SSsharing> setssharing = new HashSet<SSsharing>();
-	private static Set<SScomputation> setsscomputation = new HashSet<SScomputation>();
 
 	private static PET detectePet(Elements childrens) throws JSONException {
 		for (Element child : childrens) {
@@ -209,19 +231,19 @@ public class BpmnParser {
 				JSONObject obj = new JSONObject(computation);
 				String objgroup = obj.getString("groupId");
 
-				for(SScomputation s : setsscomputation) {
-					if(s.getGroup_id().equals(objgroup))
+				for (SScomputation s : setsscomputation) {
+					if (s.getGroup_id().equals(objgroup))
 						return s;
 				}
 				SScomputation sscomputatin = new SScomputation(objgroup);
 				setsscomputation.add(sscomputatin);
 				return sscomputatin;
 
-			} else if (child.tagName().equalsIgnoreCase(ssreconstruction))
+			} else if (child.tagName().equalsIgnoreCase(ssreconstruction)) {
 				if (uniquereconstruction == null)
 					uniquereconstruction = new SSreconstruction();
-				else
-					return uniquereconstruction;
+				return uniquereconstruction;
+			}
 
 		}
 		return null;
@@ -257,11 +279,24 @@ public class BpmnParser {
 	/*
 	 * Create a Set of Data Object s.t : ID-Name
 	 */
-	private static Set<Pair<String, String>> dataobjrefMap = new HashSet<Pair<String, String>>();
+	private static Map<String, PET> dataobjrefMap = new HashMap<String, PET>();
 
-	private static Set<PETExtendedNode> detectDataObject(Elements dataobref) {
+	private static void addtoDaraObjMap(String s,PET p) {
+		boolean change = false;
+		for(Entry<String,PET> entry : dataobjrefMap.entrySet()) {
+			if(entry.getKey().equals(s) ) {
+				//if(entry.getValue().getPET().equals(PETLabel.SSCOMPUTATION))
+				if(p.getPET().equals(PETLabel.SSRECONTRUCTION))	
+					entry.setValue(p);
+				change = true;
+			}
+		}
+		if(!change)
+			dataobjrefMap.put(s,p);
+	}
+	private static Set<PETExtendedNode> detectDataObject(Elements datapobref) {
 		Set<PETExtendedNode> datanodeSet = new HashSet<PETExtendedNode>();
-		for (Element d : dataobref) {
+		for (Element d : datapobref) {
 			String name = d.attr(attrname);
 			name = name.replace(".", "_");
 			String[] differentnames = name.split(",");
@@ -270,7 +305,10 @@ public class BpmnParser {
 				dn.setId(d.attr("id") + differentnames[i]);
 				dn.setName(differentnames[i]);
 				datanodeSet.add(dn);
-				dataobjrefMap.add(Pair.of(d.attr("id"), name));
+				for(Entry<String,PET> entry : dataobjrefMap.entrySet()) {
+					if(entry.getKey().equals(differentnames[i]))
+						dn.setPET(entry.getValue());
+				}
 			}
 		}
 		return datanodeSet;
@@ -283,7 +321,6 @@ public class BpmnParser {
 			f.setName(name);
 		}
 		f.setId(e.attr(attrid));
-
 	}
 
 	/*
