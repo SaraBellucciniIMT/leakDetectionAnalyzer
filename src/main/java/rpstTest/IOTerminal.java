@@ -30,6 +30,8 @@ import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import algo.AbstractTranslationAlg;
 import algo.CollaborativeAlg;
 import algo.IDOperaion;
 import formula.TextInterpreterFormula;
@@ -60,7 +62,7 @@ public class IOTerminal {
 	private String mcrl2file;
 	private String check;
 
-	public IOTerminal() {
+	public IOTerminal() throws IOException {
 		// If the folder result doesn't exist it generates it
 		if (!dir.exists())
 			dir.mkdir();
@@ -82,90 +84,81 @@ public class IOTerminal {
 		else
 			filename = f.getName();
 
-		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
-		try {
-			set = BpmnParser.collaborationParser(inputfile);
-			CollaborativeAlg translationalg = new CollaborativeAlg(set);
-			while (true) {
-				Set<String> datset = new HashSet<>();
-				System.out.println(
-						"Select action:\n" + "-> 1 Check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
-								+ "-> 2 Check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
-								+ "-> 3 verify (SS/AddSS/FunSS) violation \n"
-								+ "-> 4 verify if RECONSTRUCTION is ALWAYS possible\n"
-								+ "-> 5 verify PK/SK encryption violaton\n" + "-> 6 exit");
+		while (true) {
+			Set<String> datset = new HashSet<>();
+			System.out.println("Select action:\n"
+					+ "-> 1 Check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+					+ "-> 2 Check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
+					+ "-> 3 verify (SS/AddSS/FunSS) violation \n" + "-> 4 verify if RECONSTRUCTION is ALWAYS possible\n"
+					+ "-> 5 verify PK/SK encryption violaton\n" + "-> 6 exit");
+			scan = new Scanner(System.in);
+			String number = scan.nextLine();
+			String partecipant;
+			mCRL2 mcrl2;
+			switch (Integer.valueOf(number)) {
+			case 1:
+				mcrl2 = generateSpecLps(parsebpmnfile(1, inputfile), 1, filename);
+				System.out.println(mcrl2.toStringTasks() + "\n Choose task: \n");
 				scan = new Scanner(System.in);
-				String number = scan.nextLine();
-				String partecipant;
-				mCRL2 mcrl2;
-				switch (Integer.valueOf(number)) {
-				case 1:
-					mcrl2 = generateSpecLps(translationalg, 1, filename);
-					System.out.println(mcrl2.toStringTasks() + "\n Choose task: \n");
+				partecipant = scan.nextLine();
+				while (!mcrl2.containt(partecipant)) {
+					System.out.println("INCORRECT INPUT: THIS TASK DOESN'T EXIST. CHOOSE ANOTHER ONE: ");
 					scan = new Scanner(System.in);
 					partecipant = scan.nextLine();
-					while (!mcrl2.containt(partecipant)) {
-						System.out.println("INCORRECT INPUT: THIS TASK DOESN'T EXIST. CHOOSE ANOTHER ONE: ");
-						scan = new Scanner(System.in);
-						partecipant = scan.nextLine();
-					}
-					System.out.println(mcrl2.toStringData());
-					datset.addAll(dataexist(mcrl2.getSortName()));
-					check = TextInterpreterFormula.generateTaskFormula(mcrl2, dirname.getPath(), partecipant, datset);
-					if (displayalternativeoutput(check))
-						break;
-					callFormula(mcrl2);
+				}
+				System.out.println(mcrl2.toStringData());
+				datset.addAll(dataexist(mcrl2.getSortName()));
+				check = TextInterpreterFormula.generateTaskFormula(mcrl2, dirname.getPath(), partecipant, datset);
+				if (displayalternativeoutput(check))
 					break;
-				case 2:
-					mcrl2 = generateSpecLps(translationalg, 2, filename);
-					System.out.println(mcrl2.toStringPartecipants() + "\n Choose partecipant: \n ");
+				callFormula(mcrl2);
+				break;
+			case 2:
+				mcrl2 = generateSpecLps(parsebpmnfile(2, inputfile), 2, filename);
+				System.out.println(mcrl2.toStringPartecipants() + "\n Choose partecipant: \n ");
+				scan = new Scanner(System.in);
+				partecipant = scan.nextLine();
+				while (!mcrl2.containt(partecipant)) {
+					System.out.println("INCORRECT INPUT: PARTICIPANT DOESN'T EXIST. CHOOSE ANOTHER ONE: ");
 					scan = new Scanner(System.in);
 					partecipant = scan.nextLine();
-					while (!mcrl2.containt(partecipant)) {
-						System.out.println("INCORRECT INPUT: PARTICIPANT DOESN'T EXIST. CHOOSE ANOTHER ONE: ");
-						scan = new Scanner(System.in);
-						partecipant = scan.nextLine();
-					}
-					System.out.println(mcrl2.toStringData());
-					datset.addAll(dataexist(mcrl2.getSortName()));
-					check = TextInterpreterFormula.generateParticipantFormula(mcrl2, dirname.getPath(), partecipant,
-							datset);
-					if (displayalternativeoutput(check))
-						break;
-					callFormula(mcrl2);
+				}
+				System.out.println(mcrl2.toStringData());
+				datset.addAll(dataexist(mcrl2.getSortName()));
+				check = TextInterpreterFormula.generateParticipantFormula(mcrl2, dirname.getPath(), partecipant,
+						datset);
+				if (displayalternativeoutput(check))
 					break;
-				case 3:
-					mcrl2 = generateSpecLps(translationalg, 3, filename);
-					mcrl22lps();
-					lps2lts(3, mcrl2);
-					break;
-				case 4:
-					mcrl2 = generateSpecLps(translationalg, 4, filename);
-					Action reconstruct = mcrl2.identifyRecostructionTask();
-					if (reconstruct == null) {
-						System.out.println("NO RECOSTRUCTION ACTION TASK IN THE MODEL");
-						break;
-					}
-					mcrl22lps();
-					lps2lts(4, mcrl2);
-					break;
-				case 5:
-					mcrl2 = generateSpecLps(translationalg, 5, filename);
-					mcrl22lps();
-					lps2lts(5, mcrl2);
-					break;
-				case 6:
-					cleanDirectory();
-					System.exit(0);
-				default:
-					System.out.println("OPERATION NOT RECOGNIZED");
+				callFormula(mcrl2);
+				break;
+			case 3:
+				mcrl2 = generateSpecLps(parsebpmnfile(3, inputfile), 3, filename);
+				mcrl22lps();
+				lps2lts(3, mcrl2);
+				break;
+			case 4:
+				mcrl2 = generateSpecLps(parsebpmnfile(4, inputfile), 4, filename);
+				Action reconstruct = mcrl2.identifyRecostructionTask();
+				if (reconstruct == null) {
+					System.out.println("NO RECOSTRUCTION ACTION TASK IN THE MODEL");
 					break;
 				}
-				continueOrExit();
+				mcrl22lps();
+				lps2lts(4, mcrl2);
+				break;
+			case 5:
+				mcrl2 = generateSpecLps(parsebpmnfile(5, inputfile), 5, filename);
+				mcrl22lps();
+				lps2lts(5, mcrl2);
+				break;
+			case 6:
+				cleanDirectory();
+				System.exit(0);
+			default:
+				System.out.println("OPERATION NOT RECOGNIZED");
+				break;
 			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
+			continueOrExit();
 		}
 	}
 
@@ -175,6 +168,19 @@ public class IOTerminal {
 			if (!file.isDirectory())
 				file.delete();
 		}
+	}
+
+	private CollaborativeAlg parsebpmnfile(int i, String inputfile) {
+		AbstractTranslationAlg.id_op = i;
+		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
+		try {
+			set = BpmnParser.collaborationParser(inputfile);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return new CollaborativeAlg(set);
+
 	}
 
 	private Set<String> dataexist(Sort sort) {
@@ -413,22 +419,20 @@ public class IOTerminal {
 
 					String task = line.substring(line.indexOf("\"") + 1, line.lastIndexOf("\"")).replaceAll("\\(.*\\)",
 							"");
-					//Pattern pattern = Pattern.compile("node\\(.*\\)");
+					// Pattern pattern = Pattern.compile("node\\(.*\\)");
 					TaskProcess t;
 					if ((t = TextInterpreterFormula.identifyIdTaskFormula(mcrl, task)) != null) {
 						Set<String> tmp = new HashSet<String>();
-						for(String s : mcrl.getSortName().getTypes()) {
-							if(line.contains("node("+s+")"))
+						for (String s : mcrl.getSortName().getTypes()) {
+							if (line.contains("node(" + s + ")"))
 								tmp.add(s);
 						}
-						/*Matcher m = pattern.matcher(line);
-						while (m.find()) {
-							String[] match = m.group(0).replace("(", "").replace(")", "").replace("{", "").replace("}","").replace("node","").trim().split(",");
-							for (int i = 0; i < match.length; i++) {
-								if (!match[i].isEmpty())
-									tmp.add(match[i].trim());
-							}
-						}*/
+						/*
+						 * Matcher m = pattern.matcher(line); while (m.find()) { String[] match =
+						 * m.group(0).replace("(", "").replace(")", "").replace("{",
+						 * "").replace("}","").replace("node","").trim().split(","); for (int i = 0; i <
+						 * match.length; i++) { if (!match[i].isEmpty()) tmp.add(match[i].trim()); } }
+						 */
 						map.put(Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1])),
 								Pair.of(t.getAction().getId(), tmp));
 					}

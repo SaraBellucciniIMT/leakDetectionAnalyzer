@@ -1,10 +1,15 @@
 package rpstTest;
 
-
+import java.io.IOException;
 
 public class App {
 	public static void main(String[] args) {
-		IOTerminal terminal = new IOTerminal();
+		try {
+			IOTerminal terminal = new IOTerminal();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 	}
 
