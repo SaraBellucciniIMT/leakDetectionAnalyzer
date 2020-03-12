@@ -21,18 +21,30 @@ import org.jbpt.pm.bpmn.CatchingEvent;
 import org.jbpt.pm.bpmn.EndEvent;
 import org.jbpt.pm.bpmn.StartEvent;
 import org.jbpt.pm.bpmn.Task;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONStringer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import com.google.common.collect.Sets;
+
+import algo.AbstractTranslationAlg;
+import algo.IDOperaion;
+import io.pet.Cipher;
+import io.pet.KComputation;
+import io.pet.KDecrypt;
+import io.pet.KEncrypt;
+import io.pet.Key;
 import io.pet.PET;
 import io.pet.PETLabel;
 import io.pet.SScomputation;
 import io.pet.SSreconstruction;
 import io.pet.SSsharing;
+import rpstTest.Utils;
 
 /*
  * Every partecipant is inteded as a bpmn model itself, not as a unique model
@@ -42,12 +54,25 @@ public class BpmnParser {
 	private final static String collaboration = "bpmn2:collaboration";
 	private final static String sssharing = "pleak:sssharing";
 	private final static String sscomputation = "pleak:sscomputation";
-	private final static String ssreconstruction = "pleak:SSReconstruction";
+	private final static String ssreconstruction = "pleak:ssreconstruction";
+	private final static String addsssharing = "pleak:addsssharing";
+	private final static String addsscomputation = "pleak:addsscomputation";
+	private final static String addssreconstruction = "pleak:addssreconstruction";
+	private final static String funsssharing = "pleak:funsssharing";
+	private final static String funsscomputation = "pleak:funsscomputation";
+	private final static String funssrecostruction = "pleak:funssreconstruction";
+	private final static String pkencrypt = "pleak:pkencrypt";
+	private final static String pkcomputation = "pleak:pkcomputation";
+	private final static String pkdecrypt = "pleak:pkdecrypt";
+	private final static String skencrypt = "pleak:skencrypt";
+	private final static String skcomputation = "pleak:skcomputation";
+	private final static String skdecrypt = "pleak:skdecrypt";
 	private final static String datainput = "bpmn2:datainputassociation";
 	private final static String dataoutput = "bpmn2:dataoutputassociation";
 	private final static String attrid = "id";
 	private final static String attrname = "name";
-	public  static SSreconstruction uniquereconstruction = null;
+	// public static SSreconstruction uniquereconstruction = null;
+	// private static int id =0;
 	private static Set<SSsharing> setssharing = new HashSet<SSsharing>();
 	private static Set<SScomputation> setsscomputation = new HashSet<SScomputation>();
 
@@ -56,7 +81,6 @@ public class BpmnParser {
 		Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmnSet = new HashSet<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>();
 
 		File file = new File(s);
-
 		while (!file.exists()) {
 			System.err.println(file.getName() + " doens't exist in this directory, try again");
 			break;
@@ -111,7 +135,7 @@ public class BpmnParser {
 			bpmnSet.add(bpmn);
 		}
 
-		setTresholdRecostruction();
+		// setTresholdRecostruction();
 		// Compute message flow
 		Elements collaborationel = doc.getElementsByTag(collaboration);
 
@@ -131,27 +155,16 @@ public class BpmnParser {
 		return Pair.of(bpmnSet, messageflow);
 	}
 
-	private static void setTresholdRecostruction() {
-		if (uniquereconstruction != null) {
-			for (SSsharing s : setssharing)
-				uniquereconstruction.setTreshold(s.getTreshold());
-		}
-		for (SScomputation sc : setsscomputation) {
-			for (SSsharing s : setssharing)
-				sc.setTreshold(s.getTreshold());
-		}
-	}
-	
 	private static void correctData(Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> setbpmns) {
-		for(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : setbpmns) {
-			for(NonFlowNode n: b.getNonFlowNodes()) {
-				PETExtendedNode pet = (PETExtendedNode)n;
-				for(Entry<String,PET> entry : dataobjrefMap.entrySet()) {
-					if(entry.getKey().equals(pet.getName())) {
+		for (Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : setbpmns) {
+			for (NonFlowNode n : b.getNonFlowNodes()) {
+				PETExtendedNode pet = (PETExtendedNode) n;
+				for (Entry<String, PET> entry : dataobjrefMap.entrySet()) {
+					if (entry.getKey().equals(pet.getName())) {
 						pet.setPET(entry.getValue());
 					}
 				}
-			}	
+			}
 		}
 	}
 
@@ -168,83 +181,183 @@ public class BpmnParser {
 	private static void detectAssociation(Elements childrens, Set<PETExtendedNode> datanodeset, FlowNode f) {
 		try {
 			PET pet = null;
-			pet = detectePet(childrens);
-			if (pet != null)
-				f.setDescription(pet.getPET().name() + "-" + pet.getID_protection());
+			if ((AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()) ||(AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) || AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
+				pet = detectePet(childrens, datanodeset);
+			int coundsharesadditivesss = 0;
+			if (pet != null) {
+				if (pet.getPET().equals(PETLabel.SSSHARING) || pet.getPET().equals(PETLabel.KENCRYPT))
+					f.setDescription(pet.getPET().name() + "-" + pet.getIdPet());
+				else
+					f.setDescription(pet.getPET().name());
+			}
 			for (Element child : childrens) {
 				if (child.tagName().equals(datainput)) {
 					String dataobjref = child.getElementsByTag("bpmn2:sourceref").text();
 					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 							.forEach(d -> d.addReadingFlowNode(f));
-
-					if (pet != null && pet.getPET().equals(PETLabel.SSRECONTRUCTION)) {
-						for (PETExtendedNode e : datanodeset) {
-							if (getIdDataNode(e).equals(dataobjref)) {
-								e.setPET(pet);
-								addtoDaraObjMap(e.getName(), pet);
-							}
-						}
-					}
-
 				} else if (child.tagName().equals(dataoutput)) {
 					String dataobjref = child.getElementsByTag("bpmn2:targetref").text();
 					datanodeset.stream().filter(p -> getIdDataNode(p).equals(dataobjref))
 							.forEach(d -> d.addWritingFlowNode(f));
+					if (pet != null) {
+						if (pet.getPET().equals(PETLabel.SSSHARING)) {
+							for (PETExtendedNode d : datanodeset) {
+								if (getIdDataNode(d).equals(dataobjref)) {
+									d.setPET(pet);
+									addtoDaraObjMap(d.getName(), pet);
+									if (((SSsharing) pet).getThreshold() == -1)
+										coundsharesadditivesss += 1;
+								}
+							}
+							// If the thresold is not already set this means that is an addictive ssharing
+							// so the threashold is equal to the number of output data
 
-					if (pet != null && pet.getPET().equals(PETLabel.SSSHARING)) {
-						for (PETExtendedNode d : datanodeset) {
-							if (getIdDataNode(d).equals(dataobjref)) {
-								d.setPET(pet);
-								addtoDaraObjMap(d.getName(), pet);
+						} else if (pet.getPET().equals(PETLabel.SSCOMPUTATION)) {
+							for (PETExtendedNode e : datanodeset) {
+								if (getIdDataNode(e).equals(dataobjref) && !e.hasPET()) {
+									e.setPET(pet);
+									addtoDaraObjMap(e.getName(), pet);
+								}
 							}
-						}
-					} else if (pet != null && pet.getPET().equals(PETLabel.SSCOMPUTATION)) {
-						for (PETExtendedNode e : datanodeset) {
-							if (getIdDataNode(e).equals(dataobjref) && !e.hasPET()) {
-								e.setPET(pet);
-								addtoDaraObjMap(e.getName(), pet);
+						} else if (pet.getPET().equals(PETLabel.SSRECONTRUCTION)) {
+							for (PETExtendedNode e : datanodeset) {
+								if (getIdDataNode(e).equals(dataobjref)) {
+									e.setPET(pet);
+									addtoDaraObjMap(e.getName(), pet);
+								}
 							}
+						} else if (pet.getPET().equals(PETLabel.KENCRYPT)) {
+							// This is the cipher object going out from the encryption task
+							for (PETExtendedNode e : datanodeset) {
+								if (getIdDataNode(e).equals(dataobjref)) {
+									Cipher c = new Cipher();
+									c.setIdPet(((KEncrypt) pet).getKey().getIdPet());
+									e.setPET(c);
+									addtoDaraObjMap(e.getName(), c);
+								}
+							}
+						} else if (pet.getPET().equals(PETLabel.KCOMPUTATION)) {
+							for (PETExtendedNode e : datanodeset) {
+								if (getIdDataNode(e).equals(dataobjref)) {
+									Cipher c = new Cipher();
+									c.setIdPet(((KComputation) pet).getIdCipher());
+									e.setPET(c);
+									addtoDaraObjMap(e.getName(), c);
+								}
+							}
+
 						}
 					}
 				}
 				continue;
 			}
+			if (coundsharesadditivesss != 0) {
+				((SSsharing) pet).setThreshold(coundsharesadditivesss);
+				coundsharesadditivesss = 0;
+			}
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-
 	}
 
-
-	private static PET detectePet(Elements childrens) throws JSONException {
+	private static PET detectePet(Elements childrens, Set<PETExtendedNode> datanodeset) throws JSONException {
 		for (Element child : childrens) {
-			if (child.tagName().equals(sssharing)) {
-				String ssssharing = child.getElementsByTag(sssharing).text();
-				JSONObject obj = new JSONObject(ssssharing);
-				int treshold = obj.getInt("treshold");
-				// int computation = obj.getInt("computationParties");
-				SSsharing ssharing = new SSsharing(treshold);
+			String tagname = child.tagName();
+			if (tagname.equalsIgnoreCase(sssharing) || tagname.equalsIgnoreCase(addsssharing)
+					|| tagname.equalsIgnoreCase(funsssharing)) {
+				SSsharing ssharing = new SSsharing(Utils.getId());
+				if (tagname.equals(sssharing)) {
+					String ssssharing = child.getElementsByTag(tagname).text();
+					JSONObject obj = new JSONObject(ssssharing);
+					int treshold = obj.getInt("treshold");
+					ssharing.setThreshold(treshold);
+				} else if (tagname.equals(funsssharing)) {
+					ssharing.setThreshold(2);
+				}
 				setssharing.add(ssharing);
 				return ssharing;
-			} else if (child.tagName().equals(sscomputation)) {
-				String computation = child.getElementsByTag(sscomputation).text();
+			} else if (tagname.equalsIgnoreCase(sscomputation) || tagname.equalsIgnoreCase(addsscomputation)
+					|| tagname.equalsIgnoreCase(funsscomputation)) {
+				String computation = child.getElementsByTag(tagname).text();
 				JSONObject obj = new JSONObject(computation);
 				String objgroup = obj.getString("groupId");
-
 				for (SScomputation s : setsscomputation) {
-					if (s.getGroup_id().equals(objgroup))
+					if (s.getGroupId().equals(objgroup))
 						return s;
 				}
 				SScomputation sscomputatin = new SScomputation(objgroup);
 				setsscomputation.add(sscomputatin);
 				return sscomputatin;
 
-			} else if (child.tagName().equalsIgnoreCase(ssreconstruction)) {
-				if (uniquereconstruction == null)
-					uniquereconstruction = new SSreconstruction();
-				return uniquereconstruction;
+			} else if (tagname.equalsIgnoreCase(ssreconstruction) || tagname.equalsIgnoreCase(addssreconstruction)
+					|| tagname.equalsIgnoreCase(funssrecostruction)) {
+				return new SSreconstruction(Utils.getId());
+			} else if (tagname.equals(pkencrypt)) {
+				JSONObject obj = new JSONObject(child.getElementsByTag(tagname).text());
+				KEncrypt kencrypt = new KEncrypt();
+				String key = obj.getString("key");
+				datanodeset.forEach(d -> {
+					if (getIdDataNode(d).equals(key)) {
+						Key k = new Key();
+						mapkeygroupid.forEach((g, p) -> {
+							if (p.getRight().contains(d.getName()))
+								k.setIdPet(p.getLeft());
+						});
+						kencrypt.setKey(k);
+						// addtoDaraObjMap(d.getName(), k);
+					}
+				});
+				return kencrypt;
+			} else if (tagname.equals(skencrypt)) {
+				JSONObject obj = new JSONObject(child.getElementsByTag(tagname).text());
+				KEncrypt kencrypt = new KEncrypt();
+				String key = obj.getString("key");
+				datanodeset.forEach(d -> {
+					if (getIdDataNode(d).equals(key)) {
+						Key k = new Key();
+						k.setIdPet(Utils.getId());
+						kencrypt.setKey(k);
+						addtoDaraObjMap(d.getName(), k);
+					}
+				});
+				return kencrypt;
+			} else if (tagname.equals(pkcomputation) || tagname.equals(skcomputation)) {
+				KComputation kcomputation = new KComputation(Utils.getId());
+				JSONObject obj = new JSONObject(child.getElementsByTag(tagname).text());
+				JSONArray arr = obj.getJSONArray("inputTypes");
+				for (int i = 0; i < arr.length(); i++) {
+					JSONObject objtype = arr.getJSONObject(i);
+					String s = objtype.getString("type");
+					if (s.equals("encrypted")) {
+						String data = objtype.getString("id");
+						datanodeset.forEach(d -> {
+							if (getIdDataNode(d).equals(data)) {
+								Cipher c = new Cipher();
+								mapkeygroupid.forEach((g, p) -> {
+									if (p.getRight().contains(d.getName()))
+										c.setIdPet(p.getLeft());
+								});
+								kcomputation.setCipher(c);
+							}
+						});
+					}
+				}
+				return kcomputation;
+			} else if (tagname.equals(pkdecrypt) || tagname.equals(skdecrypt)) {
+				KDecrypt kdecrypt = new KDecrypt(Utils.getId());
+				// String key = obj.getString("key");
+				/*
+				 * datanodeset.forEach(d -> { if (getIdDataNode(d).equals(key))
+				 * kdecrypt.setKeyDecypt(d.getName()); });
+				 */
+				// String ciphertext = obj.getString("ciphertext");
+				/*
+				 * datanodeset.forEach(d -> { if (getIdDataNode(d).equals(ciphertext))
+				 * kdecrypt.setCipherText(d.getName()); }); kdecrypt.setKeyDecypt(key);
+				 * kdecrypt.setCipherText(ciphertext);
+				 */
+				return kdecrypt;
 			}
-
 		}
 		return null;
 	}
@@ -281,19 +394,19 @@ public class BpmnParser {
 	 */
 	private static Map<String, PET> dataobjrefMap = new HashMap<String, PET>();
 
-	private static void addtoDaraObjMap(String s,PET p) {
+	private static void addtoDaraObjMap(String s, PET p) {
 		boolean change = false;
-		for(Entry<String,PET> entry : dataobjrefMap.entrySet()) {
-			if(entry.getKey().equals(s) ) {
-				//if(entry.getValue().getPET().equals(PETLabel.SSCOMPUTATION))
-				if(p.getPET().equals(PETLabel.SSRECONTRUCTION))	
-					entry.setValue(p);
+		for (Entry<String, PET> entry : dataobjrefMap.entrySet()) {
+			if (entry.getKey().equals(s)) {
 				change = true;
 			}
 		}
-		if(!change)
-			dataobjrefMap.put(s,p);
+		if (!change)
+			dataobjrefMap.put(s, p);
 	}
+
+	private static Map<String, Pair<Integer, Set<String>>> mapkeygroupid = new HashMap<String, Pair<Integer, Set<String>>>();
+
 	private static Set<PETExtendedNode> detectDataObject(Elements datapobref) {
 		Set<PETExtendedNode> datanodeSet = new HashSet<PETExtendedNode>();
 		for (Element d : datapobref) {
@@ -305,9 +418,38 @@ public class BpmnParser {
 				dn.setId(d.attr("id") + differentnames[i]);
 				dn.setName(differentnames[i]);
 				datanodeSet.add(dn);
-				for(Entry<String,PET> entry : dataobjrefMap.entrySet()) {
-					if(entry.getKey().equals(differentnames[i]))
+
+				for (Entry<String, PET> entry : dataobjrefMap.entrySet()) {
+					if (entry.getKey().equals(differentnames[i]))
 						dn.setPET(entry.getValue());
+				}
+				for (Element child : d.children()) {
+					// In case of private key encryption
+					if (child.tagName().equals("pleak:pkprivate") || child.tagName().equals("pleak:pkpublic")) {
+						String pkp = child.getElementsByTag(child.tagName()).text();
+						JSONObject obj;
+						try {
+							obj = new JSONObject(pkp);
+							String objgroup = obj.getString("groupId");
+							Key k = new Key();
+							if (mapkeygroupid.containsKey(objgroup)) {
+								k.setIdPet(mapkeygroupid.get(objgroup).getLeft());
+								mapkeygroupid.get(objgroup).getRight().add(dn.getName());
+							} else {
+								int id = Utils.getId();
+								k.setIdPet(id);
+								mapkeygroupid.put(objgroup, Pair.of(id, Sets.newHashSet(dn.getName())));
+							}
+
+							if (child.tagName().equals("pleak:pkprivate")) {
+								dn.setPET(k);
+								addtoDaraObjMap(dn.getName(), k);
+							}
+						} catch (JSONException e) {
+							e.printStackTrace();
+						}
+
+					}
 				}
 			}
 		}

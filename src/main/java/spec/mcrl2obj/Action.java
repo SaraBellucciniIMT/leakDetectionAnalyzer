@@ -3,8 +3,8 @@ package spec.mcrl2obj;
 import org.apache.commons.lang3.ArrayUtils;
 
 import algo.AbstractTranslationAlg;
+import spec.mcrl2obj.DataParameter;
 import algo.IDOperaion;
-import io.pet.PET;
 import rpstTest.Utils;
 
 public class Action {
@@ -22,7 +22,6 @@ public class Action {
 	// e1...en :Data
 	private boolean isParameter = false;
 	private static final String tau = "tau";
-	private static final String violation = "VIOLATION";
 	private static final String input = "i";
 	private static final String output = "o";
 	private static final String sendread = "sendread";
@@ -30,7 +29,12 @@ public class Action {
 	private boolean isTemporary = false;
 	private static final String memory = "memory";
 	private boolean istau = false;
-	private String pet="";
+	private String pet = "";
+
+	public Action(String name) {
+		this.name = name;
+		this.parameters = new DataParameter[0];
+	}
 
 	public Action(String name, DataParameter... dataParameters) {
 		this.name = name;
@@ -48,18 +52,28 @@ public class Action {
 		this.id = id;
 	}
 
+	private String petid;
+
 	public void setPet(String pet) {
-		this.pet = pet;
+		String[] split = pet.split("-");
+		this.pet = split[0];
+		if (split.length > 1)
+			this.petid = split[1];
 	}
 
-	public boolean equalPet(PET p) {
-		String[] split = this.pet.split("-");
-		if(p.getPET().name().equals(split[0]) && p.getID_protection() == Integer.valueOf(split[1]))
+	public String getPETid() {
+		return this.petid;
+	}
+
+	public boolean equalPet(String petname, String id_shares) {
+		if (this.pet.equals(petname) && petid.equals(id_shares))
 			return true;
+
 		return false;
 	}
-	
-	//PET is given by petname-id_protection, example SSHARING-(no threshold but id of the privacy label)
+
+	// PET is given by petname-id_protection, example SSHARING-(no threshold but id
+	// of the privacy label)
 	public String getPet() {
 		return this.pet;
 	}
@@ -92,11 +106,14 @@ public class Action {
 		DataParameter par = new DataParameter(sort);
 		return new Action(memory + (index++), par);
 	}
-	
+
 	public static Action setVIOLATOINAction() {
-		return new Action(violation);
+		return new Action(mCRL2.violation);
 	}
 
+	public static Action setRECOSTRUCTIONAction() {
+		return new Action(mCRL2.recostruct);
+	}
 	public static Action setSendReadAction(DataParameter... dataParameters) {
 		return new Action(sendread, dataParameters);
 	}
@@ -168,22 +185,21 @@ public class Action {
 		else if (id != null) {
 			String s = name;
 			if (parameters != null && parameters.length != 0)
-				return s + "(union("+lp+rp+","+lp+  Utils.organizeParameterAsString(parameters) + rp+"))";
+				return s + "(union(" + lp + rp + "," + lp + Utils.organizeParameterAsString(parameters) + rp + "))";
 			else
-				return s + "("+lp+rp+")";
+				return s + "(" + lp + rp + ")";
 		} else if (isParameter) {
 			return Utils.organizeParameterAsString(parameters) + ": " + parameters[0].getSort().getName();
-		}else if(isTemporary) {
-				String s = name;
-				s = s+"("+ parameters[0].toString() +","+lp;
-				for(int i=1 ; i<parameters.length; i++) {
-					s = s + parameters[i];
-					if(i!= parameters.length-1)
-						s = s + ",";
-				}
-				return s + rp +")";
+		} else if (isTemporary) {
+			String s = name;
+			s = s + "(" + parameters[0].toString() + "," + lp;
+			for (int i = 1; i < parameters.length; i++) {
+				s = s + parameters[i];
+				if (i != parameters.length - 1)
+					s = s + ",";
 			}
-		 else if (parameters.length != 0 && !this.name.isEmpty() && this.name.equals("!empty")) {
+			return s + rp + ")";
+		} else if (parameters.length != 0 && !this.name.isEmpty() && this.name.equals("!empty")) {
 			return name + "(" + Utils.organizeParameterAsString(parameters) + ")";
 		} else if (parameters.length != 0 && !this.name.isEmpty())
 			return name + "(" + Utils.organizeParameterAsString(parameters) + ")";
@@ -192,17 +208,23 @@ public class Action {
 	}
 
 	public static String setRightParenthesis() {
-		if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
+		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
 			return "}";
-		else if(AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal())
+		else if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
 			return "]";
 		return null;
 	}
-	
+
 	public static String setLeftParenthesis() {
-		if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
+		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
 			return "{";
-		else if(AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal())
+		else if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
 			return "[";
 		return null;
 	}
@@ -218,6 +240,7 @@ public class Action {
 		}
 		return false;
 	}
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

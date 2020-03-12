@@ -11,12 +11,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.apache.commons.lang3.tuple.Triple;
+import org.apache.commons.lang3.tuple.Pair;
 
 import algo.AbstractTranslationAlg;
 import algo.IDOperaion;
 import io.pet.PET;
 import io.pet.PETLabel;
+import io.pet.SSsharing;
 import spec.ISpec;
 
 /*
@@ -24,7 +25,40 @@ import spec.ISpec;
  */
 public class mCRL2 implements ISpec {
 
-	public Set<Sort> sorts;
+	public static final String recostruct = "RECOSTRUCTED";
+	public static final String violation = "VIOLATION";
+	public static final String sss = "sssharing";
+	public static final String is_sss = "is_sssharing";
+	public static final String ssc = "sscomputation";
+	public static final String is_ssc = "is_sscomputation";
+	public static final String ssr = "ssrecostruction";
+	public static final String is_ssr = "is_ssrecostruction";
+	public static final String node = "node";
+	public static final String is_n = "is_node";
+	public static final String pnode = "pnode";
+	public static final String is_pn = "is_pnode";
+	public static final String v = "value";
+	public static final String pv = "pvalue";
+	public static final String dk = "decondingkey";
+	public static final String is_dk = "is_decondingkey";
+	public static final String cip = "cipher";
+	public static final String is_cip = "is_cipher";
+	public static final String unionf = "union";
+	public static final String emptyf = "empty";
+	public static final String head = "head";
+	public static final String tail = "tail";
+	public static final String frt = "frt";
+	public static final String snd = "snd";
+	public static final String pair = "pair";
+	public static final String TH = "TH";
+	private Sort sortnat = new Sort("Nat");
+	protected static StructSort sortname = new StructSort("Name");
+	protected static StructSort sortpname = new StructSort("PName");
+	protected static StructSort sortprivacy = new StructSort("Privacy");
+	protected static StructSort sortdata = new StructSort("Data");
+	protected static Sort sortmemory = new Sort("Memory");
+	protected static Sort sortbool = new Sort("Bool");
+	public static final String eps = "eps";
 	private Set<Action> actions;
 	private Set<Action> allow;
 	private Set<CommunicationFunction> comm;
@@ -32,20 +66,22 @@ public class mCRL2 implements ISpec {
 	private Set<AbstractProcess> processes;
 	private Set<String> initSet;
 	private static int id = 0;
-	// private Map<PET, Set<String>> sensibledata;
-	private int id_op;
 
-	public mCRL2(int id_op) {
+	public mCRL2() {
 		this.actions = new HashSet<Action>();
 		this.allow = new HashSet<Action>();
-		if (id_op == IDOperaion.SSSHARING.getVal())
+		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal())
 			this.allow.add(Action.setVIOLATOINAction());
+		else if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
+			this.actions.add(Action.setRECOSTRUCTIONAction());
+			this.allow.add(Action.setRECOSTRUCTIONAction());
+		}
 		this.comm = new HashSet<CommunicationFunction>();
-		this.sorts = new HashSet<Sort>();
+		// this.sorts = new HashSet<Sort>();
 		this.hide = new HashSet<Action>();
 		this.processes = new HashSet<AbstractProcess>();
 		this.initSet = new HashSet<String>();
-		this.id_op = id_op;
 	}
 
 	public void addCommunicaitonFunction(CommunicationFunction f) {
@@ -64,13 +100,6 @@ public class mCRL2 implements ISpec {
 		return null;
 	}
 
-	/*
-	 * public Map<PET, Set<String>> getSensibleData() { return this.sensibledata; }
-	 * 
-	 * public void setSensibleData(Map<PET, Set<String>> s) { this.sensibledata = s;
-	 * }
-	 */
-
 	public void addAction(Action... action) {
 		for (Action a : action) {
 			boolean t = false;
@@ -83,9 +112,70 @@ public class mCRL2 implements ISpec {
 		}
 	}
 
-	public void addSort(Sort... sorts) {
-		for (int i = 0; i < sorts.length; i++)
-			this.sorts.add(sorts[i]);
+	public String getValueTreshold() {
+		for (Pair<String, PET> p : sortdata.getPrivatePair()) {
+			if (p.getRight().getPET().equals(PETLabel.SSSHARING))
+				return String.valueOf(((SSsharing) p.getRight()).getThreshold());
+		}
+		return "";
+	}
+
+	// Data = struct data1 |... | datan;
+	public StructSort getSortName() {
+		return sortname;
+	}
+
+	public void setSortPName() {
+		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
+			sortpname.addType(printf(sss, sortname.getName()) + "?" + is_sss);
+			sortpname.addType(printf(ssc, sortname.getName()) + "?" + is_ssc);
+			sortpname.addType(printf(ssr, sortname.getName()) + "?" + is_ssr);
+		} else if (AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
+			sortpname.addType(printf(dk, sortname.getName()) + "?" + is_dk);
+			sortpname.addType(printf(cip, sortname.getName()) + "?" + is_cip);
+		}
+	}
+
+	public StructSort getSortPName() {
+		return sortpname;
+	}
+
+	public void setSortPrivacy() {
+		sortprivacy.addType("pair(frt:" + sortpname.getName() + ",snd:Nat)");
+	}
+
+	public StructSort getSortPrivacy() {
+		return sortprivacy;
+	}
+
+	public void setSortData() {
+		sortdata.addType(printf(node, v + ":" + sortname.getName()) + "?" + is_n);
+		sortdata.addType(eps);
+	}
+
+	public StructSort getSortData() {
+		return sortdata;
+	}
+
+	public void setSortMemory() {
+		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
+			sortmemory.addType(" Set(" + sortdata.getName() + ")");
+		else if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
+			sortmemory.addType(" List(" + sortdata.getName() + ")");
+		}
+	}
+
+	public Sort getSortMemory() {
+		return sortmemory;
+	}
+
+	// Predefined mcrl2 sort
+	public Sort getSortBool() {
+		return sortbool;
 	}
 
 	public void addAllow(Action... allow) {
@@ -150,16 +240,29 @@ public class mCRL2 implements ISpec {
 		this.initSet.remove(name);
 	}
 
+	private String printSorts() {
+		String s = "";
+		if (!sortname.isEmpty())
+			s = s + sortname.toString() + ";\n";
+		if (!sortpname.isEmpty())
+			s = s + sortpname.toString() + ";\n";
+		if (!sortprivacy.isEmpty())
+			s = s + sortprivacy.toString() + ";\n";
+		if (!sortdata.isEmpty())
+			s = s + sortdata.toString() + ";\n";
+		if (!sortmemory.isEmpty())
+			s = s + sortmemory.toString() + ";\n";
+		return s;
+	}
+
 	@Override
 	public String toString() {
 		String s = "sort ";
-		for (Sort sort : sorts) {
-			if (!sort.getName().equalsIgnoreCase("bool"))
-				s = s + sort.toString() + ";\n";
-		}
+		s = s + printSorts();
 		s = s + memoryToString();
 		s = s + "act" + "\n";
-		if (id_op == IDOperaion.SSSHARING.getVal())
+		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal())
 			s = s + "VIOLATION;\n";
 		Map<String, Set<String>> classact = classifyaction();
 		for (Entry<String, Set<String>> entry : classact.entrySet()) {
@@ -247,7 +350,6 @@ public class mCRL2 implements ISpec {
 			}
 		}
 		return classact;
-
 	}
 
 	public void taureduction() {
@@ -333,6 +435,14 @@ public class mCRL2 implements ISpec {
 		}
 	}
 
+	public TaskProcess identifyTaskProcessFromAction(Action a) {
+		for (AbstractProcess p : processes) {
+			if (p.getClass().equals(TaskProcess.class) && ((TaskProcess) p).getAction().equals(a))
+				return (TaskProcess) p;
+		}
+		return null;
+	}
+
 	public AbstractProcess identifyAbstractProcess(String name) {
 		for (AbstractProcess p : processes) {
 			if (p.getName().equals(name))
@@ -390,7 +500,7 @@ public class mCRL2 implements ISpec {
 
 	public String toStringData() {
 		String s = "All data in the model ";
-		for (String t : AbstractTranslationAlg.getSortData().getTypes())
+		for (String t : sortname.getTypes())
 			s = s + t.toString() + "\n";
 
 		return s;
@@ -410,47 +520,231 @@ public class mCRL2 implements ISpec {
 		return file.getName().replace(".mcrl2", "");
 	}
 
+	// print namef = domain1 # domain2 # ... # domainn -> codomain
+	private String printMap(String namef, Sort codomain, Sort... domain) {
+		String s = namef + ":";
+		for (int i = 0; i < domain.length; i++) {
+			s = s + domain[i].getName();
+			if (i != domain.length - 1)
+				s = s + "#";
+		}
+		s = s + "->" + codomain.getName() + "; \n";
+		return s;
+	}
+
+	// Print (ifs) -> thens = eqs
+	public static String printifeqn(String ifs, String thens, String eqs) {
+		String s = "";
+		if (!eqs.isEmpty())
+			s = "(" + ifs + ") -> " + thens + " = " + eqs + ";\n";
+		else
+			s = "(" + ifs + ") -> " + thens;
+		return s;
+	}
+
+	// Print f = true;
+	private String printtruef(String f) {
+		return f + " = " + true + ";\n";
+	}
+
+	// Print f = false;
+	public static String printfalsef(String f) {
+		return f + "=" + false + ";\n";
+	}
+
+	// Print f(arg1,arg2,...,argn)
+	public static String printf(String f, String... arg) {
+		String s = f + "(";
+		for (int i = 0; i < arg.length; i++) {
+			s = s + arg[i];
+			if (i != arg.length - 1)
+				s = s + ",";
+		}
+		s = s + ")";
+		return s;
+	}
+
+	private String printvar(Sort domain, String... vars) {
+		String s = "";
+		for (int i = 0; i < vars.length; i++) {
+			s = s + vars[i];
+			if (i != vars.length - 1)
+				s = s + ",";
+		}
+		s = s + " : " + domain.getName() + ";\n";
+		return s;
+	}
+
 	// Print in output of all the function in map, var and eqn, remember to modify 1
 	// with the real thresold value
 	private String memoryToString() {
 		String m1 = Action.setTemporaryAction().getName();
 		String m2 = Action.setTemporaryAction().getName();
-		String list = Action.setTemporaryAction().getName();
-		String d = Action.setTemporaryAction().getName();
-		String b = Action.setTemporaryAction().getName();
+		String pn = Action.setTemporaryAction().getName();
 		String n = Action.setTemporaryAction().getName();
+		String p = Action.setTemporaryAction().getName();
+		String data = Action.setTemporaryAction().getName();
+		String i = Action.setTemporaryAction().getName();
 		String id = Action.setTemporaryAction().getName();
-		String e = Action.setTemporaryAction().getName();
-		String s = "map \r\n" + "union : Memory # Memory -> Memory;\r\n " + "empty : EvalData -> Bool;\r\n";
-		if (id_op == IDOperaion.SSSHARING.getVal()) {
-			s = s + "sssharingviolation : Nat # Memory # Nat-> Bool;\r\n"
-					+ "sssprivatelist : Nat # Memory # Memory -> Memory;\r\n";
+		String s = "map \r\n";
+		s = s + printMap("union", sortmemory, sortmemory, sortmemory);
+		if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal()) {
+			s = s + printMap(emptyf, sortbool,sortmemory);
+		}else 
+			s = s + printMap("empty", sortbool, sortdata);
+		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()) {
+			s = s + TH + " : " + sortnat.getName() + ";\n";
+			s = s + printMap("sssharingviolation", sortbool, sortnat, sortmemory);
+			s = s + printMap("sslist", sortnat, sortnat, sortmemory, sortnat);
+			s = s + printMap("sscompviolation", sortbool, sortnat, sortmemory);
+			s = s + printMap("sscomp", sortnat, sortnat, sortmemory, sortnat);
+			s = s + printMap("ssrecviolation", sortbool, sortmemory);
+		} else if (AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
+			s = s + printMap("haskey", sortbool, sortmemory, sortnat);
+			s = s + printMap("hascipher", sortbool, sortmemory, sortnat);
+			s = s + printMap("encryptionviolation", sortbool, sortmemory, sortnat);
+		} else if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
+			s = s + TH + " : " + sortnat.getName() + ";\n";
+			s = s + printMap("rlist", sortnat, sortmemory, sortnat);
+			s = s + printMap("is_recostructed", sortbool, sortmemory);
 		}
-		s = s + "var\r\n" + m1 + "," + m2 + "," + list + ": Memory;\r\n" + d + ": Data; \r\n" + b + ": Bool; \r\n";
-		if (id_op == IDOperaion.SSSHARING.getVal())
-			s = s + n + "," + id + ": Nat;\r\n";
-		else
-			s = s + n + ":Nat;\r\n";
-		s = s + e + ": EvalData;\r\n" + "eqn \r\n" + "fst(triple(" + d + "," + b + "," + n + "))=" + d + ";\r\n"
-				+ "snd(triple(" + d + "," + b + "," + n + "))=" + b + ";\r\n" + "trd(triple(" + d + "," + b + "," + n
-				+ "))=" + n + ";\r\n" + "(" + e + "== " + AbstractTranslationAlg.empty + ") -> empty(" + e
-				+ ") = true;\r\n" + "(" + e + "!=" + AbstractTranslationAlg.empty + ") -> empty(" + e
-				+ ") = false; \r\n";
-		if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal() || id_op == IDOperaion.RECONSTRUCTION.getVal())
-			s = s + "union(" + m1 + "," + m2 + ")= " + m1 + "+" + m2 + ";\r\n";
-		else if (id_op == IDOperaion.SSSHARING.getVal())
-			s = s + "(head(" + m2 + ") in " + m1 + ") -> union(" + m1 + "," + m2 + ") = union(" + m1 + ",tail(" + m2
-					+ "));\r\n" + "(!(head(" + m2 + ") in " + m1 + ")) -> union(" + m1 + "," + m2 + ") = union(" + m1
-					+ "<|head(" + m2 + "),tail(" + m2 + "));\r\n" + "(" + m2 + "==[]) -> union(" + m1 + "," + m2
-					+ ") = " + m1 + "; \r\n" + "(#sssprivatelist(" + id + "," + m1 + ",[])>=" + n
-					+ ") -> sssharingviolation(" + id + "," + m1 + "," + n + ")= true;\r\n" + "(#sssprivatelist(" + id
-					+ "," + m1 + ",[])<" + n + ") -> sssharingviolation(" + id + "," + m1 + "," + n + ")= false;\r\n"
-					+ "(trd(head(" + m1 + ")) == " + id + ") -> sssprivatelist(" + id + "," + m1 + "," + list
-					+ ")=sssprivatelist(" + id + ",tail(" + m1 + ")," + list + "<|head(" + m1 + "));\r\n" + "(trd(head("
-					+ m1 + ")) != " + id + ") -> sssprivatelist(" + id + "," + m1 + "," + list + ")=sssprivatelist("
-					+ id + ",tail(" + m1 + ")," + list + ");\r\n" + "(" + m1 + "==[]) -> sssprivatelist(" + id + ","
-					+ m1 + "," + list + ") = " + list + ";\r\n";
+		s = s + "var\r\n";
+		s = s + printvar(sortmemory, m1, m2);
+		s = s + printvar(sortdata, data);
+		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
+			s = s + printvar(sortpname, pn);
+			s = s + printvar(sortname, n);
+			s = s + printvar(sortprivacy, p);
+			s = s + printvar(sortnat, i, id);
+		}
+		s = s + "eqn \n";
+		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal()) {
+			s = s + printf(unionf, m1, m2) + "=" + m1 + " + " + m2 + ";\n";
+			s = s + printf(emptyf, m1) + "= { dd :" + sortdata.getName() + " | ({ dd } * " + m1 + "!= {}) && (dd != "
+					+ eps + ")} == {};\n";
+		} else if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
+			s = s + printifeqn(printf(head, m2) + " in " + m1, printf(unionf, m1, m2),
+					printf(unionf, m1, printf(tail, m2)));
+			s = s + printifeqn("!(" + printf(head, m2) + " in " + m1 + ")", printf(unionf, m1, m2),
+					printf(unionf, m1 + " <| " + printf(head, m2), printf(tail, m2)));
+			s = s + printifeqn(m2 + "== [] ", printf(unionf, m1, m2), m1);
+			s = s + printifeqn(m1 + "== [] ", printf(unionf, m1, m2), m2);
+			s = s + printifeqn(data + "== " + eps, printtruef(printf(emptyf, data)), "");
+			s = s + printifeqn(data + "!= " + eps, printfalsef(printf(emptyf, data)), "");
+			s = s + printf(v, printf(node, n)) + " = " + n + ";\n";
+			s = s + printf(pv, printf(pnode, p)) + " = " + p + ";\n";
+			s = s + printtruef(printf(is_n, printf(node, n)));
+			s = s + printfalsef(printf(is_n, printf(pnode, p)));
+			s = s + printfalsef(printf(is_pn, printf(node, n)));
+			s = s + printtruef(printf(is_pn, printf(pnode, p)));
+			s = s + printf(frt, printf(pair, pn, i)) + "=" + pn + ";\n";
+			s = s + printf(snd, printf(pair, pn, i)) + "=" + i + ";\n";
+		}
+		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
+				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
+			s = s + TH + "=" + getValueTreshold() + ";\n";
+			s = s + printtruef(printf(is_sss, printf(sss, n)));
+			s = s + printfalsef(printf(is_sss, printf(ssc, n)));
+			s = s + printfalsef(printf(is_sss, printf(ssr, n)));
+			s = s + printtruef(printf(is_ssc, printf(ssc, n)));
+			s = s + printfalsef(printf(is_ssc, printf(sss, n)));
+			s = s + printfalsef(printf(is_ssc, printf(ssr, n)));
+			s = s + printtruef(printf(is_ssr, printf(ssr, n)));
+			s = s + printfalsef(printf(is_ssr, printf(ssc, n)));
+			s = s + printfalsef(printf(is_ssr, printf(sss, n)));
+			// if its just sssharing checking
+			if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()) {
+				s = s + printifeqn(printf("sslist", id, m1, String.valueOf(0)) + ">=" + TH,
+						printtruef(printf("sssharingviolation", id, m1)), "");
+				s = s + printifeqn(printf("sslist", id, m1, String.valueOf(0)) + "<" + TH,
+						printfalsef(printf("sssharingviolation", id, m1)), "");
+				s = s + printifeqn(
+						printf(is_pn, printf(head, m1)) + " && "
+								+ printf(is_sss, printf(frt, printf(pv, printf(head, m1)))) + " && "
+								+ printf(snd, printf(pv, printf(head, m1))) + " == " + id,
+						printf("sslist", id, m1, i),
+						printf("sslist", id, printf(tail, m1), String.valueOf(i) + "+" + 1));
+				s = s + printifeqn(
+						printf("!(" + is_pn, printf(head, m1)) + ") || !("
+								+ printf(is_sss, printf(frt, printf(pv, printf(head, m1)))) + ") || "
+								+ printf(snd, printf(pv, printf(head, m1))) + " != " + id,
+						printf("sslist", id, m1, i), printf("sslist", id, printf(tail, m1), i));
+				s = s + printifeqn(m1 + "== []", printf("sslist", id, m1, i), i);
+				s = s + printifeqn(printf("sscomp", id, m1, String.valueOf(0)) + ">=" + TH,
+						printtruef(printf("sscompviolation", id, m1)), "");
+				s = s + printifeqn(printf("sscomp", id, m1, String.valueOf(0)) + "<" + TH,
+						printfalsef(printf("sscompviolation", id, m1)), "");
+				s = s + printifeqn(
+						printf(is_pn, printf(head, m1)) + " && "
+								+ printf(is_ssc, printf(frt, printf(pv, printf(head, m1)))) + " && "
+								+ printf(snd, printf(pv, printf(head, m1))) + " == " + id,
+						printf("sscomp", id, m1, i),
+						printf("sscomp", id, printf(tail, m1), String.valueOf(i) + "+" + 1));
+				s = s + printifeqn(
+						printf("!(" + is_pn, printf(head, m1)) + ") || !("
+								+ printf(is_ssc, printf(frt, printf(pv, printf(head, m1)))) + ") || "
+								+ printf(snd, printf(pv, printf(head, m1))) + " != " + id,
+						printf("sscomp", id, m1, i), printf("sscomp", id, printf(tail, m1), i));
+				s = s + printifeqn(m1 + "== []", printf("sscomp", id, m1, i), i);
+				s = s + printifeqn(
+						"exists dd:" + sortdata.getName() + ". dd in " + m1 + "&&" + printf(is_pn, printf(head, m1))
+								+ "&&" + printf(is_ssr, printf(frt, printf(pv, printf(head, m1)))),
+						printtruef(printf("ssrecviolation", m1)), "");
+				s = s + printifeqn(
+						"!(exists dd:" + sortdata.getName() + ". dd in " + m1 + "&&" + printf(is_pn, printf(head, m1))
+								+ "&&" + printf(is_ssr, printf(frt, printf(pv, printf(head, m1)))) + ")",
+						printfalsef(printf("ssrecviolation", m1)), "");
+			} else if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
+				s = s + printifeqn(printf("rlist", m1, String.valueOf(0)) + ">=" + TH,
+						printtruef(printf("is_recostructed", m1)), "");
+				s = s + printifeqn(printf("rlist", m1, String.valueOf(0)) + "<" + TH,
+						printfalsef(printf("is_recostructed", m1)), "");
+				s = s + printifeqn(
+						printf(is_pn, printf(head, m1)) + " && " + "("
+								+ printf(is_sss, printf(frt, printf(pv, printf(head, m1)))) + "||"
+								+ printf(is_ssc, printf(frt, printf(pv, printf(head, m1)))) + ")",
+						printf("rlist", m1, i), printf("rlist", printf(tail, m1), String.valueOf(i) + "+" + 1));
+				s = s + printifeqn(
+						printf("!(" + is_pn, printf(head, m1)) + ") || !("
+								+ printf(is_sss, printf(frt, printf(pv, printf(head, m1)))) + ") || !("
+								+ printf(is_ssc, printf(frt, printf(pv, printf(head, m1)))) + ")"
+								,
+						printf("rlist", m1, i), printf("rlist", printf(tail, m1), i));
+				s = s + printifeqn(m1 + "== []", printf("rlist", m1, i), i);
 
+			}
+		} else if (AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
+			s = s + printifeqn(
+					printf(is_pn, printf(head, m1)) + " && " + printf(is_dk, printf(frt, printf(pv, printf(head, m1))))
+							+ " && " + printf(snd, printf(pv, printf(head, m1))) + " == " + id,
+					printtruef(printf("haskey", m1, id)), "");
+			s = s + printifeqn(
+					"!(" + printf(is_pn, printf(head, m1)) + " )|| !("
+							+ printf(is_dk, printf(frt, (printf(pv, printf(head, m1))))) + ") || !("
+							+ printf(snd, printf(pv, printf(head, m1))) + " == " + id + ")",
+					printf("haskey", m1, id), printf("haskey", printf(tail, m1), id));
+			s = s + printifeqn(m1 + "== []", printfalsef(printf("haskey", m1, id)), "");
+			s = s + printifeqn(
+					printf(is_pn, printf(head, m1)) + " && " + printf(is_cip, printf(frt, printf(pv, printf(head, m1))))
+							+ " && " + printf(snd, printf(pv, printf(head, m1))) + " == " + id,
+					printtruef(printf("hascipher", m1, id)), "");
+			s = s + printifeqn(
+					"!(" + printf(is_pn, printf(head, m1)) + " )|| !("
+							+ printf(is_cip, printf(frt, printf(pv, printf(head, m1)))) + ") || !("
+							+ printf(snd, printf(pv, printf(head, m1))) + " == " + id + ")",
+					printf("hascipher", m1, id), printf("hascipher", printf(tail, m1), id));
+			s = s + printifeqn(m1 + "== []", printfalsef(printf("hascipher", m1, id)), "");
+			s = s + printifeqn(printf("haskey", m1, id) + " && " + printf("hascipher", m1, id),
+					printtruef(printf("encryptionviolation", m1, id)), "");
+			s = s + printifeqn("!" + printf("haskey", m1, id) + " || !" + printf("hascipher", m1, id),
+					printfalsef(printf("encryptionviolation", m1, id)), "");
+
+		}
 		return s;
 	}
 
@@ -479,28 +773,35 @@ public class mCRL2 implements ISpec {
 		}
 		return null;
 	}
-	
+
 	public Action identifyRecostructionTask() {
-		for(Action a : actions) {
-			if(!a.getPet().isEmpty()) {
-				//System.out.println(a.getPet());
-				String[] petname = a.getPet().split("-"); 
-				if(petname[0].equals(PETLabel.SSRECONTRUCTION.name()))
+		for (Action a : actions) {
+			if (!a.getPet().isEmpty()) {
+				if (a.getPet().equals(PETLabel.SSRECONTRUCTION.name()))
 					return a;
 			}
 		}
 		return null;
 	}
-	
-	public Set<String> identifyReconstructionData(){
-		Set<String> reconstructiondata = new HashSet<String>();
-		Set<Triple<String,PET,Integer>> triple = AbstractTranslationAlg.getSortEvalData().getPrivateTriple();
-		for(Triple<String,PET,Integer> t : triple) {
-			if(t.getMiddle().getPET().equals(PETLabel.SSRECONTRUCTION)) {
-				reconstructiondata.add(t.getLeft());
-			}
+
+	public Set<Integer> identifySSSharingTask() {
+		Set<Pair<String, PET>> pair = sortdata.getPrivatePair();
+		Set<Integer> set = new HashSet<Integer>();
+		for (Pair<String, PET> p : pair) {
+			if (p.getRight().getPET().equals(PETLabel.SSSHARING))
+				set.add(p.getRight().getIdPet());
 		}
-		return reconstructiondata;
+		return set;
 	}
-	
+
+	public Set<Integer> identifySSComputationTask() {
+		Set<Pair<String, PET>> pair = sortdata.getPrivatePair();
+		Set<Integer> set = new HashSet<Integer>();
+		for (Pair<String, PET> p : pair) {
+			if (p.getRight().getPET().equals(PETLabel.SSCOMPUTATION))
+				set.add(p.getRight().getIdPet());
+		}
+		return set;
+	}
+
 }

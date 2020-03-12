@@ -30,15 +30,13 @@ import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import algo.AbstractTranslationAlg;
 import algo.CollaborativeAlg;
 import algo.IDOperaion;
-import formula.TaskFormula;
 import formula.TextInterpreterFormula;
 import io.BpmnParser;
 import pcrrlalgoelement.Parout;
 import spec.mcrl2obj.Action;
+import spec.mcrl2obj.Sort;
 import spec.mcrl2obj.TaskProcess;
 import spec.mcrl2obj.mCRL2;
 
@@ -50,7 +48,6 @@ public class IOTerminal {
 	private static Scanner scan;
 	private final static String YES = "Y";
 	private final static String NO = "N";
-	//private final static String evidencelps = ".pbes.evidence.lps";
 	private final static String evidencelts = ".pbes.evidence.lts";
 	private final static String evidencefsm = ".pbes.evidence.fsm";
 	private final static String dotmcrl2 = ".mcrl2";
@@ -92,9 +89,11 @@ public class IOTerminal {
 			while (true) {
 				Set<String> datset = new HashSet<>();
 				System.out.println(
-						"Select action:\n" + "->1 Check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
-								+ "->2 Check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
-								+ "->3 verify secret sharing violation \n" + "->4 verify if RECONSTRUCTION is ALWAYS possible\n"+"-> 5 exit");
+						"Select action:\n" + "-> 1 Check if a <SELECTED> task has a set of <Data1,...,Datan> data \n"
+								+ "-> 2 Check if a <SELECTED> partecipants has a set of  <Data1,...,Datan> data \n"
+								+ "-> 3 verify (SS/AddSS/FunSS) violation \n"
+								+ "-> 4 verify if RECONSTRUCTION is ALWAYS possible\n"
+								+ "-> 5 verify PK/SK encryption violaton\n" + "-> 6 exit");
 				scan = new Scanner(System.in);
 				String number = scan.nextLine();
 				String partecipant;
@@ -111,8 +110,8 @@ public class IOTerminal {
 						partecipant = scan.nextLine();
 					}
 					System.out.println(mcrl2.toStringData());
-					datset.addAll(dataexist());
-					check = TaskFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, 1);
+					datset.addAll(dataexist(mcrl2.getSortName()));
+					check = TextInterpreterFormula.generateTaskFormula(mcrl2, dirname.getPath(), partecipant, datset);
 					if (displayalternativeoutput(check))
 						break;
 					callFormula(mcrl2);
@@ -128,33 +127,34 @@ public class IOTerminal {
 						partecipant = scan.nextLine();
 					}
 					System.out.println(mcrl2.toStringData());
-					datset.addAll(dataexist());
-					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, 2);
+					datset.addAll(dataexist(mcrl2.getSortName()));
+					check = TextInterpreterFormula.generateParticipantFormula(mcrl2, dirname.getPath(), partecipant,
+							datset);
 					if (displayalternativeoutput(check))
 						break;
 					callFormula(mcrl2);
 					break;
 				case 3:
 					mcrl2 = generateSpecLps(translationalg, 3, filename);
-					lps2lts();
+					mcrl22lps();
+					lps2lts(3, mcrl2);
 					break;
 				case 4:
-					mcrl2 = generateSpecLps(translationalg, 1, filename);
+					mcrl2 = generateSpecLps(translationalg, 4, filename);
 					Action reconstruct = mcrl2.identifyRecostructionTask();
-					if(reconstruct == null) {
-						System.out.println("NO RECOSTRUCTION ACTION APPEAR IN THE MODEL");
+					if (reconstruct == null) {
+						System.out.println("NO RECOSTRUCTION ACTION TASK IN THE MODEL");
 						break;
 					}
-					partecipant = reconstruct.getName();
-					datset.addAll(mcrl2.identifyReconstructionData());
-					if(datset.isEmpty()) {
-						System.out.println("NO RECONSTRUCTION DATA ");
-						break;
-					}
-					check = TextInterpreterFormula.toFile(mcrl2, dirname.getPath(), partecipant, datset, 4);
-					callFormula(mcrl2);
+					mcrl22lps();
+					lps2lts(4, mcrl2);
 					break;
 				case 5:
+					mcrl2 = generateSpecLps(translationalg, 5, filename);
+					mcrl22lps();
+					lps2lts(5, mcrl2);
+					break;
+				case 6:
 					cleanDirectory();
 					System.exit(0);
 				default:
@@ -177,13 +177,13 @@ public class IOTerminal {
 		}
 	}
 
-	private Set<String> dataexist() {
+	private Set<String> dataexist(Sort sort) {
 		boolean dontexist = false;
 		Set<String> datset = new HashSet<String>();
 		datset.addAll(scanData());
 		while (!dontexist) {
 			for (String d : datset) {
-				if (AbstractTranslationAlg.getSortData().containtType(d))
+				if (sort.containtType(d))
 					dontexist = true;
 				else {
 					System.out.println(d + " IS NOT A DATA TYPE IN THE SPECIFICATION");
@@ -198,33 +198,37 @@ public class IOTerminal {
 	}
 
 	private mCRL2 generateSpecLps(CollaborativeAlg col, int id_op, String filename) {
-		//long startTime = getCurrentTime();
+		// long startTime = getCurrentTime();
 		mCRL2 mcrl2 = col.getSpec(id_op);
 		Parout parout = new Parout();
 		mcrl2 = parout.parout(mcrl2);
 		mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
-		//long endTime = getCurrentTime();
-		//System.out.println("Traduction time: " + computeTimeSpanms(startTime, endTime) + " ms");
+		// long endTime = getCurrentTime();
+		// System.out.println("Traduction time: " + computeTimeSpanms(startTime,
+		// endTime) + " ms");
 		String lpsgen = "mcrl22lps " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
 		runmcrlcommand(lpsgen);
 		return mcrl2;
 	}
 
 	private void callFormula(mCRL2 mcrl2) {
-		//long startTime = getCurrentTime();
+		// long startTime = getCurrentTime();
 		boolean resultbool = lps2pbes2solve2convert();
 		System.out.println(resultbool);
 		try {
 			if (resultbool) {
-				List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
-				fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
+				if (new File(dirname.getPath() + mcrl2file + evidencefsm).exists()) {
+					List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
+					fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
+				}
 			} else
 				System.out.println("No JSON file generated because there isn't a path to show");
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		//long endTime = getCurrentTime();
-		//System.out.println("Verification time: " + computeTimeSpans(startTime, endTime) + " s");
+		// long endTime = getCurrentTime();
+		// System.out.println("Verification time: " + computeTimeSpans(startTime,
+		// endTime) + " s");
 	}
 
 	// return true if an unexpected output exist, false otherwise
@@ -238,17 +242,20 @@ public class IOTerminal {
 		return true;
 	}
 
-	/*
-	 * private boolean displayalternativeoutputsssharing(String s) { if (s == null)
-	 * System.out.println("NEVER VIOLATED"); else return false; return true;
-	 * 
-	 * }
-	 */
+	private void mcrl22lps() {
+		String mcrl22lps = "mcrl22lps -lstack " + mcrl2file + dotmcrl2 + " " + mcrl2file + dotlps;
+		runmcrlcommand(mcrl22lps);
+	}
 
-	private void lps2lts() {
-		String lps2lts = "lps2lts -aVIOLATION -t1 " + mcrl2file + dotlps;
+	private void lps2lts(int j, mCRL2 mcrl2) {
+		String lps2lts = "";
+		if (j == IDOperaion.SSSHARING.getVal() || j == IDOperaion.ENCRYPTION.getVal())
+			lps2lts = "lps2lts -a" + mCRL2.violation + " -t1 " + mcrl2file + dotlps;
+		else if (j == IDOperaion.RECONSTRUCTION.getVal())
+			lps2lts = "lps2lts -a" + mCRL2.recostruct + " -t1 " + mcrl2file + dotlps;
 		runmcrlcommand(lps2lts);
-		String path = "";
+		List<String> path = new ArrayList<String>();
+		;
 		File dir = new File(dirname);
 		String[] children = dir.list();
 		if (children != null) {
@@ -265,12 +272,8 @@ public class IOTerminal {
 						BufferedReader br = new BufferedReader(fileReader);
 						String line;
 						while ((line = br.readLine()) != null) {
-							if (!line.equals("tau")) {
-								if (path.isEmpty())
-									path = line;
-								else
-									path = path + "," + line;
-							}
+							if (!line.equals("tau"))
+								path.add(line);
 						}
 						br.close();
 					} catch (IOException e) {
@@ -281,11 +284,41 @@ public class IOTerminal {
 				}
 			}
 		}
-		if (path.isEmpty())
-			System.out.println(IDOperaion.SSSHARING + " IS PRESERVED");
-		else
-			System.out.println(path);
+		if (path.isEmpty()) {
+			if (j == IDOperaion.SSSHARING.getVal())
+				System.out.println(IDOperaion.SSSHARING + " IS PRESERVED");
+			else if (j == IDOperaion.ENCRYPTION.getVal()) {
+				System.out.println(IDOperaion.ENCRYPTION + " IS PRESERVED");
+			} else if (j == IDOperaion.RECONSTRUCTION.getVal())
+				System.out.println("NOT RECOSTRUCTED");
+		} else {
+			// System.out.println(path);
+			List<Pair<String, Set<String>>> list = generateList(path, mcrl2);
+			try {
+				fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, list);
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
 
+	private List<Pair<String, Set<String>>> generateList(List<String> path, mCRL2 mcrl2) {
+		List<Pair<String, Set<String>>> list = new ArrayList<Pair<String, Set<String>>>();
+		for (int i = 0; i < path.size(); i++) {
+			String el = path.get(i);
+			if (el.equals(mCRL2.violation) || el.equals(mCRL2.recostruct))
+				continue;
+			String nametask = el.substring(0, el.indexOf("("));
+			Set<String> setdata = new HashSet<String>();
+			for (String s : mcrl2.getSortName().getTypes()) {
+				if (el.contains(Utils.adjustName(s)))
+					setdata.add(s);
+			}
+
+			list.add(Pair.of(nametask, setdata));
+		}
+		return list;
 	}
 
 	private boolean lps2pbes2solve2convert() {
@@ -356,9 +389,8 @@ public class IOTerminal {
 		}
 		cleanDirectory();
 		if (r.equalsIgnoreCase(YES)) {
-			AbstractTranslationAlg.cleanSorts();
 			return;
-		}else
+		} else
 			System.exit(0);
 
 	}
@@ -381,20 +413,22 @@ public class IOTerminal {
 
 					String task = line.substring(line.indexOf("\"") + 1, line.lastIndexOf("\"")).replaceAll("\\(.*\\)",
 							"");
-					// Pattern pattern = Pattern.compile("\\{.*\\}");
-					Pattern pattern = Pattern.compile("triple\\(.*\\)");
-
+					//Pattern pattern = Pattern.compile("node\\(.*\\)");
 					TaskProcess t;
 					if ((t = TextInterpreterFormula.identifyIdTaskFormula(mcrl, task)) != null) {
 						Set<String> tmp = new HashSet<String>();
-						Matcher m = pattern.matcher(line);
+						for(String s : mcrl.getSortName().getTypes()) {
+							if(line.contains("node("+s+")"))
+								tmp.add(s);
+						}
+						/*Matcher m = pattern.matcher(line);
 						while (m.find()) {
-							String[] match = m.group(0).replace("{", "").replace("}", "").split("triple");
+							String[] match = m.group(0).replace("(", "").replace(")", "").replace("{", "").replace("}","").replace("node","").trim().split(",");
 							for (int i = 0; i < match.length; i++) {
 								if (!match[i].isEmpty())
-									tmp.add(match[i].substring(1, match[i].indexOf(",")));
+									tmp.add(match[i].trim());
 							}
-						}
+						}*/
 						map.put(Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1])),
 								Pair.of(t.getAction().getId(), tmp));
 					}
@@ -455,7 +489,6 @@ public class IOTerminal {
 	private long getCurrentTime() {
 		return System.nanoTime();
 	}
-
 
 	private long computeTimeSpans(long startTime, long endTime) {
 		return TimeUnit.NANOSECONDS.toSeconds(endTime - startTime);

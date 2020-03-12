@@ -3,6 +3,9 @@
  */
 package io.pet;
 
+import rpstTest.Utils;
+import spec.mcrl2obj.mCRL2;
+
 /**
  * @author sara
  * 
@@ -13,16 +16,25 @@ public class SScomputation extends PET{
 	public SScomputation(String group_id) {
 		this.petname = PETLabel.SSCOMPUTATION;
 		this.group_id = group_id;
-		setID_protection();
+		this.id = Utils.getId();
+		
 	}
-	
-	public void setTreshold(int i) {
-		if(this.treshold ==-1 || this.treshold>i)
-		this.treshold = i;
+
+	@Override
+	public String getPNamePET() {
+		// TODO Auto-generated method stub
+		return mCRL2.ssc;
 	}
-	
-	public String getGroup_id() {
+	public String getGroupId() {
 		return this.group_id;
+	}
+	
+	//Return the group id of the computation
+	@Override
+	//We need an int because the funcion to check violation in mcrl2 takes int 
+	public int getIdPet() {
+		// TODO Auto-generated method stub
+		return id;
 	}
 
 	

@@ -16,7 +16,7 @@ public abstract class AbstractProcess {
 
 	private String name;
 	private static final String fiexdName = "P";
-	public static final String id = "id";
+	//public static final String id = "id";
 	protected Set<Process> insidedef;
 	
 	protected void setName() {

@@ -8,10 +8,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.HashSet;
 import java.util.Set;
-import com.google.common.collect.Sets;
-
-import algo.IDOperaion;
-import io.BpmnParser;
 import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.TaskProcess;
 import spec.mcrl2obj.mCRL2;
@@ -30,41 +26,38 @@ public abstract class TextInterpreterFormula {
 	private static int id = 0;
 	private static String parameter = "p";
 
-	public static String toFile(mCRL2 mcrl2, String path, String idname, Set<String> data, int id_case) {
-		String formula = "";
-		if (id_case == IDOperaion.TASK.getVal())
-			formula = TaskFormula.generateTaskFormula(mcrl2, identifyIdTaskFormula(mcrl2, idname), data,
-					openpossibilityformula, closepossibilityformula);
-		else if (id_case == IDOperaion.PARTICIPANT.getVal())
-			formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
-		else if (id_case == IDOperaion.RECONSTRUCTION.getVal()) {
-			int th = BpmnParser.uniquereconstruction.getTreshold();
-			Set<Set<String>> powerset = Sets.powerSet(data);
-			for (Set<String> set : powerset) {
-				if (set.size() == th) {
-					if (!formula.isEmpty())
-						formula = formula + "||";
-					formula = formula + TaskFormula.generateTaskFormula(mcrl2, identifyIdTaskFormula(mcrl2, idname),
-							set, openallformula, closeallformula);
-				}
-			}
-		}
+	public static String generateParticipantFormula(mCRL2 mcrl2, String path, String idname, Set<String> data) {
+		String formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
+		return generateMCFfile(formula, path);
+	}
 
+	public static String generateLivenessFormula(String dirname) {
+		String formula = openpossibilityformula + mCRL2.recostruct + closepossibilityformula;
+		return generateMCFfile(formula, dirname);
+	}
+	
+	public static String generateSaferyFormula(String dirname) {
+		String 	formula = openpossibilityformula + mCRL2.violation + closepossibilityformula;
+		return generateMCFfile(formula, dirname);
+	}
+	
+	public static String generateTaskFormula(mCRL2 mcrl2, String path, String idname, Set<String> data) {
+		String formula = TaskFormula.generateTaskFormula(mcrl2, identifyIdTaskFormula(mcrl2, idname), data,
+				openpossibilityformula, closepossibilityformula);
+		return generateMCFfile(formula, path);
+	}
+	private static String generateMCFfile(String formula, String dirname) {
 		if (formula == null || formula.equals(""))
 			return formula;
-		if (idname.contains(" "))
-			idname = idname.replace(" ", "_");
-		File file = new File(path + idname + fileName + ".mcf");
+		File file = new File(dirname + fileName + ".mcf");
 		while (file.exists())
-			file = new File(path + idname + fileName + (id++) + ".mcf");
-
+			file = new File(dirname + fileName + (id++) + ".mcf");
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
 			output.write(formula);
 			output.close();
 		} catch (Exception e) {
-			System.err.println("error in generating " + idname + fileName);
+			System.err.println("error in generating formula:" + fileName);
 		}
-
 		return file.getName();
 	}
 

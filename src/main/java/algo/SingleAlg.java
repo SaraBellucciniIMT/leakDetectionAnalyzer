@@ -17,7 +17,6 @@ public class SingleAlg extends AbstractTranslationAlg{
 	Tmcrl tmcrl;
 	
 	public SingleAlg(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn) {
-		// TODO Auto-generated constructor stub
 		this.bpmn = bpmn;
 	}
 	
@@ -31,7 +30,6 @@ public class SingleAlg extends AbstractTranslationAlg{
 
 	@Override
 	protected void analyzeData() {
-		// TODO Auto-generated method stub
 		
 	}
 

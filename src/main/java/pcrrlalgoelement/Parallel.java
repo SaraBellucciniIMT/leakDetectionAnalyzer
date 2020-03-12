@@ -12,7 +12,6 @@ public class Parallel extends AbstractParaout{
 		// TODO Auto-generated method stub
 		
 		List<String> newchild = new ArrayList<String>();
-		
 		dad.getChild().forEach(c->{if(!c.equals(child.getName())) newchild.add(c);});
 		child.getChild().forEach(c->newchild.add(c));
 		child.getAllInsideDef().forEach(i->dad.addInsideDef(i));

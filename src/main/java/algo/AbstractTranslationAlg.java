@@ -11,15 +11,10 @@ import org.jbpt.pm.bpmn.BpmnControlFlow;
 
 import algo.interpreter.Tmcrl;
 import io.ExploitedRPST;
-import spec.mcrl2obj.Sort;
-import spec.mcrl2obj.StructSort;
 
 /**
- * @author sara
- *
- *         Abstract class that define how to compute the control flow of a bpmn
- *         model
- *
+ * @author sara Abstract class that define how to compute the control flow of a
+ *         bpmn model
  */
 public abstract class AbstractTranslationAlg implements ITranslationAlg {
 
@@ -29,46 +24,6 @@ public abstract class AbstractTranslationAlg implements ITranslationAlg {
 	}
 
 	protected abstract void analyzeData();
-
 	public static int id_op;
-	private static Sort sortData = new StructSort("Data");
-	private static Sort sortMemory = new Sort("Memory");
-	private static Sort sortBool = new Sort("Bool");
-	private static StructSort sortEvalData = new StructSort("EvalData");
-	public static final String empty = "eps";
 
-	// Data = struct data1 |... | datan;
-	public static Sort getSortData() {
-		return sortData;
-	}
-
-	// Memory = List(EvalData);
-	public static Sort getSortMemory() {
-		if(sortMemory.isEmpty()) {
-			if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal() || id_op == IDOperaion.RECONSTRUCTION.getVal())
-				sortMemory.addType(" Set(EvalData)");
-			else if (id_op == IDOperaion.SSSHARING.getVal())
-				sortMemory.addType(" List(EvalData)");
-		}
-		return sortMemory;
-	}
-
-	// Predefined mcrl2 sort
-	public static Sort getSortBool() {
-		return sortBool;
-	}
-
-	// EvalData = struct triple(fst:Data,snd:Bool,trd:Nat)|eps;
-	public static StructSort getSortEvalData() {
-		if (sortEvalData.isEmpty())
-			sortEvalData.addType("triple(fst:Data,snd:Bool,trd:Nat)", empty);
-		return sortEvalData;
-	}
-	
-	public static void cleanSorts() {
-		sortMemory.clean();
-		sortData.clean();
-		sortBool.clean();
-		sortEvalData.clean();
-	}
 }

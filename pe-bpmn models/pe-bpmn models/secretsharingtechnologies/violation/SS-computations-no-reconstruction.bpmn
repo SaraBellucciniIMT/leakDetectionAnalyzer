@@ -73,8 +73,7 @@
       <bpmn2:dataOutputAssociation id="DataOutputAssociation_1cg5g4t">
         <bpmn2:targetRef>DataObjectReference_08s3y7j</bpmn2:targetRef>
       </bpmn2:dataOutputAssociation>
-      <pleak:
-	  >{"groupId":"g1","inputScript":"","inputs":[{"id":0,"inputs":[{"id":"DataObjectReference_0hx6g96","name":"z1"},{"id":"DataObjectReference_1g2c0nu","name":"z2"},{"id":"DataObjectReference_16txxb9","name":"z3"}]},{"id":1,"inputs":[{"id":"DataObjectReference_17o2t16","name":"s1"},{"id":"DataObjectReference_0d48kal","name":"s2"},{"id":"DataObjectReference_0ipbg20","name":"s3"}]},{"id":2,"inputs":[{"id":"DataObjectReference_0pi1851","name":"y1"},{"id":"DataObjectReference_0rgtwoq","name":"y2"},{"id":"DataObjectReference_0h3xbfa","name":"y3"}]}]}</pleak:SSComputation>
+      <pleak:SSComputation>{"groupId":"g1","inputScript":"","inputs":[{"id":0,"inputs":[{"id":"DataObjectReference_0hx6g96","name":"z1"},{"id":"DataObjectReference_1g2c0nu","name":"z2"},{"id":"DataObjectReference_16txxb9","name":"z3"}]},{"id":1,"inputs":[{"id":"DataObjectReference_17o2t16","name":"s1"},{"id":"DataObjectReference_0d48kal","name":"s2"},{"id":"DataObjectReference_0ipbg20","name":"s3"}]},{"id":2,"inputs":[{"id":"DataObjectReference_0pi1851","name":"y1"},{"id":"DataObjectReference_0rgtwoq","name":"y2"},{"id":"DataObjectReference_0h3xbfa","name":"y3"}]}]}</pleak:SSComputation>
     </bpmn2:task>
     <bpmn2:task id="Task_1r3ncdb" name="compute">
       <bpmn2:incoming>SequenceFlow_1fzu677</bpmn2:incoming>

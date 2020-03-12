@@ -69,7 +69,10 @@ public class TaskProcess extends AbstractProcess {
 	public void addOutputAction(Action o) {
 		this.outputAction.add(o);
 	}
-
+	private String recochecking ="";
+	public void setRecostructionChecking(String s) {
+		this.recochecking = s;
+	}
 	public String toStringinputAction() {
 		String s = "";
 		if (!inputAction.isEmpty()) {
@@ -98,11 +101,13 @@ public class TaskProcess extends AbstractProcess {
 
 	@Override
 	public String toString() {
-		String s = getName() + "("+ AbstractProcess.id+":Nat) = ";
+		String s = getName() +" = ";
 
 		s = s + toStringinputAction();
 		if (action != null) {
 			s = s + action.toString();
+			if(!recochecking.isEmpty())
+				s = s + "."+ recochecking;
 			if (!outputAction.isEmpty())
 				s = s + ".";
 		}

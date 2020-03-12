@@ -2,7 +2,6 @@ package algo.interpreter;
 
 import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Action;
-import spec.mcrl2obj.Process;
 import spec.mcrl2obj.TaskProcess;
 
 public class CatchingEvent implements ITProcess{
