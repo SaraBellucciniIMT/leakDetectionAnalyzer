@@ -98,7 +98,7 @@ public class IOTerminal {
 			switch (Integer.valueOf(number)) {
 			case 1:
 				mcrl2 = generateSpecLps(parsebpmnfile(1, inputfile), 1, filename);
-				System.out.println(mcrl2.toStringTasks() + "\n Choose task: \n");
+				System.out.println(mcrl2.toStringTasks() + "Choose task: \n");
 				scan = new Scanner(System.in);
 				partecipant = scan.nextLine();
 				while (!mcrl2.containt(partecipant)) {

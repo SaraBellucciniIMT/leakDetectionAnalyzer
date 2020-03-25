@@ -588,9 +588,9 @@ public class mCRL2 implements ISpec {
 		String id = Action.setTemporaryAction().getName();
 		String s = "map \r\n";
 		s = s + printMap("union", sortmemory, sortmemory, sortmemory);
-		if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal()) {
+		/*if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal()) {
 			s = s + printMap(emptyf, sortbool,sortmemory);
-		}else 
+		}else */
 			s = s + printMap("empty", sortbool, sortdata);
 		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()) {
 			s = s + TH + " : " + sortnat.getName() + ";\n";
@@ -623,8 +623,10 @@ public class mCRL2 implements ISpec {
 		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
 				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal()) {
 			s = s + printf(unionf, m1, m2) + "=" + m1 + " + " + m2 + ";\n";
-			s = s + printf(emptyf, m1) + "= { dd :" + sortdata.getName() + " | ({ dd } * " + m1 + "!= {}) && (dd != "
-					+ eps + ")} == {};\n";
+			s = s + printifeqn(data + "== " + eps, printtruef(printf(emptyf, data)), "");
+			s = s + printifeqn(data + "!= " + eps, printfalsef(printf(emptyf, data)), "");
+			//s = s + printf(emptyf, m1) + "= { dd :" + sortdata.getName() + " | ({ dd } * " + m1 + "!= {}) && (dd != "
+				//	+ eps + ")} == {};\n";
 		} else if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
 				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()
 				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {

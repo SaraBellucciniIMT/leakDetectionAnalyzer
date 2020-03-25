@@ -27,7 +27,6 @@ public class TaskFormula extends TextInterpreterFormula {
 				}
 				s = s + ":"+mcrl2.getSortData().getName()+".";
 			}
-
 			s = s + task.getAction().getName() + "({";
 			if (!parameterplu.isEmpty()) {
 				for(String par : parameterplu)
