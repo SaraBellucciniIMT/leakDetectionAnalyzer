@@ -98,7 +98,7 @@ public class IOTerminal {
 			switch (Integer.valueOf(number)) {
 			case 1:
 				mcrl2 = generateSpecLps(parsebpmnfile(1, inputfile), 1, filename);
-				System.out.println(mcrl2.toStringTasks() + "Choose task: \n");
+				System.out.println(mcrl2.toStringTasks() + "Choose task:");
 				scan = new Scanner(System.in);
 				partecipant = scan.nextLine();
 				while (!mcrl2.containt(partecipant)) {
@@ -242,7 +242,7 @@ public class IOTerminal {
 		if (s == null)
 			System.out.println("This task/partecipant doesn't exist");
 		else if (s.equals("-1"))
-			System.out.println(" NEVER HAS THIS NUMBER OF PARAMETERS");
+			System.out.println("NEVER HAS THIS NUMBER OF PARAMETERS");
 		else
 			return false;
 		return true;

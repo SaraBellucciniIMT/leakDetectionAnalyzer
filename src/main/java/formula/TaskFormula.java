@@ -11,7 +11,7 @@ public class TaskFormula extends TextInterpreterFormula {
 	protected static String generateTaskFormula(mCRL2 mcrl2, TaskProcess task, Set<String> data,String openf,String closef) {
 		String s = "";
 		if (task == null || task.getAction().nparameter() < data.size()) {
-			return null;
+			return "-1";
 		}else {
 			s = openf;
 			Set<String> parameterplu = new HashSet<String>();
