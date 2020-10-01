@@ -45,11 +45,6 @@ public class PartecipantFormula extends TextInterpreterFormula {
 			}
 			int i=0;
 			for(String d : analyzedata) {
-				/*Triple<String,PET,Integer> triple =mcrl2.getSortData().getTripleByName(d);
-				if(triple.getMiddle() == null)
-					s = s + "triple("+ triple.getLeft() + "," + false +"," + triple.getRight()+")";
-				else
-					s = s + "triple("+ triple.getLeft() + "," + true +"," + triple.getRight()+")";*/
 				s =  s + mCRL2.printf(mCRL2.node,d);
 				if(i != data.size()-1)
 					s =s + ",";

@@ -30,6 +30,7 @@ import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.jsoup.nodes.TextNode;
 
 import algo.AbstractTranslationAlg;
 import algo.CollaborativeAlg;
@@ -134,7 +135,7 @@ public class IOTerminal {
 			case 3:
 				mcrl2 = generateSpecLps(parsebpmnfile(3, inputfile), 3, filename);
 				mcrl22lps();
-				lps2lts(3, mcrl2);
+				lps2lts(mcrl2);
 				break;
 			case 4:
 				mcrl2 = generateSpecLps(parsebpmnfile(4, inputfile), 4, filename);
@@ -143,13 +144,16 @@ public class IOTerminal {
 					System.out.println("NO RECOSTRUCTION ACTION TASK IN THE MODEL");
 					break;
 				}
-				mcrl22lps();
-				lps2lts(4, mcrl2);
+				check = TextInterpreterFormula.generateMCFfile("<true*." + mCRL2.norecostruct + ">true",
+						dirname.getPath());
+				if (displayalternativeoutput(check))
+					break;
+				callFormula(mcrl2);
 				break;
 			case 5:
 				mcrl2 = generateSpecLps(parsebpmnfile(5, inputfile), 5, filename);
 				mcrl22lps();
-				lps2lts(5, mcrl2);
+				lps2lts(mcrl2);
 				break;
 			case 6:
 				cleanDirectory();
@@ -171,7 +175,6 @@ public class IOTerminal {
 	}
 
 	private CollaborativeAlg parsebpmnfile(int i, String inputfile) {
-		AbstractTranslationAlg.id_op = i;
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> set = null;
 		try {
 			set = BpmnParser.collaborationParser(inputfile);
@@ -205,7 +208,7 @@ public class IOTerminal {
 
 	private mCRL2 generateSpecLps(CollaborativeAlg col, int id_op, String filename) {
 		// long startTime = getCurrentTime();
-		mCRL2 mcrl2 = col.getSpec(id_op);
+		mCRL2 mcrl2 = col.getSpec();
 		Parout parout = new Parout();
 		mcrl2 = parout.parout(mcrl2);
 		mcrl2file = mcrl2.toFile(dirname.getPath() + filename);
@@ -222,12 +225,14 @@ public class IOTerminal {
 		boolean resultbool = lps2pbes2solve2convert();
 		System.out.println(resultbool);
 		try {
-			if (resultbool) {
+			if (resultbool && (AbstractTranslationAlg.id_op != IDOperaion.RECONSTRUCTION.getVal())) {
 				if (new File(dirname.getPath() + mcrl2file + evidencefsm).exists()) {
 					List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + mcrl2file + evidencefsm, mcrl2);
 					fromPathInFSMtoJsonFile(dirname.getPath() + mcrl2file + json, s);
 				}
-			} else
+			} else if(resultbool && (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())) {
+				lps2lts(mcrl2);
+			}else
 				System.out.println("No JSON file generated because there isn't a path to show");
 		} catch (JSONException e) {
 			e.printStackTrace();
@@ -253,11 +258,11 @@ public class IOTerminal {
 		runmcrlcommand(mcrl22lps);
 	}
 
-	private void lps2lts(int j, mCRL2 mcrl2) {
+	private void lps2lts( mCRL2 mcrl2) {
 		String lps2lts = "";
-		if (j == IDOperaion.SSSHARING.getVal() || j == IDOperaion.ENCRYPTION.getVal())
+		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal() || AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal())
 			lps2lts = "lps2lts -a" + mCRL2.violation + " -t1 " + mcrl2file + dotlps;
-		else if (j == IDOperaion.RECONSTRUCTION.getVal())
+		else if(AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
 			lps2lts = "lps2lts -a" + mCRL2.recostruct + " -t1 " + mcrl2file + dotlps;
 		runmcrlcommand(lps2lts);
 		List<String> path = new ArrayList<String>();
@@ -291,11 +296,11 @@ public class IOTerminal {
 			}
 		}
 		if (path.isEmpty()) {
-			if (j == IDOperaion.SSSHARING.getVal())
+			if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal())
 				System.out.println(IDOperaion.SSSHARING + " IS PRESERVED");
-			else if (j == IDOperaion.ENCRYPTION.getVal()) {
+			else if (AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
 				System.out.println(IDOperaion.ENCRYPTION + " IS PRESERVED");
-			} else if (j == IDOperaion.RECONSTRUCTION.getVal())
+			} else if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
 				System.out.println("NOT RECOSTRUCTED");
 		} else {
 			// System.out.println(path);
@@ -313,7 +318,7 @@ public class IOTerminal {
 		List<Pair<String, Set<String>>> list = new ArrayList<Pair<String, Set<String>>>();
 		for (int i = 0; i < path.size(); i++) {
 			String el = path.get(i);
-			if (el.equals(mCRL2.violation) || el.equals(mCRL2.recostruct))
+			if (el.equals(mCRL2.violation) || el.equals(mCRL2.recostruct) || el.equals(mCRL2.norecostruct))
 				continue;
 			String nametask = el.substring(0, el.indexOf("("));
 			Set<String> setdata = new HashSet<String>();
@@ -336,12 +341,21 @@ public class IOTerminal {
 		runmcrlcommand(lts2pbes);
 		String pbessolve = "pbessolve -s1 --file=" + mcrl2file + dotlts + " " + mcrl2file + ".pbes";
 		String resultsolve = runmcrlcommand(pbessolve);
-		if (resultsolve.equals("false"))
-			return false;
-		runmcrlcommand(lps2lts);
-		String ltsconvert2 = "ltsconvert -eweak-trace " + mcrl2file + evidencelts + " " + mcrl2file + evidencefsm;
-		runmcrlcommand(ltsconvert2);
-		return true;
+
+		if (AbstractTranslationAlg.id_op != IDOperaion.RECONSTRUCTION.getVal()) {
+			if (resultsolve.equals("false"))
+				return false;
+			String ltsconvert2 = "ltsconvert -eweak-trace " + mcrl2file + evidencelts + " " + mcrl2file + evidencefsm;
+			runmcrlcommand(ltsconvert2);
+			return true;
+
+		} else {
+			if (resultsolve.equals("true")) {
+				return false;
+			}else {
+				return true;
+			}
+		}
 	}
 
 	private String runmcrlcommand(String command) {

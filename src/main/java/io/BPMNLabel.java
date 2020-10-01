@@ -9,5 +9,6 @@ public enum BPMNLabel {
 	XOR,
 	POLYGON,
 	LOOP,
+	EVENTBASEDG,
 	AND;
 }

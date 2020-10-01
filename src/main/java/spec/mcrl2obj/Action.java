@@ -8,7 +8,6 @@ import algo.IDOperaion;
 import rpstTest.Utils;
 
 public class Action {
-
 	private String name = "";
 	private String secondName = "";
 	private static int index = 0;
@@ -207,7 +206,8 @@ public class Action {
 			return name;
 	}
 
-	public static String setRightParenthesis() {
+	//This shitty method will disappear soon
+	/*public static String setRightParenthesis() {
 		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
 				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
 			return "}";
@@ -218,6 +218,7 @@ public class Action {
 		return null;
 	}
 
+	//Also this one
 	public static String setLeftParenthesis() {
 		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
 				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
@@ -227,7 +228,7 @@ public class Action {
 				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
 			return "[";
 		return null;
-	}
+	}*/
 
 	public boolean isTau() {
 		return istau;

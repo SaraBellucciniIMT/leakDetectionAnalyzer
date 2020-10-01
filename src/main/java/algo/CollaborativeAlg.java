@@ -237,7 +237,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		this.mcrl2.addProcess(sumprocess);
 		String eps = "";
 		for (int j = 0; j < sumprocess.getInitialParameters().length; j++) {
-			eps = eps + mCRL2.eps;
+			eps = eps + mCRL2.printf(mCRL2.node, mCRL2.emptyf);
 			if (j != sumprocess.getInitialParameters().length - 1)
 				eps = eps + ",";
 		}
@@ -409,26 +409,13 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	 */
 	private void addRecostructionConstraint() {
 		Action a = mcrl2.identifyRecostructionTask();
-		//Set<Integer> setsss = mcrl2.identifySSSharingTask();
-		//Set<Integer> setssc = mcrl2.identifySSComputationTask();
 		if (a != null) {
 			DataParameter[] dp = a.getParameters();
 			String s = "";
-			//int j = 0;
-			//for (int i : setsss) {
 				s = s + mCRL2.printf("is_recostructed",
-						"[" + Utils.organizeParameterAsString(dp) + "]");
-				/*if (j != setsss.size() - 1)
-					s = s + "||";
-				j++;
-			}
-			for (int i : setssc) {
-				if (!s.isEmpty())
-					s = s + "||";
-				s = s + mCRL2.printf("is_recostructed", String.valueOf(i),
-						"[" + Utils.organizeParameterAsString(dp) + "]");
-			}*/
-			String complete = mCRL2.printifeqn(s, mCRL2.recostruct, "");
+						mCRL2.printf("list2bag", "[" + Utils.organizeParameterAsString(dp) + "],{0:0}"));
+				
+			String complete = mCRL2.printifeqn(s, mCRL2.recostruct, "") + "<>" + mCRL2.norecostruct;
 			TaskProcess t = mcrl2.identifyTaskProcessFromAction(a);
 			t.setRecostructionChecking(complete);
 		}
@@ -484,9 +471,8 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	}
 
 	@Override
-	public mCRL2 getSpec(int id_op) {
-		AbstractTranslationAlg.id_op = id_op;
-
+	public mCRL2 getSpec() {
+		
 		tmcrl2 = new HashSet<Tmcrl>();
 		for (Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : bpmn)
 			tmcrl2.add(analyzeControlFlow(b));
@@ -494,7 +480,8 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		mcrl2 = new mCRL2();
 		mcrl2.setSortMemory();
 		mcrl2.setSortData();
-		if (id_op == IDOperaion.SSSHARING.getVal() || id_op == IDOperaion.ENCRYPTION.getVal()
+		//How want it to be indipendent from the initial choice, so this will dissappear later on.
+		/*if (id_op == IDOperaion.SSSHARING.getVal() || id_op == IDOperaion.ENCRYPTION.getVal()
 				|| id_op == IDOperaion.RECONSTRUCTION.getVal()) {
 			mcrl2.setSortPName();
 			mcrl2.setSortPrivacy();
@@ -502,8 +489,9 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 					mCRL2.printf(mCRL2.pnode, mCRL2.pv + ":" + mcrl2.getSortPrivacy().getName()) + "?" + mCRL2.is_pn);
 			if (id_op == IDOperaion.SSSHARING.getVal() || id_op == IDOperaion.RECONSTRUCTION.getVal()) {
 			}
-		}
+		}*/
 
+		
 		tmcrl2.forEach(t -> {
 			mcrl2.addProcesses(t.getProcess());
 			mcrl2.addAction(t.getActions().toArray(new Action[] {}));
@@ -519,8 +507,8 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		changePartecipants();
 		mcrl2.taureduction();
 		addConnectionToMemory();
-		if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
-			addRecostructionConstraint();
+		//if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
+			//addRecostructionConstraint();
 		return mcrl2;
 	}
 

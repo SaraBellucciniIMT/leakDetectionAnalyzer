@@ -4,13 +4,19 @@ import spec.mcrl2obj.DataParameter;
 
 public class Utils {
 
-	public Utils() {
-		// TODO Auto-generated constructor stub
-	}
-	private static int i;
 	
+	private static int i;
+	private static String dataID = "dataID";
+	public static String node = "node";
+	public static String pnode = "pnode";
+	public static String is_node = "is_node";
+	public static String is_pnode = "is_pnode";
 	public static int getId() {
 		return i++;
+	}
+	
+	public static String getDataID() {
+		return dataID + i++;
 	}
 	
 	public static String adjustName(String s) {

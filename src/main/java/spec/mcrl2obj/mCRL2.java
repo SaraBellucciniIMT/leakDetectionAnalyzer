@@ -26,6 +26,7 @@ import spec.ISpec;
 public class mCRL2 implements ISpec {
 
 	public static final String recostruct = "RECOSTRUCTED";
+	public static final String norecostruct = "NOTRECOSTRUCTED";
 	public static final String violation = "VIOLATION";
 	public static final String sss = "sssharing";
 	public static final String is_sss = "is_sssharing";
@@ -58,6 +59,7 @@ public class mCRL2 implements ISpec {
 	protected static StructSort sortdata = new StructSort("Data");
 	protected static Sort sortmemory = new Sort("Memory");
 	protected static Sort sortbool = new Sort("Bool");
+	protected static Sort sortbagnat = new Sort("Bag(Nat)");
 	public static final String eps = "eps";
 	private Set<Action> actions;
 	private Set<Action> allow;
@@ -75,8 +77,12 @@ public class mCRL2 implements ISpec {
 			this.allow.add(Action.setVIOLATOINAction());
 		else if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
 			this.actions.add(Action.setRECOSTRUCTIONAction());
+			this.actions.add(new Action(norecostruct));
 			this.allow.add(Action.setRECOSTRUCTIONAction());
+			this.allow.add(new Action(norecostruct));
 		}
+		
+		sortname.addType(emptyf);
 		this.comm = new HashSet<CommunicationFunction>();
 		// this.sorts = new HashSet<Sort>();
 		this.hide = new HashSet<Action>();
@@ -586,6 +592,7 @@ public class mCRL2 implements ISpec {
 		String data = Action.setTemporaryAction().getName();
 		String i = Action.setTemporaryAction().getName();
 		String id = Action.setTemporaryAction().getName();
+		String b = Action.setTemporaryAction().getName();
 		String s = "map \r\n";
 		s = s + printMap("union", sortmemory, sortmemory, sortmemory);
 		/*if(AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal() || AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal()) {
@@ -605,8 +612,10 @@ public class mCRL2 implements ISpec {
 			s = s + printMap("encryptionviolation", sortbool, sortmemory, sortnat);
 		} else if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
 			s = s + TH + " : " + sortnat.getName() + ";\n";
-			s = s + printMap("rlist", sortnat, sortmemory, sortnat);
-			s = s + printMap("is_recostructed", sortbool, sortmemory);
+			//s = s + printMap("rlist", sortnat, sortmemory, sortnat);
+			//s = s + printMap("is_recostructed", sortbool, sortmemory);
+			s = s + printMap("list2bag", sortbagnat, sortmemory,sortbagnat);
+			s = s + printMap("is_recostructed", sortbool, sortbagnat);
 		}
 		s = s + "var\r\n";
 		s = s + printvar(sortmemory, m1, m2);
@@ -618,6 +627,7 @@ public class mCRL2 implements ISpec {
 			s = s + printvar(sortname, n);
 			s = s + printvar(sortprivacy, p);
 			s = s + printvar(sortnat, i, id);
+			s = s + printvar(sortbagnat, b);
 		}
 		s = s + "eqn \n";
 		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
@@ -638,27 +648,10 @@ public class mCRL2 implements ISpec {
 			s = s + printifeqn(m1 + "== [] ", printf(unionf, m1, m2), m2);
 			s = s + printifeqn(data + "== " + eps, printtruef(printf(emptyf, data)), "");
 			s = s + printifeqn(data + "!= " + eps, printfalsef(printf(emptyf, data)), "");
-			s = s + printf(v, printf(node, n)) + " = " + n + ";\n";
-			s = s + printf(pv, printf(pnode, p)) + " = " + p + ";\n";
-			s = s + printtruef(printf(is_n, printf(node, n)));
-			s = s + printfalsef(printf(is_n, printf(pnode, p)));
-			s = s + printfalsef(printf(is_pn, printf(node, n)));
-			s = s + printtruef(printf(is_pn, printf(pnode, p)));
-			s = s + printf(frt, printf(pair, pn, i)) + "=" + pn + ";\n";
-			s = s + printf(snd, printf(pair, pn, i)) + "=" + i + ";\n";
-		}
+					}
 		if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
 				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
 			s = s + TH + "=" + getValueTreshold() + ";\n";
-			s = s + printtruef(printf(is_sss, printf(sss, n)));
-			s = s + printfalsef(printf(is_sss, printf(ssc, n)));
-			s = s + printfalsef(printf(is_sss, printf(ssr, n)));
-			s = s + printtruef(printf(is_ssc, printf(ssc, n)));
-			s = s + printfalsef(printf(is_ssc, printf(sss, n)));
-			s = s + printfalsef(printf(is_ssc, printf(ssr, n)));
-			s = s + printtruef(printf(is_ssr, printf(ssr, n)));
-			s = s + printfalsef(printf(is_ssr, printf(ssc, n)));
-			s = s + printfalsef(printf(is_ssr, printf(sss, n)));
 			// if its just sssharing checking
 			if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()) {
 				s = s + printifeqn(printf("sslist", id, m1, String.valueOf(0)) + ">=" + TH,
@@ -702,23 +695,18 @@ public class mCRL2 implements ISpec {
 								+ "&&" + printf(is_ssr, printf(frt, printf(pv, printf(head, m1)))) + ")",
 						printfalsef(printf("ssrecviolation", m1)), "");
 			} else if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal()) {
-				s = s + printifeqn(printf("rlist", m1, String.valueOf(0)) + ">=" + TH,
-						printtruef(printf("is_recostructed", m1)), "");
-				s = s + printifeqn(printf("rlist", m1, String.valueOf(0)) + "<" + TH,
-						printfalsef(printf("is_recostructed", m1)), "");
-				s = s + printifeqn(
-						printf(is_pn, printf(head, m1)) + " && " + "("
-								+ printf(is_sss, printf(frt, printf(pv, printf(head, m1)))) + "||"
-								+ printf(is_ssc, printf(frt, printf(pv, printf(head, m1)))) + ")",
-						printf("rlist", m1, i), printf("rlist", printf(tail, m1), String.valueOf(i) + "+" + 1));
+					s = s + printifeqn(printf(is_pn,printf(head, m1)) + "&&" + "("+printf(is_sss, printf(frt, printf(pv, printf(head, m1)))) + 
+						"||"+ printf(is_ssc, printf(frt, printf(pv, printf(head, m1)))) +")", printf("list2bag", m1,b), 
+						printf("list2bag", printf(tail, m1),b + "+{"+printf(snd, printf(pv, printf(head, m1)))+":1}"));
 				s = s + printifeqn(
 						printf("!(" + is_pn, printf(head, m1)) + ") || !("
 								+ printf(is_sss, printf(frt, printf(pv, printf(head, m1)))) + ") || !("
 								+ printf(is_ssc, printf(frt, printf(pv, printf(head, m1)))) + ")"
 								,
-						printf("rlist", m1, i), printf("rlist", printf(tail, m1), i));
-				s = s + printifeqn(m1 + "== []", printf("rlist", m1, i), i);
-
+						printf("list2bag", m1, b), printf("list2bag", printf(tail, m1), b));
+				s = s + printifeqn(m1 + "== []", printf("list2bag", m1, b), b);
+				s = s + printifeqn("(exists " +i +":Nat. " + i + " in " + b + " && count(" + i +","+b +")>= "+ TH+")",printf("is_recostructed", b) , "true");
+				s = s + printifeqn("!(exists " +i +":Nat. " + i + " in " + b + " && count(" + i +","+b +")>= "+ TH+")",printf("is_recostructed", b) , "false");
 			}
 		} else if (AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()) {
 			s = s + printifeqn(

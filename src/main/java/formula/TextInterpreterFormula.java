@@ -46,7 +46,8 @@ public abstract class TextInterpreterFormula {
 				openpossibilityformula, closepossibilityformula);
 		return generateMCFfile(formula, path);
 	}
-	private static String generateMCFfile(String formula, String dirname) {
+	
+	public static String generateMCFfile(String formula, String dirname) {
 		if (formula == null || formula.equals("") || formula.equals("-1"))
 			return formula;
 		File file = new File(dirname + fileName + ".mcf");

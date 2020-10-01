@@ -16,14 +16,8 @@ import io.ExploitedRPST;
  * @author sara Abstract class that define how to compute the control flow of a
  *         bpmn model
  */
+//TO-DO: forse getSpec potrebbe essere defina qui, pensarci dopo
 public abstract class AbstractTranslationAlg implements ITranslationAlg {
 
-	protected Tmcrl analyzeControlFlow(Bpmn<BpmnControlFlow<FlowNode>, FlowNode> bpmn) {
-		return new Tmcrl(new ExploitedRPST(new RPST<ControlFlow<FlowNode>, FlowNode>(bpmn)), bpmn.getName(),
-				bpmn.getId());
-	}
-
-	protected abstract void analyzeData();
-	public static int id_op;
 
 }

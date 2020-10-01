@@ -1,0 +1,46 @@
+sort Name = struct data1|reconstruction|data1_1|result2|data1_2|info|result1;
+Data = struct node(value:Name)?is_node|eps;
+Memory =  Set(Data);
+map 
+union:Memory#Memory->Memory; 
+empty:Data->Bool; 
+var
+t48,t49 : Memory;
+t53 : Data;
+eqn 
+union(t48,t49)=t48 + t49;
+(t53== eps) -> empty(t53) = true;
+(t53!= eps) -> empty(t53)=false;
+act
+t44,sendread,t46: Bool#Memory;
+o13,o1,o14,o2,sendread,i0,i3,i12,i15: Data#Data;
+memory47,Task_0t0j2k9,memory45,Task_0fx9x1y,Task_1pk4bs4,Task_1g7130r,Task_1a0h6kc,Task_0g00xef,Task_05516z9,IntermediateThrowEvent_1ruxt5p,IntermediateThrowEvent_0p3sute,Task_07ttp5f,IntermediateThrowEvent_0v3exgy: Memory;
+i31,i11,i32,i35,i36,o30,i39,o33,o10,i16,i19,o34,o37,o17,o38,o18,i40,o5,i20,o6,i43,i24,o9,i23,i4,o42,o41,i28,o22,i7,o21,i27,i8,o26,o25,sendread,o29: Data;
+proc
+P59(ph14:Data) = (sum ph3: Data.i20(ph3).P59(ph3))+(o21(ph14).P59(ph14));
+P0 = sum ph3: Data.i39(ph3).IntermediateThrowEvent_1ruxt5p(union({},{ph3})).t46(false,{ph3}).o10(ph3);
+P35(ph10:Data) = (sum ph3: Data.i8(ph3).P35(ph3))+(o9(ph10).P35(ph10));
+P3 = sum ph0,ph1: Data.i15(ph0,ph1).Task_0t0j2k9(union({},{ph0,ph1})).t46(false,{ph0,ph1});
+P85(ph17:Data) = (sum ph0: Data.i32(ph0).P85(ph0))+(o33(ph17).P85(ph17));
+P10 = sum ph0: Data.i35(ph0).Task_05516z9(union({},{ph0,node(info)})).t44(false,{ph0,node(info)}).o2(ph0,node(info)).o18(ph0);
+P103(ph19:Data) = (sum ph6: Data.i40(ph6).P103(ph6))+(o41(ph19).P103(ph19));
+P75(ph16:Data) = (sum ph2: Data.i28(ph2).P75(ph2))+((!empty(ph16))->o29(ph16).P75(ph16));
+P1 = sum ph3: Data.i11(ph3).Task_1a0h6kc(union({},{node(result2),ph3})).o6(node(result2)).t46(false,{node(result2),ph3});
+P132= (P0.P1.P2.P3.P4.t46(true,{eps})); 
+P123(ph25:Memory) = sum ph23: Bool.sum ph24: Memory.t46(ph23,ph24).(!ph23)->P123(union(ph25,ph24))<>memory47(ph25).P123(ph25);
+P8 = Task_0g00xef(union({},{node(data1_2),node(data1),node(data1_1)})).o34(node(data1_1)).t44(false,{node(data1_2),node(data1),node(data1_1)}).o22(node(data1_2));
+P43(ph11,ph12:Data) = (sum ph0,ph1: Data.i12(ph0,ph1).P43(ph0,ph1))+(o13(ph11,ph12).P43(ph11,ph12));
+P9 = sum ph3: Data.i23(ph3).Task_07ttp5f(union({},{ph3})).o38(ph3).t44(false,{ph3});
+P11 = sum ph0: Data.i19(ph0).Task_1g7130r(union({},{ph0,node(result1)})).o42(node(result1)).t44(false,{ph0,node(result1)});
+P13 = sum ph6: Data.i43(ph6).sum ph2: Data.i27(ph2).Task_0fx9x1y(union({},{ph2,node(reconstruction),ph6})).t44(false,{ph2,node(reconstruction),ph6});
+P93(ph18:Data) = (sum ph3: Data.i36(ph3).P93(ph3))+((!empty(ph18))->o37(ph18).P93(ph18));
+P51(ph13:Data) = (sum ph0: Data.i16(ph0).P51(ph0))+(o17(ph13).P51(ph13));
+P130= (P8.P9.P10.P11.P12.P13.t44(true,{eps})); 
+P113(ph22:Memory) = sum ph20: Bool.sum ph21: Memory.t44(ph20,ph21).(!ph20)->P113(union(ph22,ph21))<>memory45(ph22).P113(ph22);
+P67(ph15:Data) = (sum ph2: Data.i24(ph2).P67(ph2))+(o25(ph15).P67(ph15));
+P17(ph7,ph8:Data) = (sum ph0,ph1: Data.i0(ph0,ph1).P17(ph0,ph1))+((!empty(ph7)&& !empty(ph8))->o1(ph7,ph8).P17(ph7,ph8));
+P4 = sum ph2: Data.i7(ph2).Task_1pk4bs4(union({},{ph2})).t46(false,{ph2}).o30(ph2);
+P27(ph9:Data) = (sum ph2: Data.i4(ph2).P27(ph2))+(o5(ph9).P27(ph9));
+P2 = sum ph0,ph1: Data.i3(ph0,ph1).IntermediateThrowEvent_0v3exgy(union({},{ph0,ph1})).o14(ph0,ph1).t46(false,{ph0,ph1});
+P12 = sum ph2: Data.i31(ph2).IntermediateThrowEvent_0p3sute(union({},{ph2})).o26(ph2).t44(false,{ph2});
+init hide ({sendread},allow ({Task_0fx9x1y,IntermediateThrowEvent_0p3sute,IntermediateThrowEvent_0v3exgy,Task_1a0h6kc,Task_07ttp5f,IntermediateThrowEvent_1ruxt5p,Task_1pk4bs4,sendread,Task_1g7130r,memory45,Task_0g00xef,Task_05516z9,Task_0t0j2k9,memory47},comm ({o1|i3->sendread,o14|i12->sendread,o33|i35->sendread,o13|i15->sendread,o34|i32->sendread,o17|i19->sendread,o38|i36->sendread,o37|i39->sendread,o42|i40->sendread,o6|i4->sendread,o10|i8->sendread,o18|i16->sendread,o2|i0->sendread,o22|i20->sendread,o5|i7->sendread,o9|i11->sendread,o41|i43->sendread,o25|i27->sendread,o30|i28->sendread,t46|t46->sendread,o26|i24->sendread,o29|i31->sendread,t44|t44->sendread,o21|i23->sendread},P123({})||P132||P27(eps)||P43(eps,eps)||P113({})||P75(eps)||P85(eps)||P51(eps)||P67(eps)||P93(eps)||P103(eps)||P35(eps)||P59(eps)||P17(eps,eps)||P130)));
