@@ -75,6 +75,7 @@ public class IOTerminal {
 		File f;
 		while ((f = scanFile()) == null) {
 		}
+		
 		String bpmnFile = FilenameUtils.getBaseName(f.getPath());
 		// Parse the BPMN file
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> setBpmn;
@@ -166,7 +167,7 @@ public class IOTerminal {
 						nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
 						mcrl22lps(nf);
 						String jsonfilerec = lps2lts(mcrl2, nf, op_deadlock, op_trace);
-						if(jsonfilerec == null)
+						if (jsonfilerec == null)
 							System.out.println("Parallelism preserved");
 						else
 							System.out.println("Parallelism is not preserved");
@@ -298,7 +299,7 @@ public class IOTerminal {
 	 * 
 	 * @param mcrl2 the mcrl2 specification on which we are searching for the
 	 *              violation
-	 *       
+	 * 
 	 * @return the name of the json file containing the path leading to the
 	 *         violation of a formula, otherwise null
 	 */
@@ -307,15 +308,15 @@ public class IOTerminal {
 		Boolean deadlock = false;
 		for (int i = 0; i < option.length; i++) {
 			lps2lts += option[i] + " ";
-			if(option[i].equals(op_deadlock))
+			if (option[i].equals(op_deadlock))
 				deadlock = true;
 		}
 		lps2lts += nameFile + dotlps + Utils.space + nameFile + dotlts;
 		runmcrlcommand(lps2lts);
-		
+
 		List<String> path = new ArrayList<String>();
 		String[] children = dir.list();
-		List<Pair<String,Set<String>>> path_tracepp = new ArrayList<Pair<String,Set<String>>>();
+		List<Pair<String, Set<String>>> path_tracepp = new ArrayList<Pair<String, Set<String>>>();
 		if (children != null) {
 			for (int i = 0; i < children.length; i++) {
 				// Get filename of file or directory
@@ -330,17 +331,17 @@ public class IOTerminal {
 						BufferedReader br = new BufferedReader(fileReader);
 						String line;
 						while ((line = br.readLine()) != null) {
-								path.add(line);
+							path.add(line);
 						}
 						br.close();
 					} catch (IOException e) {
 						e = new IOException("File " + dottrc + "not found");
 					}
 					path_tracepp = generateList(path, mcrl2);
-					if(!path.isEmpty() && deadlock) {
-						String lasttask = path_tracepp.get(path_tracepp.size()-1).getKey();
-						if(!lasttask.equals(MCRL2.TAU.toString()) && !mcrl2.containsTask(lasttask)) {
-							path_tracepp = new ArrayList<Pair<String,Set<String>>>();
+					if (!path.isEmpty() && deadlock) {
+						String lasttask = path_tracepp.get(path_tracepp.size() - 1).getKey();
+						if (!lasttask.equals(MCRL2.TAU.toString()) && !mcrl2.containsTask(lasttask)) {
+							path_tracepp = new ArrayList<Pair<String, Set<String>>>();
 							continue;
 						}
 					}
@@ -370,7 +371,7 @@ public class IOTerminal {
 		List<Pair<String, Set<String>>> list = new ArrayList<Pair<String, Set<String>>>();
 		for (int i = 0; i < path.size(); i++) {
 			String el = path.get(i);
-			if(el.equals(MCRL2.TAU.toString()))
+			if (el.equals(MCRL2.TAU.toString()))
 				continue;
 			// System.out.println(el);
 			Set<String> setdata = new HashSet<String>();

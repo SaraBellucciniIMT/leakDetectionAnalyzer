@@ -7,7 +7,7 @@ import spec.mcrl2obj.Processes.AbstractProcess;
 /**
  * This is the Start Event class that given a node generates a process with an empty action
  * 
- * @see StartEvent#interpreter(Tmcrl)
+ * @see #interpreter(ExtendedNode)
  * @author S. Belluccini
  *
  */

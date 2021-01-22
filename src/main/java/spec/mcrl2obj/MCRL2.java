@@ -455,16 +455,16 @@ public class MCRL2 implements ISpec {
 		String init = "";
 		for (Buffer process : processes) {
 			s = s + process.toString();
-			if (!init.isBlank())
+			if (!init.isEmpty())
 				init += "||";
 			init += process.inizializeBuffer();
 		}
 		for (ParticipantProcess p : particiantProcess) {
 			s = s + p.toString();
-			if (!init.isBlank())
+			if (!init.isEmpty())
 				init += "||";
 			init += p.getId();
-			if(!p.initializeMemoryCallP().isBlank()) {
+			if(!p.initializeMemoryCallP().isEmpty()) {
 				init += "||" + p.initializeMemoryCallP();
 			}
 		}
@@ -647,7 +647,7 @@ public class MCRL2 implements ISpec {
 		for (TaskProcess t : getTaskProcesses()) {
 			TaskAction a = t.getAction();
 			s = s + "ID: " + a.getId();
-			if (!a.getRealName().isBlank())
+			if (a.getRealName()!= null && !a.getRealName().isEmpty())
 				s = s + " Name: " + a.getRealName();
 			s += "\n";
 		}

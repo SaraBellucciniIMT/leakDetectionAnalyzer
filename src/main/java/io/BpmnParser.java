@@ -58,12 +58,14 @@ public class BpmnParser {
 	}
 
 	/**
-	 * Returns the set of BPMN elements in this collaboration with the set of
-	 * messages exchanged between their flownodes
+	 * Returns a pair describing the set of BPMN elements in this collaboration and the set of
+	 * messages exchanged between them
 	 * 
 	 * @param f the file .bpmn to be parse
 	 * @return a pair with the sets of bpmn objects and a set of pairs representing
-	 *         the message exchange between flownodes
+	 *         the message exchange between flownodes in both the parties
+	 *         
+	 * @throws IOException if is not able to parse the input file
 	 */
 	public static Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> collaborationParser(
 			File f) throws IOException {

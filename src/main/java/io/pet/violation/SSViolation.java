@@ -203,7 +203,7 @@ public class SSViolation extends AbstractViolation {
 					}
 				}
 			}
-			if (!addToMem.isBlank()) {
+			if (!addToMem.equals("")) {
 				Process memory = new Process(Operator.DOT);
 				memory.addParameters(m);
 				Action synMem = MCRL2.getTemporaryAction(e);

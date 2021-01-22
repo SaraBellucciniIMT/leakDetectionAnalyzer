@@ -241,19 +241,7 @@ public class ParticipantProcess extends AbstractProcess {
 	public AbstractProcess getProcess() {
 		return this.p;
 	}
-	/**
-	 * Returns the dimension of the memory
-	 * 
-	 * @return the dimension of the memory
-	 */
-	/*
-	 * public int getDimensionMemory() { return this.maxdim; }
-	 */
-
-	/*
-	 * public void setDimensionMemory(int i) { this.maxdim = i; }
-	 */
-
+	
 	/**
 	 * Returns the initialization of the call to the memory of this party, i.e.
 	 * Memory([])

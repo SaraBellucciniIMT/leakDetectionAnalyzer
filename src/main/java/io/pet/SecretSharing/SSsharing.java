@@ -20,10 +20,9 @@ import sort.ISort;
 import sort.Name;
 
 /**
- * This class describes the Secret sharing stereotype,
+ * This class describes the SSsharing/AddSSsharing/FunSSsharing pet stereotypes
  * 
- * @see #threshold a number that describe the threshold to reconstruct this
- *      secret
+ * @see SSsharing#THRESHOLD a number that describe how many shares are needed to recostruct the secret
  * 
  * @author S. Belluccini
  */

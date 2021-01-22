@@ -12,8 +12,9 @@ import sort.ISort;
  * Abstract class representing PETs objects
  * 
  * @see #getPNamePET()
- * @see #getIdPet()
- * @see #getPET()
+ * @see #defineInputDataSort(DataNode)
+ * @see #defineOutputDataSort(DataNode)
+ * @see #interpreterTask(Element, Elements, Set)
  * 
  * @author S. Bellucini
  *

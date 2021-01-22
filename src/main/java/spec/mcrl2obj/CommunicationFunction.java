@@ -8,7 +8,7 @@ import java.util.List;
  * This is the CommunicationFunction class. It represents the communcation
  * function in the mcrl2 language.
  * 
- * a1|...|a_n-> r
+ * a1|...|a_n THEN r
  * 
  * @author S. Belluccini
  *

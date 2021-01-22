@@ -134,7 +134,7 @@ public class Process extends AbstractProcess implements Iterable<AbstractProcess
 					s += op.getValue();
 			}
 		}
-		if(!s.isBlank())
+		if(!s.isEmpty())
 			s= "(" + s +")";
 		return Pair.with(s, taskprocesses);
 	}

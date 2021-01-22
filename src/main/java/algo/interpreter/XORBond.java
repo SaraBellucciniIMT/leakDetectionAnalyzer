@@ -10,10 +10,10 @@ import spec.mcrl2obj.Processes.Process;
 
 /**
  * This is the XORBond class that represents XORBOND as a external choice
- * process (tau.P1 + tau.P2 + ... + tau.PN) if the elements inside the node are >1
+ * process (tau.P1 + tau.P2 + ... + tau.PN) if the elements inside the node are more than 1,
  * otherwise it returns the representation on the single node
  * 
- * @see #interpreter(Tmcrl)
+ * @see #interpreter(ExtendedNode)
  * @author S. Belluccini
  *
  */

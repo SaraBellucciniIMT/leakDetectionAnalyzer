@@ -33,9 +33,8 @@ public class App {
 		// Create the mcrl2 object describing the collaboration
 		MCRL2 mcrl2 = new CollaborativeAlg(setBpmn).getSpec();
 		mcrl2.toFile(IOTerminal.dirname.getPath() + "result");*/
-		
 		try {
-			new IOTerminal();
+			IOTerminal t = new IOTerminal();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

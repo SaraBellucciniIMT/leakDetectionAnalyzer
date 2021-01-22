@@ -12,6 +12,11 @@ import io.pet.AbstractTaskPET;
 import io.pet.PETLabel;
 import sort.ISort;
 
+/**
+ * This is the KDecrypt class, i
+ * @author Sara
+ *
+ */
 public class KDecrypt extends AbstractTaskPET {
 
 	private DataNode privatekey;
@@ -29,9 +34,9 @@ public class KDecrypt extends AbstractTaskPET {
 	}
 
 	/**
-	 * Returns the groupid associated to the private key of this deconding key
+	 * Returns the group id associated to the private key of this deconding key
 	 * 
-	 * @return
+	 * @return the group id associated to the private key of this deconding key
 	 */
 	public String getGroupId() {
 		return ((PKPrivate) privatekey.getTag()).getGroupId();

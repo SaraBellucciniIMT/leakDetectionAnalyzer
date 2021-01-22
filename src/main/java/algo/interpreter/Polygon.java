@@ -12,10 +12,10 @@ import spec.mcrl2obj.Processes.Process;
 
 /**
  * This is the Polygon class that represents a Polygon as a sequence process if
- * the elements inside the node are >1 otherwise it returns the representation
+ * the elements inside the node are more than 1, otherwise it returns the representation
  * on the single node
  * 
- * @see #interpreter(Tmcrl)
+ * @see #interpreter(ExtendedNode)
  * @author S. Belluccini
  *
  */

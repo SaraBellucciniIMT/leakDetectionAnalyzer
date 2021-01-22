@@ -7,11 +7,9 @@ import java.util.Set;
 
 import org.javatuples.Pair;
 import org.javatuples.Triplet;
-import org.jbpt.hypergraph.abs.GObject;
 
 import io.pet.MPC;
 import io.pet.PETLabel;
-import sort.Data;
 import sort.Placeholder;
 import spec.mcrl2obj.Action;
 import spec.mcrl2obj.CommunicationFunction;

@@ -22,8 +22,8 @@ import spec.mcrl2obj.Operator;
  * This is the Buffer class. There are two types of buffers, no blocking one:
  * B(b1...bn:Data) = sum e1,...,en:Data.ib(e1,...,en).B(e1,...,en) +
  * ob(b1,...,bn).B(eps1,...,epsn) blocking one: B(b1...bn:Data) = sum
- * e1,...,en:Data.ib(e1,...,en).B(e1,...,en) + (!empty(b1) && .... &&
- * !empty(bn)) -> ob(b1,...,bn).B(eps1,...,epsn)
+ * e1,...,en:Data.ib(e1,...,en).B(e1,...,en) + IF(!empty(b1) AND .... AND
+ * !empty(bn)) THEN ob(b1,...,bn).B(eps1,...,epsn)
  * 
  * @author S. Belluccini
  *
@@ -122,7 +122,7 @@ public class Buffer extends AbstractProcess {
 	public String inizializeBuffer() {
 		String st = "";
 		for (int i = 0; i < this.getParameters().length; i++) {
-			if (!st.isBlank())
+			if (!st.isEmpty())
 				st += ",";
 			st += Data.eps().getId();
 		}

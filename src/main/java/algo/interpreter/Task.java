@@ -10,7 +10,7 @@ import spec.mcrl2obj.Processes.TaskProcess;
  * represents a task element of the bpmn model. It contains an action that has
  * as name the id of the bpmn model representing the task
  * 
- * @see #interpreter(Tmcrl)
+ * @see #interpreter(ExtendedNode)
  * @author S. Belluccini
  *
  */

@@ -55,7 +55,7 @@ public abstract class AbstractProcess {
 	public String printParameters() {
 		String param="";
 		for(ISort s : parameters) {
-			if(!param.isBlank())
+			if(!param.isEmpty())
 				param += ",";
 			param += s.toString() + ":" + s.getNameSort(); 
 		}

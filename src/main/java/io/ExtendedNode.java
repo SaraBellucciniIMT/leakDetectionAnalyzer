@@ -11,13 +11,12 @@ import io.pet.AbstractTaskPET;
  * The extended nodes are an extension of the flow node in the RPST tree. Are
  * use to keep more information about a node like:
  * 
- * @see #singleNode is a single flow node, that has no connection with other
- *      nodes
- * @see #tag is the type of
- * @see #type
- * @see #id
- * @see #associatedIRPSTNode
- * @author Sara
+ * @see #singleNode is a leafnode of the rpst, so it has no connection with other
+ *      nodes 
+ * @see #type describes if a node is TRIVIAL or BOND
+ * @see #associatedIRPSTNode is a node of the rpst, it has other node/leaf connected
+ * 
+ * @author S. Belluccini
  *
  */
 public class ExtendedNode {
@@ -39,24 +38,29 @@ public class ExtendedNode {
 	/**
 	 * Constructor used in case of leaf nodes like TRIVIALS
 	 * 
-	 * @param f
-	 * @param type
+	 * @param f the leaf node
+	 * @param type TRIVIAL
 	 */
 	public ExtendedNode(FlowNode f, TCType type) {
 		this.singleNode = f;
 		this.type = type;
 	}
 
+	/**
+	 * Returns the IRPSTNode associated to this node if exits, otherwise null
+	 * 
+	 * @return  the IRPSTNode associated to this node if exits, otherwise null
+	 */
 	public IRPSTNode<ControlFlow<FlowNode>, FlowNode> getIRPTNodeAssociated() {
 		return this.associatedIRPSTNode;
 	}
 
-	public Object getTag() {
+	/*public Object getTag() {
 		if (this.associatedIRPSTNode != null)
 			return this.associatedIRPSTNode.getTag();
 		else
 			return singleNode.getTag();
-	}
+	}*/
 
 	/**
 	 * Returns the ID that identifies this IRPSTNode or single node
@@ -70,13 +74,10 @@ public class ExtendedNode {
 			return this.singleNode.getId();
 	}
 
-	public String getDescription() {
-		if (this.associatedIRPSTNode != null)
-			return this.associatedIRPSTNode.getDescription().toString();
-		else
-			return this.singleNode.getDescription();
-	}
-
+	/**
+	 * Returns the type of this extended node (i.e. TRIVIAL, BOND)
+	 * @return the type of this extended node (i.e. TRIVIAL, BOND)
+	 */
 	public TCType getType() {
 		if (this.associatedIRPSTNode != null)
 			return this.associatedIRPSTNode.getType();
@@ -84,6 +85,10 @@ public class ExtendedNode {
 			return this.type;
 	}
 
+	/**
+	 * Returns the name associated to this extended node
+	 * @return the name associated to this extended node
+	 */
 	public String getName() {
 		if (this.associatedIRPSTNode != null)
 			return this.associatedIRPSTNode.getName();
@@ -111,6 +116,11 @@ public class ExtendedNode {
 		return result;
 	}
 
+	/**
+	 * Checks if the given BPMNLabel is equal to the one associated to this extended node
+	 * @param l the BPMNLabel
+	 * @return true if is equal to the one in the node, false otherwise
+	 */
 	public boolean equalsDescription(BPMNLabel l) {
 		if (this.associatedIRPSTNode != null && ((this.associatedIRPSTNode.getDescription() != null
 				&& this.associatedIRPSTNode.getDescription().equals(l.name()))
@@ -149,6 +159,9 @@ public class ExtendedNode {
 		}
 	}
 
+	/**
+	 * Prints the name of the name (not id) of the node
+	 */
 	@Override
 	public String toString() {
 		if (this.associatedIRPSTNode != null)

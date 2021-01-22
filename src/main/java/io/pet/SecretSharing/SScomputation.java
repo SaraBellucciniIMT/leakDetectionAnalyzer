@@ -18,11 +18,10 @@ import sort.ISort;
 import sort.Name;
 
 /**
- * This class describes the secret sharing computation stereotypes
+ * This class describes the SSComputation/addSSComputation/FunSSComputation stereotypes
  * 
- * @see #group_id the name of the group of a set of data included in the same
- *      compuation
- * @see #inputsData all the data involved in this group computation
+ * @see #group_id the group id name of this computation
+ * 
  * @author S. Belluccini
  * 
  */

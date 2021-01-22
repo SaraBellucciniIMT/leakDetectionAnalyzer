@@ -9,7 +9,6 @@ import spec.mcrl2obj.Operator;
 import spec.mcrl2obj.Processes.AbstractProcess;
 import spec.mcrl2obj.Processes.ParticipantProcess;
 import spec.mcrl2obj.Processes.Process;
-import spec.mcrl2obj.Processes.TaskProcess;
 
 public class Parout {
 

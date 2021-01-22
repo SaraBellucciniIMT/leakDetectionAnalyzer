@@ -11,7 +11,6 @@ import java.util.Set;
 
 import rpstTest.IOTerminal;
 import sort.Data;
-import spec.mcrl2obj.Processes.ParticipantProcess;
 import spec.mcrl2obj.Processes.TaskProcess;
 
 /**
@@ -27,11 +26,6 @@ public abstract class TextInterpreterFormula {
 	private static final String fileName = "formula";
 	private static int id = 0;
 	private static String parameter = "p";
-
-	/*public static String generateParticipantFormula(ParticipantProcess p, Set<Data> data) {
-		String formula = PartecipantFormula.generatePartecipantFormula(p,data);
-		return generateMCFfile(formula);
-	}*/
 
 	public static String generateLivenessFormula(String action) {
 		String formula = openpossibilityformula + action + closepossibilityformula;
