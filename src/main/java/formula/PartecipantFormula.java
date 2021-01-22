@@ -3,8 +3,10 @@ package formula;
 import java.util.HashSet;
 import java.util.Set;
 
-import spec.mcrl2obj.PartecipantProcess;
-import spec.mcrl2obj.mCRL2;
+import rpstTest.Utils;
+import sort.Data;
+import sort.ISort;
+import spec.mcrl2obj.Processes.ParticipantProcess;
 
 /*
  * 1° understand who are the of parteipant name
@@ -12,21 +14,16 @@ import spec.mcrl2obj.mCRL2;
  */
 public class PartecipantFormula extends TextInterpreterFormula {
 
-	protected static String generatePartecipantFormula(mCRL2 mcrl2, String partecipantname, Set<String> data) {
-		Set<String> analyzedata = new HashSet<String>(data);
-		PartecipantProcess partecipant = (PartecipantProcess) mcrl2.getPartcipant(partecipantname);
-		if(partecipant == null) {
-			System.err.println("This partecipant doesn't exist");
-			return null;
-		}
+	/*protected static String generatePartecipantFormula(ParticipantProcess p, Set<Data> data) {
+		Set<Data> analyzedata = new HashSet<Data>(data);
 		String s = "";
-		if (analyzedata.size() > partecipant.getDimensionMemory()) {
+		if (analyzedata.size() > p.getDimensionMemory()) {
 			return null;
 		}else {
 			s = openpossibilityformula;
 			Set<String> parameterplu = new HashSet<String>();
-			if (analyzedata.size() < partecipant.getDimensionMemory()) {
-				parameterplu = generatePar(partecipant.getDimensionMemory() - analyzedata.size());
+			if (analyzedata.size() < p.getDimensionMemory()) {
+				parameterplu = generatePar(p.getDimensionMemory() - analyzedata.size());
 				s = s + "exists ";
 				int i = 0;
 				for (String par : parameterplu) {
@@ -35,26 +32,19 @@ public class PartecipantFormula extends TextInterpreterFormula {
 						s = s + ",";
 					i++;
 				}
-				s = s + ":"+mcrl2.getSortData().getName()+".";
+				s = s + ":"+Data.class.getName()+".";
 			}
 			
-			s = s + partecipant.getActionMemory().getName() + "({";
+			s = s + p.getMemoryAct().getId() + "({";
 			if (!parameterplu.isEmpty()) {
 				for(String par : parameterplu)
 					s = s + par +",";
 			}
-			int i=0;
-			for(String d : analyzedata) {
-				s =  s + mCRL2.printf(mCRL2.node,d);
-				if(i != data.size()-1)
-					s =s + ",";
-				i++;
-			}
-
+			s += Utils.organizeParameterAsString(data.toArray(new ISort[data.size()]));
 			s = s + "})" + closepossibilityformula;
 		
 		}
 		return s;
-	}
+	}*/
 
 }

@@ -1,29 +1,31 @@
 package algo.interpreter;
 
+import io.ExtendedNode;
+import spec.mcrl2obj.TaskAction;
+import spec.mcrl2obj.Processes.AbstractProcess;
+import spec.mcrl2obj.Processes.TaskProcess;
 
-import spec.mcrl2obj.AbstractProcess;
-import spec.mcrl2obj.Action;
-import spec.mcrl2obj.TaskProcess;
-
-/*
- * TO-DO: ricrevere codice Task
+/**
+ * This is the Task class that generates from a node an abstract process that
+ * represents a task element of the bpmn model. It contains an action that has
+ * as name the id of the bpmn model representing the task
+ * 
+ * @see #interpreter(Tmcrl)
+ * @author S. Belluccini
+ *
  */
-public class Task implements ITProcess{
+public class Task implements ITProcess {
 
 	@Override
-	public AbstractProcess interpreter(Tmcrl node) {
-		// TODO Auto-generated method stub
-	
-		Action a = new Action(node.getCurrentNode().getId());
-		a.setId(node.getCurrentNode().getId());
-		a.setSecondName(node.getCurrentNode().getName());
-		if(node.getCurrentNode().getPet()!= null)
-			a.setPet(node.getCurrentNode().getPet());
-		TaskProcess tp = new TaskProcess(a, node.getCurrentNode());
-		node.addProcess(tp);
-		node.addAction(a);
+	public AbstractProcess interpreter(ExtendedNode node) {
+		TaskAction a;
+		if (node.getPet() != null)
+			a = new TaskAction(node.getName(), node.getId(), node.getPet());
+		else
+			a = new TaskAction(node.getName(), node.getId());
+
+		TaskProcess tp = new TaskProcess(a);
 		return tp;
 	}
 
-	
 }

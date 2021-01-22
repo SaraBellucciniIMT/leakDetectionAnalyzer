@@ -8,9 +8,11 @@ import java.io.File;
 import java.io.FileWriter;
 import java.util.HashSet;
 import java.util.Set;
-import spec.mcrl2obj.AbstractProcess;
-import spec.mcrl2obj.TaskProcess;
-import spec.mcrl2obj.mCRL2;
+
+import rpstTest.IOTerminal;
+import sort.Data;
+import spec.mcrl2obj.Processes.ParticipantProcess;
+import spec.mcrl2obj.Processes.TaskProcess;
 
 /**
  * @author sara INPUT: string from terminal i.e string from the user OUTPUT :
@@ -26,51 +28,42 @@ public abstract class TextInterpreterFormula {
 	private static int id = 0;
 	private static String parameter = "p";
 
-	public static String generateParticipantFormula(mCRL2 mcrl2, String path, String idname, Set<String> data) {
-		String formula = PartecipantFormula.generatePartecipantFormula(mcrl2, idname, data);
-		return generateMCFfile(formula, path);
-	}
+	/*public static String generateParticipantFormula(ParticipantProcess p, Set<Data> data) {
+		String formula = PartecipantFormula.generatePartecipantFormula(p,data);
+		return generateMCFfile(formula);
+	}*/
 
-	public static String generateLivenessFormula(String dirname) {
-		String formula = openpossibilityformula + mCRL2.recostruct + closepossibilityformula;
-		return generateMCFfile(formula, dirname);
+	public static String generateLivenessFormula(String action) {
+		String formula = openpossibilityformula + action + closepossibilityformula;
+		return generateMCFfile(formula);
 	}
 	
-	public static String generateSaferyFormula(String dirname) {
-		String 	formula = openpossibilityformula + mCRL2.violation + closepossibilityformula;
-		return generateMCFfile(formula, dirname);
+	public static String generateSaferyFormula(String action) {
+		String 	formula = openpossibilityformula + action + closepossibilityformula;
+		return generateMCFfile(formula);
 	}
 	
-	public static String generateTaskFormula(mCRL2 mcrl2, String path, String idname, Set<String> data) {
-		String formula = TaskFormula.generateTaskFormula(mcrl2, identifyIdTaskFormula(mcrl2, idname), data,
+	public static String generateTaskFormula(TaskProcess t, Set<Data> data) {
+		String formula = TaskFormula.generateTaskFormula(t, data,
 				openpossibilityformula, closepossibilityformula);
-		return generateMCFfile(formula, path);
+		return generateMCFfile(formula);
 	}
 	
-	public static String generateMCFfile(String formula, String dirname) {
+	public static String generateMCFfile(String formula) {
 		if (formula == null || formula.equals("") || formula.equals("-1"))
 			return formula;
-		File file = new File(dirname + fileName + ".mcf");
+		File file = new File(IOTerminal.dirname.getPath() + fileName + ".mcf");
 		while (file.exists())
-			file = new File(dirname + fileName + (id++) + ".mcf");
+			file = new File(IOTerminal.dirname.getPath() + fileName + (id++) + ".mcf");
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
 			output.write(formula);
 			output.close();
 		} catch (Exception e) {
-			System.err.println("error in generating formula:" + fileName);
+			System.err.println(e.toString());
 		}
 		return file.getName();
 	}
-
-	public static TaskProcess identifyIdTaskFormula(mCRL2 mcrl, String idtask) {
-		for (AbstractProcess ab : mcrl.getProcesses()) {
-			if (ab.getClass().equals(TaskProcess.class) && ((TaskProcess) ab).getAction() != null
-					&& ((TaskProcess) ab).getAction().getId().equals(idtask))
-				return ((TaskProcess) ab);
-		}
-		return null;
-	}
-
+	
 	protected static Set<String> generatePar(int n) {
 		Set<String> s = new HashSet<String>();
 		int i = 0;

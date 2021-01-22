@@ -1,22 +1,20 @@
 package pcrrlalgoelement;
 
-import java.util.ArrayList;
-import java.util.List;
+import spec.mcrl2obj.Operator;
+import spec.mcrl2obj.Processes.AbstractProcess;
+import spec.mcrl2obj.Processes.Process;
 
-import spec.mcrl2obj.Process;
-
-public class Parallel extends AbstractParaout{
+public class Parallel extends AbstractParaout {
 
 	@Override
-	public void interpreter(Parout parout, Process dad, Process child) {
-		// TODO Auto-generated method stub
-		
-		List<String> newchild = new ArrayList<String>();
-		dad.getChild().forEach(c->{if(!c.equals(child.getName())) newchild.add(c);});
-		child.getChild().forEach(c->newchild.add(c));
-		child.getAllInsideDef().forEach(i->dad.addInsideDef(i));
-		dad.setChild(newchild);
-		parout.removeProcess(child.getName());
+	public AbstractProcess interpreter(Process process) {
+
+		Process p = new Process(Operator.PARALLEL);
+
+		for (int i = 0; i < process.getSize(); i++)
+			p.addChildAtPosition(i,Parout.Tp(process.getChildAtPosition(i)));
+
+		return p;
 	}
 
 }

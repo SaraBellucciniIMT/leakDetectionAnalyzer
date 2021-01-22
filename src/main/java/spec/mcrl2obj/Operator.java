@@ -8,8 +8,7 @@ public enum Operator {
 	SUM("sum"),
 	ALLOW("allow"),
 	HIDE("hide"),
-	COMM("comm"),
-	IF("IF");
+	COMM("comm");
 	
 	private final String o;
 	

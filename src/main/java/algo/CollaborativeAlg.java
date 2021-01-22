@@ -1,50 +1,56 @@
 package algo;
 
-import java.util.ArrayList;
 import java.util.Collection;
+
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
+import org.javatuples.Quartet;
 import org.jbpt.pm.DataNode;
 import org.jbpt.pm.FlowNode;
 import org.jbpt.pm.IFlowNode;
+import org.jbpt.pm.NonFlowNode;
 import org.jbpt.pm.bpmn.Bpmn;
 import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.jbpt.pm.bpmn.Task;
-import algo.interpreter.Tmcrl;
-import io.PETExtendedNode;
-import io.pet.PET;
-import io.pet.PETLabel;
-import rpstTest.Utils;
-import spec.mcrl2obj.AbstractProcess;
-import spec.mcrl2obj.Action;
-import spec.mcrl2obj.Buffer;
-import spec.mcrl2obj.CommunicationFunction;
-import spec.mcrl2obj.DataParameter;
-import spec.mcrl2obj.Operator;
-import spec.mcrl2obj.PartecipantProcess;
-import spec.mcrl2obj.Process;
-import spec.mcrl2obj.TaskProcess;
-import spec.mcrl2obj.mCRL2;
 
-/*
+import com.google.common.collect.Sets;
+
+import io.pet.AbstractDataPET;
+import pcrrlalgoelement.Parout;
+import sort.Data;
+import sort.ISort;
+
+import sort.Placeholder;
+import spec.mcrl2obj.Action;
+import spec.mcrl2obj.CommunicationFunction;
+import spec.mcrl2obj.MCRL2;
+import spec.mcrl2obj.Processes.Buffer;
+
+import spec.mcrl2obj.Processes.ParticipantProcess;
+import spec.mcrl2obj.Processes.TaskProcess;
+
+/**
+ * This is the Collaborative algorithm class that computes two steps to obtain a
+ * mCRL2 object from a bpmn collaboration model. The first step is the
+ * control-flow transformation. The second step is the data-object and message
+ * flow transformation. The results of this process is a mCRL2 object
  * 
+ * @author S. Belluccini
+ *
  */
 public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	private Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>> bpmn;
 	private Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> internalCommList;
 	private static final FlowNode epsilon = new Task();
-
 	private Set<Pair<FlowNode, FlowNode>> messages;
-	private Set<Tmcrl> tmcrl2;
-	private mCRL2 mcrl2;
+	private Map<String, Placeholder> mapPNPlaceholders = new HashMap<String, Placeholder>();
+	private MCRL2 mcrl2;
 
 	public CollaborativeAlg(Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> pair) {
 		this.bpmn = pair.getLeft();
@@ -53,260 +59,257 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 
 	protected void analyzeData() {
 		generateInternalCommunicationlist();
-		assignPlaceholder();
+		// assignPlaceholder();
 		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
+			// If the left side is epsilon than the data are prior knowledge ofthe task
 			// System.out.println(triple.toString());
-			int size = triple.getMiddle().size();
-
-			DataParameter[] parameters = new DataParameter[size];
-			int j = 0;
-			for (DataNode dn : triple.getMiddle()) {
-				parameters[j] = new DataParameter(mcrl2.getSortData(),
-						dataplaceholder.get(dn.getName()).getPlaeholder());
-				j++;
-			}
-			// Update the storage of the right side Process
 			if (triple.getLeft().contains(epsilon)) {
-				TaskProcess R = getProcessOfTask(triple.getRight());
-				triple.getMiddle().forEach(d -> {
-					DataParameter dataparameter = new DataParameter(d.getName(), mcrl2.getSortData());
-					if (((PETExtendedNode) d).getPET() != null)
-						dataparameter.setPrivate(((PETExtendedNode) d).getPET());
-					mcrl2.getSortName().addType(d.getName());
-					R.addDataToAction(dataparameter);
-				});
+				TaskProcess R = mcrl2.getActionTask(triple.getRight().getId());
+				triple.getMiddle().forEach(d -> R.addInputDataToAction(d));
 				continue;
 			}
-			// System.out.println(triple.toString());
+
+			Placeholder[] parameters = new Placeholder[triple.getMiddle().size()];
+			int j = 0;
+			for (DataNode d : triple.getMiddle()) {
+				parameters[j] = mapPNPlaceholders.get(d.getName());
+				j++;
+			}
+
 			Action send = null;
-			DataParameter[] parametertosend = null;
+			ISort[] paramtosend = null;
+			Pair<Set<DataNode>, Set<Placeholder>> pair_paramtosend = null;
 			for (IFlowNode left : triple.getLeft()) {
-				TaskProcess S = getProcessOfTask(left);
+				TaskProcess S = mcrl2.getActionTask(left.getId());
+				// If all the structure to send this message/data already exists we just need to
+				// add the output action to the new taskprocess
 				if (send != null) {
 					S.addOutputAction(send);
-					for (int k = 0; k < parametertosend.length; k++) {
-						if (!S.getAction().containsParameter(parametertosend[k]))
-							S.getAction().addDataParameter(parametertosend[k]);
-					}
+					S.addOutputDataToAction(paramtosend);
 					continue;
 				}
-				parametertosend = createOutputChannel(triple, left);
+				// Otherwise, if this data/messagge is not sent to anyone we just update the
+				// action parameters
 				if (triple.getRight().equals(epsilon)) {
-					triple.getMiddle().forEach(d -> {
-						DataParameter dataparameter = new DataParameter(d.getName(), mcrl2.getSortData());
-						// dataparameter.setId(AbstractProcess.id);
-						S.addDataToAction(dataparameter);
-					});
+					S.addOutputDataToAction(triple.getMiddle(), Sets.newHashSet());
 					continue;
 				}
-				// Generate i(e_1,...,e_n)
-				Action i = Action.inputAction(parameters);
-				// Generate o(e_1,...,e_n)
-				Action o = Action.outputAction(parameters);
-				// Generate process for the intermediate message event
-				TaskProcess R = getProcessOfTask(triple.getRight());
-				Process pread = null;
-				Process suminput = new Process(Action.sumAction(parameters), Operator.SUM);
-				for (PartecipantProcess p : collectPartecipants()) {
-					List<String> childs = new ArrayList<String>();
-					childs.addAll(mCRL2.childTaskProcess(p.getProcess(), mcrl2, childs));
-					if (childs.contains(S.getAction().getName()) && childs.contains(R.getAction().getName())) {
-						generateCommunicationBufferNonBLocking(i, o, parameters);
+				TaskProcess R = mcrl2.getActionTask(triple.getRight().getId());
+				Buffer buffer = null;
+				// System.out.println(triple.toString());
+				for (ParticipantProcess p : mcrl2.getParcipantProcesses()) {
+					if (p.containActionTask(S.getAction()) && p.containActionTask(R.getAction())) {
+						buffer = new Buffer(parameters.length, Buffer.NOBLOCK);
 						break;
-					} else if (childs.contains(S.getAction().getName()) && !childs.contains(R.getAction().getName())
-							|| (childs.contains(R.getAction().getName())
-									&& !childs.contains(S.getAction().getName()))) {
-						generateCommunicationBufferBLocking(i, o, parameters);
+					} else if ((p.containActionTask(S.getAction()) && !p.containActionTask(R.getAction()))
+							|| (p.containActionTask(R.getAction()) && p.containActionTask(S.getAction()))) {
+						buffer = new Buffer(parameters.length, Buffer.BLOCK);
 						break;
 					}
 				}
-
-				send = Action.outputAction(parametertosend);
-				// Update internal memory
-				for (int k = 0; k < parametertosend.length; k++) {
-					if (!S.getAction().containsParameter(parametertosend[k]))
-						S.getAction().addDataParameter(parametertosend[k]);
-				}
+				mcrl2.addProcess(buffer);
+				pair_paramtosend = createOutputChannel(triple.getMiddle(), left);
+				paramtosend = S.addOutputDataToAction(pair_paramtosend.getKey(), pair_paramtosend.getValue());
+				send = MCRL2.getOutputAction(paramtosend);
 				S.addOutputAction(send);
-				Action read = Action.inputAction(parameters);
-				pread = new Process(read);
-				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(send, i));
-				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(o, read));
-				for (DataParameter d : parameters) {
-					if (!R.getAction().containsParameter(d))
-						R.addDataToAction(d);
-				}
-				Process seqsuminput = new Process(Operator.DOT, suminput.getName(), pread.getName());
-				R.addInputAction(seqsuminput, suminput, pread);
+				Action read = MCRL2.getInputAction(parameters);
+				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(send, buffer.getInputAction()));
+				this.mcrl2.addCommunicaitonFunction(createSendReadCommunication(buffer.getOutputAction(), read));
+				R.addInputDataToAction(parameters);
+				R.addInputAction(read);
 			}
 		}
 	}
 
 	private CommunicationFunction createSendReadCommunication(Action a, Action b) {
-		mcrl2.addAction(a, b);
-		Action read = Action.setSendReadAction(a.getParameters());
-		addToActionAllowHide(read);
-		return new CommunicationFunction(read, a.getName(), b.getName());
+		Action sendread = new Action(MCRL2.getComFunResult(), a.getParameters());
+		mcrl2.addAction(a, b, sendread);
+		mcrl2.addAllow(sendread);
+		mcrl2.addHide(sendread);
+		return new CommunicationFunction(sendread, a, b);
 	}
 
-	private void addToActionAllowHide(Action a) {
-		mcrl2.addAction(a);
-		mcrl2.addAllow(a);
-		mcrl2.addHide(a);
-	}
-
-	private DataParameter[] createOutputChannel(Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple,
-			IFlowNode node) {
-		List<DataParameter> parametertosend = new ArrayList<DataParameter>();
-		for (DataNode d : triple.getMiddle()) {
-			if (isitFirst(node, d)) {
-				DataParameter dataparameter = new DataParameter(d.getName(), mcrl2.getSortData());
-				if (d.getClass().equals(PETExtendedNode.class) && ((PETExtendedNode) d).hasPET()) {
-					mcrl2.getSortData().addPair(Pair.of(d.getName(), ((PETExtendedNode) d).getPET()));
-					dataparameter.setPrivate(((PETExtendedNode) d).getPET());
-				}
-				parametertosend.add(dataparameter);
-				mcrl2.getSortName().addType(d.getName());
-			} else
-				parametertosend
-						.add(new DataParameter(mcrl2.getSortData(), dataplaceholder.get(d.getName()).getPlaeholder()));
-
-		}
-		return parametertosend.toArray(new DataParameter[] {});
-	}
-
-	/*
-	 * String : name of the data object DataParameter : placeholder for that data
-	 * object
+	/**
+	 * Returns a pair describing the set of petnodes and placeholders to be sent
+	 * 
+	 * @param petnodes the set of petnodes
+	 * @param node     the current node that we hare checking
+	 * @return a pair describing the set of petnodes and placeholders to be sent
 	 */
-	private Map<String, DataParameter> dataplaceholder;
-
-	// Gives a fixed placeholder to each dataparameter
-
-	private void assignPlaceholder() {
-		this.dataplaceholder = new HashMap<String, DataParameter>();
-		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			triple.getMiddle().forEach(d -> {
-				if (!dataplaceholder.containsKey(d.getName())) {
-					DataParameter dp = new DataParameter(d.getName(), mcrl2.getSortData());
-					mcrl2.getSortName().addType(d.getName());
-					dp.setPlaceHolder();
-					dataplaceholder.put(d.getName(), dp);
-				}
-			});
+	private Pair<Set<DataNode>, Set<Placeholder>> createOutputChannel(Set<DataNode> petnodes, IFlowNode node) {
+		Set<DataNode> pnToSend = new HashSet<DataNode>();
+		Set<Placeholder> plToSend = new HashSet<Placeholder>();
+		for (DataNode petnode : petnodes) {
+			// If d appears for the first time in this node
+			if (isitFirst(node, petnode))
+				pnToSend.add(petnode);
+			else
+				plToSend.add(mapPNPlaceholders.get(petnode.getName()));
 		}
+		return Pair.of(pnToSend, plToSend);
 	}
 
+	/**
+	 * Checks if this flownode is the one in which the data appears for the first
+	 * time or not
+	 * 
+	 * @param node the flow node
+	 * @param data to be checked
+	 * @return true if this flownode is the one in which the data appears for the
+	 *         first time, false otherwise
+	 */
 	private boolean isitFirst(IFlowNode node, DataNode data) {
 		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
-			for (DataNode datanode : triple.getMiddle()) {
-				if (datanode.getName().equals(data.getName())) {
-					if (triple.getRight().equals(node) && !triple.getLeft().contains(epsilon))
-						return false;
-				}
-			}
+			// <epsilon,data,node>
+			if (hasSameName(data.getName(), triple.getMiddle()) && triple.getRight().equals(node)
+					&& triple.getLeft().contains(epsilon)) {
+				return true;
+				// ! <node', data,node>
+			} else if (hasSameName(data.getName(), triple.getMiddle()) && triple.getLeft().contains(node)
+					&& !existsATripleSending(node, data))
+				return true;
 		}
-		return true;
+		return false;
 	}
 
-	private TaskProcess getProcessOfTask(IFlowNode f) {
-		for (Tmcrl t : tmcrl2) {
-			TaskProcess task;
-			if ((task = t.getProcessOfTask(f)) != null)
-				return task;
+	private boolean existsATripleSending(IFlowNode node, DataNode data) {
+		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
+			if (hasSameName(data.getName(), triple.getMiddle()) && triple.getRight().equals(node))
+				return true;
+
 		}
-		return null;
+		return false;
 	}
 
-	private void generateCommunicationBufferNonBLocking(Action i, Action o, DataParameter[] parameters) {
-		Buffer sumprocess = new Buffer(parameters, mcrl2.getSortData());
-		sumprocess.setBufferName();
-		TaskProcess bufferl = new TaskProcess();
-		// generate i(e1,...,e_n)
-		// Generate the sum : e1,...en:Data
-		Process sum = new Process(Action.sumAction(parameters), Operator.SUM);
-		Process input = new Process(i);
-		Process seqinputsum = new Process(Operator.DOT, sum.getName(), input.getName());
-		bufferl.addInputAction(seqinputsum, input, sum);
-
-		Action a = new Action(o.getName(), sumprocess.getInitialParameters());
-		this.mcrl2.addAction(a);
-		Process bufferr = new Process(a);
-
-		sumprocess.setOperant(bufferl, bufferr);
-		this.mcrl2.addProcess(sumprocess);
-		String eps = "";
-		for (int j = 0; j < sumprocess.getInitialParameters().length; j++) {
-			eps = eps + mCRL2.printf(mCRL2.node, mCRL2.emptyf);
-			if (j != sumprocess.getInitialParameters().length - 1)
-				eps = eps + ",";
+	/**
+	 * Checks if one of the datanodes in the set has name equal to the one given as
+	 * input
+	 * 
+	 * @param name  the string
+	 * @param nodes a set of datanodes
+	 * @return true if one of the datanodes in the set has name equal to the one
+	 *         given as input, false otherwise
+	 */
+	private boolean hasSameName(String name, Set<DataNode> nodes) {
+		for (DataNode d : nodes) {
+			if (d.getName().equals(name))
+				return true;
 		}
-		this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")");
+		return false;
 	}
+	/*
+	 * private void generateCommunicationBufferNonBLocking(Action i, Action o,
+	 * ISort[] parameters) { Buffer b = new B Buffer sumprocess = new
+	 * Buffer(parameters, mcrl2.getSortData()); sumprocess.setBufferName();
+	 * TaskProcess bufferl = new TaskProcess(); // generate i(e1,...,e_n) //
+	 * Generate the sum : e1,...en:Data Process sum = new
+	 * Process(Action.sumAction(parameters), Operator.SUM); Process input = new
+	 * Process(i); Process seqinputsum = new Process(Operator.DOT, sum.getName(),
+	 * input.getName()); bufferl.addInputAction(seqinputsum, input, sum);
+	 * 
+	 * Action a = new Action(o.getName(), sumprocess.getInitialParameters());
+	 * this.mcrl2.addAction(a); Process bufferr = new Process(a);
+	 * 
+	 * sumprocess.setOperant(bufferl, bufferr); this.mcrl2.addProcess(sumprocess);
+	 * String eps = ""; for (int j = 0; j <
+	 * sumprocess.getInitialParameters().length; j++) { eps = eps +
+	 * mCRL2.printf(mCRL2.node, mCRL2.emptyf); if (j !=
+	 * sumprocess.getInitialParameters().length - 1) eps = eps + ","; }
+	 * this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")"); }
+	 */
 
-	private void generateCommunicationBufferBLocking(Action i, Action o, DataParameter[] parameters) {
+	/*
+	 * private void generateCommunicationBufferBLocking(Action i, Action o, ISort[]
+	 * parameters) {
+	 * 
+	 * Buffer sumprocess = new Buffer(parameters, mcrl2.getSortData());
+	 * sumprocess.setBufferName(); TaskProcess bufferl = new TaskProcess(); //
+	 * generate i(e1,...,e_n) // Generate the sum : e1,...en:Data Process sum = new
+	 * Process(Action.sumAction(parameters), Operator.SUM); Process input = new
+	 * Process(i); Process seqinputsum = new Process(Operator.DOT, sum.getName(),
+	 * input.getName()); bufferl.addInputAction(seqinputsum, input, sum);
+	 * 
+	 * Action a = new Action(o.getName(), sumprocess.getInitialParameters());
+	 * this.mcrl2.addAction(a); Process outpuprocess = new Process(a); String
+	 * emptyness = "(!empty(" + sumprocess.getInitialParameters()[0].getPlaeholder()
+	 * + ")"; for (int j = 1; j < sumprocess.getInitialParameters().length; j++)
+	 * emptyness = emptyness + "&& !empty(" +
+	 * sumprocess.getInitialParameters()[j].getPlaeholder() + ")"; Action
+	 * actionempty = new Action(emptyness + ")"); Process processempty = new
+	 * Process(actionempty); Process ifp = new Process(Operator.IF,
+	 * processempty.getName(), outpuprocess.getName());
+	 * ifp.addInsideDef(processempty, outpuprocess); sumprocess.setOperant(bufferl,
+	 * ifp); this.mcrl2.addProcess(sumprocess); String eps = ""; for (int j = 0; j <
+	 * sumprocess.getInitialParameters().length; j++) { eps = eps + mCRL2.eps; if (j
+	 * != sumprocess.getInitialParameters().length - 1) eps = eps + ","; }
+	 * this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")"); }
+	 */
 
-		Buffer sumprocess = new Buffer(parameters, mcrl2.getSortData());
-		sumprocess.setBufferName();
-		TaskProcess bufferl = new TaskProcess();
-		// generate i(e1,...,e_n)
-		// Generate the sum : e1,...en:Data
-		Process sum = new Process(Action.sumAction(parameters), Operator.SUM);
-		Process input = new Process(i);
-		Process seqinputsum = new Process(Operator.DOT, sum.getName(), input.getName());
-		bufferl.addInputAction(seqinputsum, input, sum);
-
-		Action a = new Action(o.getName(), sumprocess.getInitialParameters());
-		this.mcrl2.addAction(a);
-		Process outpuprocess = new Process(a);
-		String emptyness = "(!empty(" + sumprocess.getInitialParameters()[0].getPlaeholder() + ")";
-		for (int j = 1; j < sumprocess.getInitialParameters().length; j++)
-			emptyness = emptyness + "&& !empty(" + sumprocess.getInitialParameters()[j].getPlaeholder() + ")";
-		Action actionempty = new Action(emptyness + ")");
-		Process processempty = new Process(actionempty);
-		Process ifp = new Process(Operator.IF, processempty.getName(), outpuprocess.getName());
-		ifp.addInsideDef(processempty, outpuprocess);
-		sumprocess.setOperant(bufferl, ifp);
-		this.mcrl2.addProcess(sumprocess);
-		String eps = "";
-		for (int j = 0; j < sumprocess.getInitialParameters().length; j++) {
-			eps = eps + mCRL2.eps;
-			if (j != sumprocess.getInitialParameters().length - 1)
-				eps = eps + ",";
-		}
-		this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")");
-	}
-
-	// What is in output from a Intermediate Message Event is the data that was
-	// sended
+	/**
+	 * Returns the set of messages exchanged among participants
+	 * 
+	 * @param f                   the message flow that is sending the message
+	 * @param tmpinternalCommList the list of communication <sender,
+	 *                            message/data,receiver>
+	 * @return the set of messages exchanged among participants
+	 */
 	private Set<DataNode> findData(IFlowNode f, Set<Triple<IFlowNode, DataNode, IFlowNode>> tmpinternalCommList) {
 		Set<DataNode> set = new HashSet<DataNode>();
 		for (Triple<IFlowNode, DataNode, IFlowNode> triple : tmpinternalCommList) {
-			if (triple.getLeft().equals(f)) {
+			if (triple.getLeft().equals(f))
 				set.add(triple.getMiddle());
-			}
 		}
 		return set;
+
 	}
 
-	// Return the flownode that correspond to the input vertix in that bpmn model
+	/**
+	 * If d1 and d2 in Data have the same name, then is the same data object, that's
+	 * why if one has a PET associated then also the other one should have it. If
+	 * not the method is copying it.
+	 */
+	private void reconnectWithPETS() {
+		bpmn.forEach(b1 -> {
+			bpmn.forEach(b2 -> {
+				if (!b1.equals(b2)) {
+					for (NonFlowNode f1 : b1.getNonFlowNodes()) {
+						for (NonFlowNode f2 : b2.getNonFlowNodes()) {
+							if (f1.getName().equals(f2.getName())) {
+								if (f1.getTag() != null && f2.getTag() == null) {
+									f2.setTag(f1.getTag());
+									mcrl2.addPetLabel(((AbstractDataPET)f1.getTag()).getPETLabel());
+								}
+							}
+						}
+					}
+				}
+			});
+		});
+	}
 
 	private void generateInternalCommunicationlist() {
 		epsilon.setTag("epsilon");
 		epsilon.setName("epsilon");
 		Set<Triple<IFlowNode, DataNode, IFlowNode>> tmpInternalCommList = new HashSet<Triple<IFlowNode, DataNode, IFlowNode>>();
+		reconnectWithPETS();
 		bpmn.forEach(b -> {
-			for (DataNode n : b.getDataNodes()) {
-				Collection<IFlowNode> writingnodes = n.getWritingFlowNodes();
-				Collection<IFlowNode> readnodes = n.getReadingFlowNodes();
+			for (NonFlowNode f : b.getNonFlowNodes()) {
+				DataNode petnode = (DataNode) f;
+				mcrl2.addDataObjectName(petnode.getName());
+				if (!mapPNPlaceholders.containsKey(petnode.getName()))
+					mapPNPlaceholders.put(petnode.getName(), new Placeholder(Data.nameSort()));
+				Collection<IFlowNode> writingnodes = petnode.getWritingFlowNodes();
+				Collection<IFlowNode> readnodes = petnode.getReadingFlowNodes();
 				if (!writingnodes.isEmpty() && !readnodes.isEmpty()) {
 					writingnodes.forEach(w -> {
-						readnodes.forEach(r -> tmpInternalCommList.add(Triple.of(w, n, r)));
+						readnodes.forEach(r -> {
+							tmpInternalCommList.add(Triple.of(w, petnode, r));
+						});
 					});
 				} else if (writingnodes.isEmpty() && !readnodes.isEmpty()) {
-					readnodes.forEach(r -> tmpInternalCommList.add(Triple.of(epsilon, n, r)));
+					readnodes.forEach(r -> tmpInternalCommList.add(Triple.of(epsilon, petnode, r)));
 				} else if (!writingnodes.isEmpty() && readnodes.isEmpty()) {
-					writingnodes.forEach(w -> tmpInternalCommList.add(Triple.of(w, n, epsilon)));
+					writingnodes.forEach(w -> tmpInternalCommList.add(Triple.of(w, petnode, epsilon)));
 				}
 			}
 		});
@@ -319,8 +322,10 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		combiningbyData(combiningbyDataReceiver(tmpInternalCommList));
 	}
 
-	/*
-	 * It combines the triple that have the same Sender and Receiver
+	/**
+	 * Unify the triples that have the same sender and receiver in a unique triple
+	 * 
+	 * @param tmpintermalcommlist the triples of communication
 	 */
 	private void combiningbyData(Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> tmpintermalcommlist) {
 		this.internalCommList = new HashSet<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>>();
@@ -338,8 +343,11 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		}
 	}
 
-	/*
-	 * It combines the triples that have the same Data and the same Receiver
+	/**
+	 * Returns a triple of <senders, messages/datas, receiver>
+	 * 
+	 * @param set containing all the triples with the communication
+	 * @return a triple of <senders, message/data, receiver>
 	 */
 	private Set<Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode>> combiningbyDataReceiver(
 			Set<Triple<IFlowNode, DataNode, IFlowNode>> set) {
@@ -365,295 +373,28 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return tmpintermalcommlist;
 	}
 
-	private String endcodeENCRYInsideMemory(PartecipantProcess p, String m, DataParameter e) {
-		Set<Pair<String, PET>> pair = mcrl2.getSortData().getPrivatePair();
-		Set<Integer> pairtocheck = new HashSet<Integer>();
-		List<String> childspartecipant = new ArrayList<String>();
-		childspartecipant.addAll(mCRL2.childTaskProcess(p.getProcess(), mcrl2, childspartecipant));
-		String s = "";
-		for (String child : childspartecipant) {
-			Action action = mcrl2.getActionByName(child);
-			if (!action.getPet().isEmpty()) {
-				if (action.getPet().equals(PETLabel.KDECRYPT.name()))
-					return s;
-			}
-		}
-		for (Pair<String, PET> t : pair) {
-			boolean tocheck = true;
-			for (String child : childspartecipant) {
-				Action action = mcrl2.getActionByName(child);
-				if (action.getPet() != null && action.getPet().equals(PETLabel.KENCRYPT.name())
-						&& action.getPETid().equals(String.valueOf(t.getRight().getIdPet()))) {
-					tocheck = false;
-					break;
-				}
-			}
-			if (tocheck)
-				pairtocheck.add(t.getRight().getIdPet());
-		}
-		if (!pairtocheck.isEmpty()) {
-			int size = 0;
-			for (int i : pairtocheck) {
-				s = s + mCRL2.printf("encryptionviolation", mCRL2.printf(mCRL2.unionf, m, e.toString()),
-						String.valueOf(i));
-				if (size != pairtocheck.size() - 1)
-					s = s + "||";
-			}
-			s = mCRL2.printifeqn(s, mCRL2.violation + ".delta", "");
-		}
-		return s;
-	}
-
-	/*
-	 * Econde ssharing violation action only if your are not creating that shares
-	 */
-	private void addRecostructionConstraint() {
-		Action a = mcrl2.identifyRecostructionTask();
-		if (a != null) {
-			DataParameter[] dp = a.getParameters();
-			String s = "";
-				s = s + mCRL2.printf("is_recostructed",
-						mCRL2.printf("list2bag", "[" + Utils.organizeParameterAsString(dp) + "],{0:0}"));
-				
-			String complete = mCRL2.printifeqn(s, mCRL2.recostruct, "") + "<>" + mCRL2.norecostruct;
-			TaskProcess t = mcrl2.identifyTaskProcessFromAction(a);
-			t.setRecostructionChecking(complete);
-		}
-	}
-
-	private String encodeSSSPetInsideMemory(PartecipantProcess p, String m, DataParameter e) {
-		Set<Pair<String, PET>> pair = mcrl2.getSortData().getPrivatePair();
-		Set<PET> pairtocheck = new HashSet<PET>();
-		String s = "";
-		List<String> childspartecipant = new ArrayList<String>();
-		childspartecipant.addAll(mCRL2.childTaskProcess(p.getProcess(), mcrl2, childspartecipant));
-		for (String child : childspartecipant) {
-			Action action = mcrl2.getActionByName(child);
-			if (!action.getPet().isEmpty()) {
-				if (action.getPet().equals(PETLabel.SSRECONTRUCTION.name()))
-					return s;
-			}
-		}
-
-		for (Pair<String, PET> t : pair) {
-			boolean tocheck = true;
-			for (String child : childspartecipant) {
-				Action action = mcrl2.getActionByName(child);
-				PETLabel petlabel = t.getRight().getPET();
-				if (action.getPet() != null && petlabel.equals(PETLabel.SSSHARING)
-						&& action.equalPet(petlabel.name(), String.valueOf(t.getRight().getIdPet()))) {
-					tocheck = false;
-					break;
-				}
-			}
-			if (tocheck)
-				pairtocheck.add(t.getRight());
-		}
-		for (PET tt : pairtocheck) {
-			if (!s.isEmpty())
-				s = s + "||";
-			PETLabel petlabel = tt.getPET();
-			if (petlabel.equals(PETLabel.SSSHARING)) {
-				s = s + mCRL2.printf("sssharingviolation", String.valueOf(tt.getIdPet()),
-						mCRL2.printf(mCRL2.unionf, m.toString(), e.toString()));
-			} else if (petlabel.equals(PETLabel.SSCOMPUTATION)) {
-				s = s + mCRL2.printf("sscompviolation", String.valueOf(tt.getIdPet()),
-						mCRL2.printf(mCRL2.unionf, m.toString(), e.toString()));
-			} else if (petlabel.equals(PETLabel.SSRECONTRUCTION)) {
-				s = s + "ssrecviolation (" + e + ")";
-			}
-
-		}
-		if (!s.isEmpty())
-			s = "(" + s + ")->VIOLATION.delta";
-		return s;
-
-	}
-
 	@Override
-	public mCRL2 getSpec() {
-		
-		tmcrl2 = new HashSet<Tmcrl>();
+	public MCRL2 getSpec() {
+		// Set of control-flow
+		Set<ParticipantProcess> tmcrl2 = new HashSet<ParticipantProcess>();
 		for (Bpmn<BpmnControlFlow<FlowNode>, FlowNode> b : bpmn)
 			tmcrl2.add(analyzeControlFlow(b));
-
-		mcrl2 = new mCRL2();
-		mcrl2.setSortMemory();
-		mcrl2.setSortData();
-		//How want it to be indipendent from the initial choice, so this will dissappear later on.
-		/*if (id_op == IDOperaion.SSSHARING.getVal() || id_op == IDOperaion.ENCRYPTION.getVal()
-				|| id_op == IDOperaion.RECONSTRUCTION.getVal()) {
-			mcrl2.setSortPName();
-			mcrl2.setSortPrivacy();
-			mcrl2.getSortData().addType(
-					mCRL2.printf(mCRL2.pnode, mCRL2.pv + ":" + mcrl2.getSortPrivacy().getName()) + "?" + mCRL2.is_pn);
-			if (id_op == IDOperaion.SSSHARING.getVal() || id_op == IDOperaion.RECONSTRUCTION.getVal()) {
-			}
-		}*/
-
-		
+		mcrl2 = new MCRL2();
 		tmcrl2.forEach(t -> {
-			mcrl2.addProcesses(t.getProcess());
-			mcrl2.addAction(t.getActions().toArray(new Action[] {}));
-			mcrl2.addAllow(t.getActions().toArray(new Action[] {}));
-			mcrl2.addInitSet(t.getFirstProcess().getName());
+			Quartet<ParticipantProcess, Set<CommunicationFunction>, Set<Action>, Set<Action>> quartet = Parout
+					.parout(t);
+			mcrl2.addParticipantProcess(quartet.getValue0());
+			mcrl2.addCommunicationFunction(quartet.getValue1());
+			mcrl2.addAllow(quartet.getValue2().toArray(new Action[quartet.getValue2().size()]));
+			mcrl2.addAllow(quartet.getValue0().getActionTask());
+			mcrl2.addHide(quartet.getValue2().toArray(new Action[quartet.getValue2().size()]));
+			mcrl2.addAction(quartet.getValue2().toArray(new Action[quartet.getValue2().size()]));
+			mcrl2.addAction(quartet.getValue3().toArray(new Action[quartet.getValue3().size()]));
 		});
 
+		// Data-object and message flow transformation step
 		analyzeData();
-		Set<PartecipantProcess> partecipant = collectPartecipants();
-		for (PartecipantProcess p : partecipant)
-			generateProcessMemory(p);
-
-		changePartecipants();
-		mcrl2.taureduction();
-		addConnectionToMemory();
-		//if (AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
-			//addRecostructionConstraint();
 		return mcrl2;
-	}
-
-	private void generateProcessMemory(PartecipantProcess p) {
-		// sum b:Bool
-		DataParameter parbool = new DataParameter(mcrl2.getSortBool());
-		Process sumbool = new Process(Action.sumAction(parbool), Operator.SUM);
-		// ----
-		// sum d:Data
-		DataParameter pardata = new DataParameter(mcrl2.getSortMemory());
-		Process sumdata = new Process(Action.sumAction(pardata), Operator.SUM);
-		// ---
-		// s(b,d) also added to the action
-		Action s = Action.setTemporaryAction(parbool, pardata);
-		Process processs = new Process(s);
-		// ---
-		Process notcomplete = new Process(Operator.DOT, sumbool.getName(), sumdata.getName(), processs.getName());
-		// (.. )-> .. <> ...
-		Process negbool = new Process(new Action("(!" + parbool.getPlaeholder() + ")"));
-
-		Action memp = Action.setMemoryAction(mcrl2.getSortMemory());
-		p.setActionMemory(memp);
-		Process thenp = null;
-		if (id_op == IDOperaion.TASK.getVal() || id_op == IDOperaion.PARTICIPANT.getVal()
-				|| id_op == IDOperaion.RECONSTRUCTION.getVal())
-			thenp = new Process(new Action(mCRL2.printf(notcomplete.getName(),
-					mCRL2.printf(mCRL2.unionf, p.retriveDataMemoryName(), pardata.toString()))));
-		else if (id_op == IDOperaion.SSSHARING.getVal() || id_op == IDOperaion.ENCRYPTION.getVal()) {
-			String encoding = "";
-			if (id_op == IDOperaion.SSSHARING.getVal())
-				encoding = encodeSSSPetInsideMemory(p, p.retriveDataMemoryName(), pardata);
-			else if (id_op == IDOperaion.ENCRYPTION.getVal())
-				encoding = endcodeENCRYInsideMemory(p, p.retriveDataMemoryName(), pardata);
-			if (encoding.isEmpty())
-				thenp = new Process(new Action(
-						notcomplete.getName() + "(union(" + p.retriveDataMemoryName() + "," + pardata + "))"));
-			else
-				thenp = new Process(new Action(encoding + "<>" + notcomplete.getName() + "(union("
-						+ p.retriveDataMemoryName() + "," + pardata + "))"));
-		}
-		mcrl2.addAction(memp, s);
-		mcrl2.addAllow(memp);
-		Process elsepmep = new Process(memp);
-		Process eleserec = new Process(new Action(mCRL2.printf(notcomplete.getName(), p.retriveDataMemoryName())));
-		Process elsep = new Process(Operator.DOT, elsepmep.getName(), eleserec.getName());
-		elsep.addInsideDef(elsepmep, eleserec);
-		Process ifthen = new Process(Operator.IF, negbool.getName(), thenp.getName(), elsep.getName());
-		ifthen.addInsideDef(negbool, thenp, elsep);
-		// -----
-		notcomplete.addChild(ifthen.getName());
-		notcomplete.addInsideDef(sumbool, sumdata, processs, ifthen);
-		p.setMemory(notcomplete);
-		p.setActionToMemory(s.getName());
-		mcrl2.addInitSet(
-				mCRL2.printf(notcomplete.getName(), Action.setLeftParenthesis() + Action.setRightParenthesis()));
-	}
-
-	// Identify the task process using is task/activity name
-	public TaskProcess identiyTaskProcessName(String name) {
-		Set<TaskProcess> tasks = getTaskProcessesInsideProcesses();
-		for (TaskProcess t : tasks) {
-			if (t.getAction() != null && t.getAction().getName().equalsIgnoreCase(name))
-				return t;
-		}
-		return null;
-	}
-
-	// Qui è definito la dimensione massima che la memoria raggiungerà
-	private void addConnectionToMemory() {
-		Action codomain = Action.setSendReadAction(new DataParameter(mcrl2.getSortBool()),
-				new DataParameter(mcrl2.getSortMemory()));
-		for (PartecipantProcess partecipant : collectPartecipants()) {
-			Set<String> sendedtomemory = new HashSet<String>();
-			List<String> childspartecipant = mCRL2.childTaskProcess(partecipant.getProcess(), mcrl2,
-					new ArrayList<String>());
-			for (String s : childspartecipant) {
-				TaskProcess t = identiyTaskProcessName(s);
-				Action output = new Action(partecipant.getActionToMemory(),
-						new DataParameter("false", mcrl2.getSortBool()));
-				output.setTemporaty();
-				for (DataParameter d : t.getAction().getParameters()) {
-					output.addDataParameter(d);
-					t.addOutputAction(output);
-					String myData = "";
-					for (Entry<String, DataParameter> entry : dataplaceholder.entrySet()) {
-						if (entry.getKey().equals(d.getName())
-								|| entry.getValue().getPlaeholder().equals(d.getName())) {
-							myData = entry.getKey();
-							break;
-						}
-					}
-					// defining the maximum memory of a participant
-					if (!sendedtomemory.contains(myData))
-						sendedtomemory.add(myData);
-				}
-			}
-			partecipant.setMaxDim(sendedtomemory.size());
-			mcrl2.addCommunicaitonFunction(new CommunicationFunction(codomain, partecipant.getActionToMemory(),
-					partecipant.getActionToMemory()));
-		}
-		mcrl2.addAction(codomain);
-	}
-
-	private Set<TaskProcess> getTaskProcessesInsideProcesses() {
-		Set<TaskProcess> taskprocessset = new HashSet<TaskProcess>();
-		mcrl2.getProcesses().forEach(tp -> {
-			if (tp.getClass().equals(TaskProcess.class))
-				taskprocessset.add((TaskProcess) tp);
-		});
-		return taskprocessset;
-	}
-
-	private void changePartecipants() {
-		for (PartecipantProcess p : collectPartecipants()) {
-			Process newpartecipant = new Process(Operator.DOT);
-			for (int i = 0; i < p.getProcess().getLength(); i++)
-				newpartecipant.addChild(p.getProcess().getChildName(i));
-			Action a = new Action(p.getActionToMemory(), new DataParameter("true", mcrl2.getSortBool()),
-					new DataParameter(mCRL2.eps, mcrl2.getSortData()));
-			a.setTemporaty();
-			Process lastsend = new Process(a);
-			newpartecipant.addChild(lastsend.getName());
-			newpartecipant.addInsideDef(lastsend);
-			newpartecipant.addInsideDef(p.getProcess().getAllInsideDef().toArray(new Process[] {}));
-			mcrl2.removePinInitSet(p.getName());
-			p.setProcessPartecipant(newpartecipant);
-			mcrl2.addInitSet(p.getName());
-			mcrl2.addProcess(p);
-
-		}
-
-	}
-
-	/*
-	 * Partecipants are always Process because are such that P = P'.P''.P'''. ... .
-	 * a(true,eps)
-	 */
-	private Set<PartecipantProcess> collectPartecipants() {
-		Set<PartecipantProcess> partecipants = new HashSet<PartecipantProcess>();
-		for (AbstractProcess ap : mcrl2.getProcesses()) {
-			if (ap.getClass().equals(PartecipantProcess.class))
-				partecipants.add((PartecipantProcess) ap);
-		}
-
-		return partecipants;
 	}
 
 }

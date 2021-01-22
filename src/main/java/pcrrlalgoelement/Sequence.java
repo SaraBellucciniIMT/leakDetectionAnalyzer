@@ -3,70 +3,67 @@
  */
 package pcrrlalgoelement;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import spec.mcrl2obj.Action;
+import spec.mcrl2obj.MCRL2;
 import spec.mcrl2obj.Operator;
-import spec.mcrl2obj.Process;
+import spec.mcrl2obj.Processes.AbstractProcess;
+import spec.mcrl2obj.Processes.Process;
 
 /**
- * @author sara
+ * It apply the tp_seq function to the abstract process
+ * @author S. Belluccini
  *
  */
 public class Sequence extends AbstractParaout {
 
-	private Process dad;
-	private Process child;
-	private Process t1;
-	private Process t2;
-
 	@Override
-	public void interpreter(Parout parout, Process dad, Process child) {
-		this.dad = dad;
-		this.child = child;
-		String firstsequencename = constructfirstsequence(parout);
-		List<String> newchildren = followingSequence(parout);
-		newchildren.add(0, firstsequencename);
-		// ----This is the new Operator---
-		dad.setOpertor(Operator.PARALLEL);
-		dad.setChild(newchildren);
-		
-		parout.removeProcess(child.getName());
+	public AbstractProcess interpreter(Process process) {
 
-	}
+		Process p = new Process(Operator.DOT);
+		for (int i = 0; i < process.getSize(); i++)
+			p.addChild(Parout.Tp(process.getChildAtPosition(i)));
 
-	private String constructfirstsequence(Parout parout) {
-		// Construct the first sequence
-		Process firstsequence = new Process(Operator.DOT);
-		for (int i = 0; i < dad.getLength(); i++) {
-			if (!dad.getChildName(i).equals(child.getName())) {
-				firstsequence.addChild(dad.getChildName(i));
-				if(dad.getInsideDef(dad.getChildName(i))!= null)
-					firstsequence.addInsideDef(dad.getInsideDef(dad.getChildName(i)));
-			}else {
-				this.t1 = new Process(Action.setTemporaryAction());
-				this.t2 = new Process(Action.setTemporaryAction());
-				firstsequence.addChild(t1.getName(), child.getChildName(0), t2.getName());
-				communicationFunctionUpdateSet(parout, Action.setTemporaryAction(), t1.getAction(), child.getLength());
-				communicationFunctionUpdateSet(parout, Action.setTemporaryAction(), t2.getAction(), child.getLength());
+		if (!AbstractParaout.hasParallel(p))
+			return p;
+
+		int indexParBlock = -1;
+		for (int i = 0; i < p.getSize(); i++) {
+			AbstractProcess child = p.getChildAtPosition(i);
+			if (child.getClass().equals(Process.class) && ((Process) child).getOperator().equals(Operator.PARALLEL)) {
+				indexParBlock = i;
+				break;
 			}
 		}
-	
-		firstsequence.addInsideDef(t1,t2);
-		parout.addProcess(firstsequence);
-		return firstsequence.getName();
-	}
+		Process parallelProcess = ((Process)process.getChildAtPosition(indexParBlock));
+		// Generating the left side part of the new parallel block, first remove the
+		// parallel block from the sequence
+		Process leftSideSequence = p.removeChildAtPosition(indexParBlock);
 
-	private List<String> followingSequence(Parout parout) {
-		List<String> followingsequence = new ArrayList<String>();
-		for (int i = 1; i < child.getLength(); i++) {
-			Process p = new Process(Operator.DOT, t1.getName(), child.getChildName(i), t2.getName());
-			p.addInsideDef(t1,t2);
-			parout.addProcess(p);
-			followingsequence.add(p.getName());
+		// Constructing t and Q
+		AbstractProcess parBlockFirstBlock = parallelProcess.getChildAtPosition(0);
+		Action t = MCRL2.getTemporaryAction();
+		// Adding t.Q.t
+		int j = indexParBlock;
+		leftSideSequence.addChildAtPosition(j, t);
+		leftSideSequence.addChildAtPosition(++j, parBlockFirstBlock);
+		leftSideSequence.addChildAtPosition(++j, t);
+		// Add t and t' to the comm, allow and hide sets
+		communicationFunctionUpdateSet(t, parallelProcess.getSize());
+		
+		// Repeat the procedure over the new sequence to check if there are other
+		// parallel blocks
+		leftSideSequence = (Process) new Sequence().interpreter(leftSideSequence);
+
+		// Put all togheter in a unique parallel block
+		Process parallelBlock = new Process(Operator.PARALLEL);
+
+		parallelBlock.addChildAtPosition(0,leftSideSequence);
+		for (int i = 1; i < parallelProcess.getSize(); i++) {
+			// t.Qi.t
+			Process seq = new Process(Operator.DOT, t,parallelProcess.getChildAtPosition(i),t);
+			parallelBlock.addChildAtPosition(i, seq);
 		}
-		return followingsequence;
+		return parallelBlock;
 	}
 
 }

@@ -1,15 +1,10 @@
 package io;
 
-import java.util.Set;
-
-import org.jbpt.pm.FlowNode;
-import org.jbpt.pm.bpmn.AlternativeGateway;
-import org.jbpt.pm.bpmn.CatchingEvent;
-import org.jbpt.pm.bpmn.EndEvent;
-import org.jbpt.pm.bpmn.StartEvent;
-import org.jbpt.pm.bpmn.Task;
-import org.jsoup.nodes.Element;
-
+/**
+ * Enum class with string tag from the XML .bpmn file
+ * @author Sara
+ *
+ */
 public enum DotBPMNKeyW {
 	
 	COLLABORATION("bpmn2:collaboration"),
@@ -43,19 +38,37 @@ public enum DotBPMNKeyW {
 	SKENCRYPT("pleak:skencrypt"),
 	SKCOMPUTATION("pleak:skcomputation"),
 	SKDECRYPT("pleak:skdecrypt"),
+	PKPUBLIC("pleak:pkpublic"),
+	PKPRIVATE("pleak:pkprivate"),
+	MPC("pleak:mpc"),
 	
 	ID("id"),
 	NAME("name"),
+	PUBLIC("public"),
+	ENCRYPTED("encrypted"),
 	PROCESSREF("processref"),
+	BPMNSOURCEREF("bpmn2:sourceref"),
+	BPMNTARGETREF("bpmn2:targetref"),
 	SOURCEREF("sourceref"),
-	TARGETREF("targetref");
+	TARGETREF("targetref"),
+	TRESHOLD("treshold"),
+	GROUPID("groupId"),
+	KEY("key"),
+	TYPE("type"),
+	INPUTS("inputs"),
+	INPUTTYPES("inputTypes");
 	
 	private String value;
 	
 	private DotBPMNKeyW(String value) {
 		this.value = value;
 	}
-
+	
+	public String getValue() {
+		return this.value;
+	}
+	
+	@Override
 	public String toString() {
 		return this.value;
 	}

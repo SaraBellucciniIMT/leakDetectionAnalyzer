@@ -1,23 +1,34 @@
 package algo.interpreter;
 
-import spec.mcrl2obj.AbstractProcess;
+import io.ExtendedNode;
 import spec.mcrl2obj.Action;
-import spec.mcrl2obj.TaskProcess;
+import spec.mcrl2obj.TaskAction;
+import spec.mcrl2obj.Processes.AbstractProcess;
+import spec.mcrl2obj.Processes.Buffer;
+import spec.mcrl2obj.Processes.TaskProcess;
 
-public class CatchingEvent implements ITProcess{
+/**
+ * This is the intermediate catching event class that return an abstract process
+ * that has an action representing the intermediate catching message of the bpmn
+ * model
+ * 
+ * @see #interpreter(Tmcrl)
+ * @author S. Belluccini
+ *
+ */
+
+public class CatchingEvent implements ITProcess {
 
 	@Override
-	//Before was returing a process
-	public AbstractProcess interpreter(Tmcrl node) {
-		// TODO Auto-generated method stub
-
-		Action a = new Action(node.getCurrentNode().getId());
-		a.setId(node.getCurrentNode().getId());
-		TaskProcess tp = new TaskProcess(a, node.getCurrentNode());
-		node.addProcess(tp);
-		node.addAction(a);
+	public AbstractProcess interpreter(ExtendedNode node) {
+		TaskAction a;
+		if(!node.getName().isBlank())
+			a = new TaskAction(node.getName(),node.getId());
+		else
+			a = new TaskAction(node.getId(), node.getId());
+		
+		TaskProcess tp = new TaskProcess(a);
 		return tp;
-	
 	}
 
 }

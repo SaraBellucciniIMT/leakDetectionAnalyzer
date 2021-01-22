@@ -1,45 +1,93 @@
 package sort;
 
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 
 import rpstTest.Utils;
+import spec.mcrl2obj.MCRL2;
 
-/*
- * Basic sort to represent data objects inside the specification
- * -name: is the name of the data object coming from the BPMN model
- * -id : is the name that the data object will assume in the specifcation id order to NOT violate 
+/**
+ * Name is the class of data object inside BPMN model
  */
-public class Name extends AbstractStructSort{
+public class Name implements ISort {
 
-	private static Set<String> dataparameters;
+	private static Map<String, String> setName = new HashMap<String, String>();
+
+	/**
+	 * The id represent the data object inside the specification
+	 */
 	private String id;
-	private String name;
-	
+	/**
+	 * Real name of the data object inside the collaboration
+	 */
+	private String realName;
 
-	@Override
-	public String getDefinition() {
-		this.type = dataparameters;
-		return this.getClass().getName() + printStruct();
+	public Name() {
+		this.id = null;
+		this.realName = null;
 	}
-	
-	
-	public Name(String n) {
-		this.name = n;
-		this.id = Utils.getDataID();
-		Name.dataparameters.add(id.toString());
+
+	/**
+	 * Constructor for Name class, an id to represent this object is assigned
+	 * 
+	 * @param realName the real name of the data object
+	 */
+	public Name(String realName) {
+		this.realName = realName;
+		if (setName.containsKey(realName))
+			this.id = setName.get(realName);
+		else {
+			this.id = MCRL2.getDataName();
+			setName.put(realName, this.id);
+		}
+
 	}
-	
+
+	public Name(String id, String realName) {
+		this.id = id;
+		this.realName = realName;
+
+	}
+
+	/**
+	 * Returns the id that identifies this object
+	 * 
+	 * @return the id that identifies this object
+	 */
 	public String getId() {
 		return this.id;
 	}
 
-	public String getName() {
-		return this.name;
+	/**
+	 * Returns the real name of a data object
+	 * 
+	 * @return the real name of a data object
+	 */
+	public String getRealName() {
+		return this.realName;
 	}
-	
+
+	/**
+	 * Gives the id that identifies this object
+	 * 
+	 * @return the id that identifies this object
+	 */
 	@Override
 	public String toString() {
 		return getId();
+	}
+
+	public String toStringSort() {
+		return Utils.printAsStruct(nameSort(), setName.values().toArray(new String[setName.size()]));
+	}
+
+	public static String nameSort() {
+		return "Name";
+	}
+
+	@Override
+	public String getNameSort() {
+		return nameSort();
 	}
 
 }

@@ -1,245 +1,127 @@
 package spec.mcrl2obj;
 
+import java.util.Set;
+
 import org.apache.commons.lang3.ArrayUtils;
+import org.javatuples.Pair;
 
-import algo.AbstractTranslationAlg;
-import spec.mcrl2obj.DataParameter;
-import algo.IDOperaion;
+import com.google.common.collect.Sets;
+
+import io.pet.AbstractTaskPET;
 import rpstTest.Utils;
+import sort.ISort;
+import spec.mcrl2obj.Processes.AbstractProcess;
 
-public class Action {
-	private String name = "";
-	private String secondName = "";
-	private static int index = 0;
-	private DataParameter[] parameters;
-	/*
-	 * Id that correspond to the field in the .bpmn file Example: <bpmn2:task
-	 * id="Task_07fz7yg" name="A">
+public class Action extends AbstractProcess {
+	private String realName = "";
+
+	/**
+	 * Id that correspond to the field in the .bpmn file Example:
+	 * <bpmn2:task id="Task_07fz7yg" name="A">
 	 */
-	private String id;
-	// isParameter == true only if the Action is representing a sum, for example
-	// e1...en :Data
-	private boolean isParameter = false;
+
 	private static final String tau = "tau";
-	private static final String input = "i";
-	private static final String output = "o";
-	private static final String sendread = "sendread";
-	private static final String temporary = "t";
-	private boolean isTemporary = false;
-	private static final String memory = "memory";
 	private boolean istau = false;
-	private String pet = "";
+	private AbstractTaskPET pet;
 
-	public Action(String name) {
-		this.name = name;
-		this.parameters = new DataParameter[0];
+	/**
+	 * Constructor for Action, that sets both realName and Id
+	 * 
+	 * @param realName of the action
+	 * @param id       the name that is actually printed out in the specification
+	 */
+	public Action(String realName, String id) {
+		this.realName = realName;
+		this.id = id;
 	}
 
-	public Action(String name, DataParameter... dataParameters) {
-		this.name = name;
-		this.parameters = dataParameters;
+	/**
+	 * Another constructor for the Action class
+	 * 
+	 * @param realName the real name of the action
+	 * @param id       the associated id
+	 * @param pet      the pet associated to this action
+	 */
+	public Action(String realName, String id, AbstractTaskPET pet) {
+		this.realName = realName;
+		this.id = id;
+		this.pet = pet;
 	}
 
-	/*
-	 * Generate a silent event
+	/**
+	 * Another constructor for the Action class. The realName is set both as
+	 * realName and Id of this action and if there are dataparamters are added to
+	 * this action
+	 * 
+	 * @param realName the name that is used both for realName and Id of this task
+	 * @param dataParameters contained by this action
+	 */
+	public Action(String realName, ISort... dataParameters) {
+		this.realName = realName;
+		this.id = realName;
+		if (dataParameters.length != 0)
+			this.parameters = dataParameters;
+	}
+
+	/**
+	 * Constructor for silent events i.e. tau actions
 	 */
 	public Action() {
 		istau = true;
 	}
 
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	private String petid;
-
-	public void setPet(String pet) {
-		String[] split = pet.split("-");
-		this.pet = split[0];
-		if (split.length > 1)
-			this.petid = split[1];
-	}
-
-	public String getPETid() {
-		return this.petid;
-	}
-
-	public boolean equalPet(String petname, String id_shares) {
-		if (this.pet.equals(petname) && petid.equals(id_shares))
-			return true;
-
-		return false;
-	}
-
-	// PET is given by petname-id_protection, example SSHARING-(no threshold but id
-	// of the privacy label)
-	public String getPet() {
+	public AbstractTaskPET getPet() {
 		return this.pet;
 	}
 
-	public void setSecondName(String secondName) {
-		this.secondName = secondName;
-	}
-
-	public String getSecondName() {
-		return this.secondName;
-	}
-
-	public String getId() {
-		return this.id;
-	}
-
-	public void setTemporaty() {
-		this.isTemporary = true;
-	}
-
-	// An action that has only parameters is used to represent sum: e1,...en : Data
-	private Action(DataParameter... parameters) {
-		this.name = "";
-		this.parameters = new DataParameter[parameters.length];
-		this.parameters = parameters;
-		this.isParameter = true;
-	}
-
-	public static Action setMemoryAction(Sort sort) {
-		DataParameter par = new DataParameter(sort);
-		return new Action(memory + (index++), par);
-	}
-
-	public static Action setVIOLATOINAction() {
-		return new Action(mCRL2.violation);
-	}
-
-	public static Action setRECOSTRUCTIONAction() {
-		return new Action(mCRL2.recostruct);
-	}
-	public static Action setSendReadAction(DataParameter... dataParameters) {
-		return new Action(sendread, dataParameters);
-	}
-
-	public static Action setTemporaryAction() {
-		return new Action(temporary + (index++));
-	}
-
-	public static Action setTemporaryAction(DataParameter... parameters) {
-		return new Action(temporary + (index++), parameters);
-	}
-
-	public String getName() {
-		return this.name;
-	}
-
-	public String getSortString() {
-		String s = "";
-		if (this.id != null)
-			return "Memory";
-		else {
-			for (int i = 0; i < this.parameters.length; i++) {
-				s = s + this.parameters[i].getSort().getName();
-				if (i != this.parameters.length - 1)
-					s = s + "#";
-			}
-			return s;
-		}
-	}
-
-	public DataParameter[] getParameters() {
-		return parameters;
-	}
-
-	public int nparameter() {
-		return parameters.length;
-	}
-
-	// Standard representation for a INPUT CHANNEL with n parameters
-	public static Action inputAction(DataParameter... parameters) {
-		return new Action(input + (index++), parameters);
-	}
-
-	// Standard representation for an OUTPUT CHANNEL with n parameters
-	public static Action outputAction(DataParameter... parameters) {
-		return new Action(output + (index++), parameters);
-	}
-
-	public static Action sumAction(DataParameter... parameter) {
-		return new Action(parameter);
-	}
-
-	/*
-	 * Add 1 parameter to this action
+	/**
+	 * Returns the real name of this activity i.e the name in the bpmn model
+	 * 
+	 * @return the real name of this activity i.e the name in the bpmn model
 	 */
-	public void addDataParameter(DataParameter parameter) {
+	public String getRealName() {
+		return this.realName;
+	}
+
+	@Override
+	public void addParameters(ISort... parameters) {
 		if (!istau) {
-			this.parameters = ArrayUtils.add(this.parameters, parameter);
+			this.parameters = ArrayUtils.addAll(this.parameters, parameters);
 		} else
 			System.err.println("You cannot add parameters to a TAU action");
 	}
 
-	@Override
-	public String toString() {
-		String rp = setRightParenthesis();
-		String lp = setLeftParenthesis();
-		if (istau)
-			return tau;
-		else if (id != null) {
-			String s = name;
-			if (parameters != null && parameters.length != 0)
-				return s + "(union(" + lp + rp + "," + lp + Utils.organizeParameterAsString(parameters) + rp + "))";
-			else
-				return s + "(" + lp + rp + ")";
-		} else if (isParameter) {
-			return Utils.organizeParameterAsString(parameters) + ": " + parameters[0].getSort().getName();
-		} else if (isTemporary) {
-			String s = name;
-			s = s + "(" + parameters[0].toString() + "," + lp;
-			for (int i = 1; i < parameters.length; i++) {
-				s = s + parameters[i];
-				if (i != parameters.length - 1)
-					s = s + ",";
-			}
-			return s + rp + ")";
-		} else if (parameters.length != 0 && !this.name.isEmpty() && this.name.equals("!empty")) {
-			return name + "(" + Utils.organizeParameterAsString(parameters) + ")";
-		} else if (parameters.length != 0 && !this.name.isEmpty())
-			return name + "(" + Utils.organizeParameterAsString(parameters) + ")";
-		else
-			return name;
-	}
-
-	//This shitty method will disappear soon
-	/*public static String setRightParenthesis() {
-		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
-				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
-			return "}";
-		else if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
-				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()
-				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
-			return "]";
-		return null;
-	}
-
-	//Also this one
-	public static String setLeftParenthesis() {
-		if (AbstractTranslationAlg.id_op == IDOperaion.TASK.getVal()
-				|| AbstractTranslationAlg.id_op == IDOperaion.PARTICIPANT.getVal())
-			return "{";
-		else if (AbstractTranslationAlg.id_op == IDOperaion.SSSHARING.getVal()
-				|| AbstractTranslationAlg.id_op == IDOperaion.ENCRYPTION.getVal()
-				|| AbstractTranslationAlg.id_op == IDOperaion.RECONSTRUCTION.getVal())
-			return "[";
-		return null;
-	}*/
+	/*
+	 * public String toString() { if (istau) return tau; String s = ""; if (id !=
+	 * null) { s = id; if (parameters.length != 0) s += "(" +
+	 * Utils.organizeParameterAsString(parameters) + ")"; } return s; }
+	 */
 
 	public boolean isTau() {
 		return istau;
 	}
 
-	public boolean containsParameter(DataParameter d) {
-		for (int i = 0; i < parameters.length; i++) {
-			if (parameters[i].equals(d))
-				return true;
+	/*
+	 * public boolean containsParameter(ISort d) { for (int i = 0; i <
+	 * parameters.length; i++) { if (parameters[i].equals(d)) return true; } return
+	 * false; }
+	 */
+
+	/**
+	 * Returns the type of an action given the sorts of its parameters, i.e. Data #
+	 * ... # Data
+	 * 
+	 * @return the type of an action given the sorts of its parameters, i.e. Data #
+	 *         ... # Data
+	 */
+	public String printActionType() {
+		String s = "";
+		for (int i = 0; i < parametersLenght(); i++) {
+			s += parameters[i].getNameSort();
+			if (i != parametersLenght() - 1)
+				s += "#";
 		}
-		return false;
+		return s;
 	}
 
 	@Override
@@ -251,20 +133,40 @@ public class Action {
 		if (getClass() != obj.getClass())
 			return false;
 		Action other = (Action) obj;
-		if (isParameter != other.isParameter)
-			return false;
 		if (istau != other.istau)
 			return false;
-		if (name == null) {
-			if (other.name != null)
+		if (realName == null) {
+			if (other.realName != null)
 				return false;
-		} else if (!name.equals(other.name))
+		} else if (!realName.equals(other.realName))
+			return false;
+		if (id == null) {
+			if (other.getId() != null)
+				return false;
+		} else if (!id.equals(other.getId()))
 			return false;
 		if (parameters == null) {
 			if (other.parameters != null)
 				return false;
-		} else if (nparameter() != other.nparameter())
+		} else if (parametersLenght() != other.parametersLenght())
 			return false;
 		return true;
+	}
+
+	@Override
+	public Pair<String, Set<String>> toPrint() {
+		return Pair.with(toString(), Sets.newHashSet());
+	}
+
+	public String toString() {
+		if (istau)
+			return tau;
+		String s = "";
+		if (id != null) {
+			s = id;
+			if (parameters.length != 0)
+				s += "(" + Utils.organizeParameterAsString(parameters) + ")";
+		}
+		return s;
 	}
 }

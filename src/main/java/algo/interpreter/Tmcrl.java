@@ -1,75 +1,68 @@
 package algo.interpreter;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.jbpt.algo.tree.tctree.TCType;
-import org.jbpt.pm.IFlowNode;
-
 import io.BPMNLabel;
 import io.ExploitedRPST;
 import io.ExtendedNode;
-import spec.mcrl2obj.AbstractProcess;
-import spec.mcrl2obj.Action;
-import spec.mcrl2obj.PartecipantProcess;
-import spec.mcrl2obj.Process;
-import spec.mcrl2obj.TaskProcess;
+import spec.mcrl2obj.Processes.AbstractProcess;
+import spec.mcrl2obj.Processes.ParticipantProcess;
 
+/**
+ * Applies the Translation Function over the RPST object of a BPMN participant.
+ * It generate a mCRL2 specification of a single participant without data
+ * objects.
+ * 
+ * TODO: add loops (while) identification
+ * @author S. Belluccini
+ *
+ */
 public class Tmcrl {
 
-	private ExploitedRPST rpst;
-	private ExtendedNode currentNode;
-	private Set<Action> actions;
-	private Set<AbstractProcess> processes = new HashSet<AbstractProcess>();
-	private PartecipantProcess partecipantProcess;
+	private static ExploitedRPST RPST;
 
-	public Tmcrl(ExploitedRPST rpst, String bpmnname,String bpmnid) {
-		this.rpst = rpst;
-		actions = new HashSet<Action>();
-	
-		this.partecipantProcess = new PartecipantProcess((Process)applyT(rpst.getRoot()),bpmnname);
-		partecipantProcess.setId(bpmnid);
-		processes.add(partecipantProcess);
+	public static ParticipantProcess computeTmcrl(ExploitedRPST rpst, String bpmnid, String bpmnname) {
+		RPST = rpst;
+		//actions = new HashSet<Action>();
+		return new ParticipantProcess(applyT(rpst.getRoot()), bpmnid,bpmnname);
 	}
 
-	protected AbstractProcess applyT(ExtendedNode node) {
-		this.currentNode = node;
+	protected static AbstractProcess applyT(ExtendedNode node) {
+		//this.currentNode = node;
 		if (node.getType().equals(TCType.TRIVIAL)) {
-			if (node.getTag().equals(BPMNLabel.STARTEVENT))
-				return new StartEvent().interpreter(this);
-			else if (node.getTag().equals(BPMNLabel.ENDEVENT))
-				return new EndEvent().interpreter(this);
-			else if (node.getTag().equals(BPMNLabel.MESSAGE))
-				return new CatchingEvent().interpreter(this);
+			if (node.equalsDescription(BPMNLabel.STARTEVENT))
+				return new StartEvent().interpreter(node);
+			else if (node.equalsDescription(BPMNLabel.ENDEVENT))
+				return new EndEvent().interpreter(node);
+			else if (node.equalsDescription(BPMNLabel.INTERCATCHMESSAGE))
+				return new CatchingEvent().interpreter(node);
 			else {
-				return new Task().interpreter(this);
+				return new Task().interpreter(node);
 			}
 		} else if (node.getType().equals(TCType.POLYGON)) {
-			return new Polygon(this.rpst.getOrderedDirectSuccessors(node)).interpreter(this);
-		} else if (node.getType().equals(TCType.BOND)
-				&& (node.getIRPTNodeAssociated().getEntry().getTag().equals(BPMNLabel.XOR)))
-			return new XORBond(this.rpst.getDirectSuccessors(node)).interpreter(this);
-		else if (node.getType().equals(TCType.BOND)
-				&& (node.getIRPTNodeAssociated().getEntry().getTag().equals(BPMNLabel.AND)))
-			return new ANDBond(this.rpst.getDirectSuccessors(node)).interpreter(this);
+			return new Polygon(RPST.getOrderedDirectSuccessors(node)).interpreter(node);
+		} else if (node.getType().equals(TCType.BOND) && (node.equalsDescription(BPMNLabel.XOR)))
+			return new XORBond(RPST.getDirectSuccessors(node)).interpreter(node);
+		else if (node.getType().equals(TCType.BOND) && (node.equalsDescription(BPMNLabel.AND)))
+			return new ANDBond(RPST.getDirectSuccessors(node)).interpreter(node);
+		else if(node.getType().equals(TCType.BOND) && node.equalsDescription(BPMNLabel.EVENTBASEDG))
+			return new EVENTBASEDGBond(RPST.getDirectSuccessors(node)).interpreter(node);
 		else
 			return null;
-
 	}
 
-	protected ExtendedNode getCurrentNode() {
+	/*protected ExtendedNode getCurrentNode() {
 		return this.currentNode;
-	}
+	}*/
 
-	protected void addProcess(AbstractProcess p) {
+	/*protected void addProcess(AbstractProcess p) {
 		this.processes.add(p);
 	}
 
 	public void addAction(Action a) {
 		this.actions.add(a);
-	}
+	}*/
 
-	public Set<AbstractProcess> getProcess() {
+	/*public Set<AbstractProcess> getProcess() {
 		return this.processes;
 	}
 
@@ -77,21 +70,21 @@ public class Tmcrl {
 		return this.actions;
 	}
 
-	public PartecipantProcess getFirstProcess() {
+	public ParticipantProcess getFirstProcess() {
 		return partecipantProcess;
-	}
+	}*/
 
-	public TaskProcess getProcessOfTask(IFlowNode flowNode) {
+	/*public TaskProcess getProcessOfTask(IFlowNode flowNode) {
 		Set<TaskProcess> taskprocesses = new HashSet<>();
 		processes.forEach(p -> {
 			if (p.getClass().equals(TaskProcess.class))
 				taskprocesses.add((TaskProcess) p);
 		});
 		for (TaskProcess t : taskprocesses) {
-			if (t.geExtendedNode().getId().equals(flowNode.getId()))
+			if (t.getId().equals(flowNode.getId()))
 				return t;
 		}
 		return null;
-	}	
+	}*/
 
 }

@@ -2,21 +2,22 @@ package formula;
 
 import java.util.HashSet;
 import java.util.Set;
-
-import spec.mcrl2obj.TaskProcess;
-import spec.mcrl2obj.mCRL2;
+import rpstTest.Utils;
+import sort.Data;
+import sort.ISort;
+import spec.mcrl2obj.Processes.TaskProcess;
 
 public class TaskFormula extends TextInterpreterFormula {
 
-	protected static String generateTaskFormula(mCRL2 mcrl2, TaskProcess task, Set<String> data,String openf,String closef) {
+	protected static String generateTaskFormula(TaskProcess task, Set<Data> data,String openf,String closef) {
 		String s = "";
-		if (task == null || task.getAction().nparameter() < data.size()) {
+		if (task == null || task.getDimActionMemory()< data.size()) {
 			return "-1";
 		}else {
 			s = openf;
 			Set<String> parameterplu = new HashSet<String>();
-			if (data.size() < task.getAction().nparameter()) {
-				parameterplu = generatePar(task.getAction().nparameter() - data.size());
+			if (data.size() < task.getDimActionMemory()) {
+				parameterplu = generatePar(task.getDimActionMemory() - data.size());
 				s = s + "exists ";
 				int i = 0;
 				for (String par : parameterplu) {
@@ -25,20 +26,14 @@ public class TaskFormula extends TextInterpreterFormula {
 						s = s + ",";
 					i++;
 				}
-				s = s + ":"+mcrl2.getSortData().getName()+".";
+				s = s + ":"+Data.nameSort()+".";
 			}
-			s = s + task.getAction().getName() + "({";
+			s = s + task.getAction().getId() + "({";
 			if (!parameterplu.isEmpty()) {
 				for(String par : parameterplu)
 					s = s + par +",";
 			}
-			int i=0;
-			for(String d : data) {
-				s = s + "node(" + d + ")";
-				if(i != data.size()-1)
-					s =s + ",";
-				i++;
-			}
+			s+= Utils.organizeParameterAsString(data.toArray(new ISort[data.size()]));
 			s = s + "})" + closef;
 		}
 		return s;

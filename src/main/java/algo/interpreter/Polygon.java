@@ -6,12 +6,17 @@ package algo.interpreter;
 import java.util.List;
 
 import io.ExtendedNode;
-import spec.mcrl2obj.AbstractProcess;
 import spec.mcrl2obj.Operator;
-import spec.mcrl2obj.Process;
+import spec.mcrl2obj.Processes.AbstractProcess;
+import spec.mcrl2obj.Processes.Process;
 
 /**
- * @author sara
+ * This is the Polygon class that represents a Polygon as a sequence process if
+ * the elements inside the node are >1 otherwise it returns the representation
+ * on the single node
+ * 
+ * @see #interpreter(Tmcrl)
+ * @author S. Belluccini
  *
  */
 public class Polygon implements ITProcess {
@@ -23,16 +28,16 @@ public class Polygon implements ITProcess {
 	}
 
 	@Override
-	public AbstractProcess interpreter(Tmcrl node) {
-		String[] childList = new String[successors.size()];
-		//This means that remove the bound the polygon is reprenset another element 
+	public AbstractProcess interpreter(ExtendedNode node) {
+		AbstractProcess[] childList = new AbstractProcess[successors.size()];
+		// If removing the boundaries of the bound node there is just one element, than
+		// is not anymore a process but mCRL2 element itself
 		if (childList.length == 1)
-			return node.applyT(successors.get(0));
+			return Tmcrl.applyT(successors.get(0));
 		else {
 			for (int i = 0; i < successors.size(); i++) {
-				AbstractProcess process = node.applyT(successors.get(i));
-				node.addProcess(process);
-				childList[i] = process.getName();
+				AbstractProcess process = Tmcrl.applyT(successors.get(i));
+				childList[i] = process;
 			}
 			return new Process(Operator.DOT, childList);
 		}
