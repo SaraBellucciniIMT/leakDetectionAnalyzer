@@ -176,12 +176,12 @@ public class IOTerminal {
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 6:
-					 nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
-					 mcrl22lps(nf);
-					 String jsonf = lps2lts(mcrl2, nf, op_deadlock,op_trace);
-					 if(jsonf == null)
-						 System.out.println("NO DEADLOCK");
-					 break;
+					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+					mcrl22lps(nf);
+					String jsonf = lps2lts(mcrl2, nf, op_deadlock, op_trace);
+					if (jsonf == null)
+						System.out.println("NO DEADLOCK");
+					break;
 				case 7:
 					cleanDirectory();
 					System.exit(0);
@@ -369,18 +369,18 @@ public class IOTerminal {
 		return jsonfilename;
 	}
 
-	private boolean checkDeadlock(Set<String> endEvents, List<Pair<String,Set<String>>> path) {
+	private boolean checkDeadlock(Set<String> endEvents, List<Pair<String, Set<String>>> path) {
 		List<String> hasevent = new ArrayList<String>();
-		for(Pair<String,Set<String>> pair : path) {
-			if(endEvents.contains(pair.getKey()))
+		for (Pair<String, Set<String>> pair : path) {
+			if (endEvents.contains(pair.getKey()))
 				hasevent.add(pair.getKey());
 		}
-		if(hasevent.containsAll(endEvents))
+		if (hasevent.containsAll(endEvents))
 			return false;
 		else
 			return true;
 	}
-	
+
 	/**
 	 * Generate a list of couples <taskname, set<data>>
 	 * 
@@ -516,10 +516,12 @@ public class IOTerminal {
 								Pair.of(MCRL2.TAU.getId(), tmp));
 					if ((t = mcrl.getActionTask(task)) != null) {
 						Set<String> setData = MCRL2Utils.parseFSMTaskLine(line);
-						for (Data d : mcrl.getData()) {
-							for (String s : setData) {
-								if (d.getId().equals(s))
-									tmp.add(d.getRealName());
+						if (!setData.isEmpty()) {
+							for (Data d : mcrl.getData()) {
+								for (String s : setData) {
+									if (d.getId().equals(s))
+										tmp.add(d.getRealName());
+								}
 							}
 						}
 						map.put(Pair.of(Integer.valueOf(split[0]), Integer.valueOf(split[1])),
