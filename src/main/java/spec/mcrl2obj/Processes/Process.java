@@ -40,9 +40,18 @@ public class Process extends AbstractProcess implements Iterable<AbstractProcess
 	/**
 	 * Another protected constructor to define an empty process
 	 */
-	protected Process() {
+	public Process() {
 	}
 	
+	
+	/**
+	 * {@inheritDoc} Returns true if the list of AbstractProcesses inside this process is emptyf 
+	 */
+	public boolean isEmpty() {
+		if(this.child.isEmpty())
+			return true;
+		return false;
+	}
 	/**
 	 * Returns true if one of the child is equal to the given action
 	 * @param a the action

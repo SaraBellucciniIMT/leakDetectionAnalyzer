@@ -225,7 +225,7 @@ public class MCRL2Utils {
 	}
 	
 	private static String parseNode(String s) {
-		s = s.strip();
+		s = s.replaceAll(" ", "");
 		for(int i=0; i<node.length(); i++) {
 			String c_s = String.valueOf(s.charAt(i));
 			String c_node = String.valueOf(node.charAt(i));
@@ -238,7 +238,7 @@ public class MCRL2Utils {
 	}
 	
 	private static String parsePNode(String s) {
-		s = s.strip();
+		s = s.replaceAll(" ", "");
 		for(int i=0; i<pnode.length(); i++) {
 			String c_s = String.valueOf(s.charAt(i));
 			String c_node = String.valueOf(pnode.charAt(i));

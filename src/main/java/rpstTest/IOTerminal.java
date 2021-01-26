@@ -35,6 +35,7 @@ import org.json.JSONObject;
 import algo.CollaborativeAlg;
 import formula.TextInterpreterFormula;
 import io.BpmnParser;
+import io.DotBPMNKeyW;
 import io.pet.violation.ParallelViolation;
 import io.pet.violation.Reconstruction;
 import io.pet.violation.ViolationInterpreter;
@@ -75,7 +76,7 @@ public class IOTerminal {
 		File f;
 		while ((f = scanFile()) == null) {
 		}
-		
+
 		String bpmnFile = FilenameUtils.getBaseName(f.getPath());
 		// Parse the BPMN file
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> setBpmn;
@@ -89,7 +90,7 @@ public class IOTerminal {
 					"Select action:\n" + "-> 1 Check if a <SELECT> task knows a set of <Data1,...,Datan> data \n"
 							+ "-> 2 Check if a <SELECT> partecipants knows a set of  <Data1,...,Datan> data \n"
 							+ "-> 3 Verify (SS/AddSS/FunSS/PK/SK) violation \n" + "-> 4 Reconstruction checking\n"
-							+ "-> 5 Verify MPC \n" + "-> 6 exit");
+							+ "-> 5 Verify MPC \n" + "-> 6 Deadlock freedom \n" + "-> 7 exit");
 			scan = new Scanner(System.in);
 			try {
 				int n = scan.nextInt();
@@ -97,15 +98,15 @@ public class IOTerminal {
 				case 1:
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
 					mcrl22lps(nf);
-					System.out.println(mcrl2.toStringTasks() + "\nChoose task:");
+					System.out.println(mcrl2.toStringTasks() + "\nSelect task:");
 					scan = new Scanner(System.in);
 					String task = scan.nextLine();
 					while (!mcrl2.containsTask(task)) {
-						System.err.println("INCORRECT INPUT: THIS TASK DOESN'T EXIST. CHOOSE ANOTHER ONE: ");
+						System.err.println("INCORRECT INPUT: THIS TASK DOESN'T EXIST. Try again: ");
 						scan = new Scanner(System.in);
 						task = scan.nextLine();
 					}
-					System.out.println(mcrl2.toStringData());
+					System.out.println("\n" + mcrl2.toStringData());
 					Set<Data> data = new HashSet<Data>();
 					while ((data = dataexist(mcrl2.getData())) == null) {
 					}
@@ -114,11 +115,11 @@ public class IOTerminal {
 					callFormula(mcrl2, nf);
 					break;
 				case 2:
-					System.out.println(mcrl2.toStringPartecipants() + "\nChoose partecipant:");
+					System.out.println(mcrl2.toStringPartecipants() + "\nSelect partecipant:");
 					scan = new Scanner(System.in);
 					String partcipant = scan.nextLine();
 					while (!mcrl2.containsParticipant(partcipant)) {
-						System.err.println("INCORRECT INPUT: PARTICIPANT DOESN'T EXIST. CHOOSE ANOTHER ONE: ");
+						System.err.println("INCORRECT INPUT: PARTICIPANT DOESN'T EXIST. Try again: ");
 						partcipant = scan.nextLine();
 					}
 					Data[] dataarray = new Data[0];
@@ -131,7 +132,7 @@ public class IOTerminal {
 					mcrl22lps(nf);
 					String jsonfile = lps2lts(mcrl2, nf, op_action + MCRL2.CONTAIN.toString(), op_trace + 1);
 					if (jsonfile == null)
-						System.out.println(partcipant + " does NOT contain the choosen data");
+						System.out.println(partcipant + " does NOT contain the selected data");
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 3:
@@ -147,7 +148,7 @@ public class IOTerminal {
 				case 4:
 					toremove = new Reconstruction().interpreter(mcrl2);
 					if (toremove.getValue0().isEmpty())
-						System.out.println("No RECOSTRUCTION TASK");
+						System.out.println("NO RECOSTRUCTION TASK");
 					else {
 						nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
 						mcrl22lps(nf);
@@ -155,7 +156,7 @@ public class IOTerminal {
 						if (jsonfilerec == null)
 							System.out.println("Secret ALWAYS reconstructed");
 						else
-							System.out.println("Secret not reconstructed");
+							System.out.println("Secret NOT reconstructed");
 					}
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
@@ -168,13 +169,20 @@ public class IOTerminal {
 						mcrl22lps(nf);
 						String jsonfilerec = lps2lts(mcrl2, nf, op_deadlock, op_trace);
 						if (jsonfilerec == null)
-							System.out.println("Parallelism preserved");
+							System.out.println("Parallelism PRESERVED");
 						else
-							System.out.println("Parallelism is not preserved");
+							System.out.println("Parallelism is NOT preserved");
 					}
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 6:
+					 nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+					 mcrl22lps(nf);
+					 String jsonf = lps2lts(mcrl2, nf, op_deadlock,op_trace);
+					 if(jsonf == null)
+						 System.out.println("NO DEADLOCK");
+					 break;
+				case 7:
 					cleanDirectory();
 					System.exit(0);
 				default:
@@ -194,7 +202,7 @@ public class IOTerminal {
 			inputfile = inputfile.concat(".bpmn");
 		File f = new File(inputfile);
 		if (!f.exists()) {
-			System.out.println("File not found, try again...");
+			System.out.println("FILE NOT FOUND, try again...");
 			return null;
 		}
 		return f;
@@ -251,7 +259,7 @@ public class IOTerminal {
 				}
 			}
 			if (!found) {
-				System.err.println(id + "is not a data in the model");
+				System.err.println(id + " is NOT a data object in the model");
 				return null;
 			}
 		}
@@ -294,6 +302,7 @@ public class IOTerminal {
 	}
 
 	/**
+	 * 
 	 * Returns the name of the json file containing the path leading to the
 	 * violation of a formula
 	 * 
@@ -340,7 +349,7 @@ public class IOTerminal {
 					path_tracepp = generateList(path, mcrl2);
 					if (!path.isEmpty() && deadlock) {
 						String lasttask = path_tracepp.get(path_tracepp.size() - 1).getKey();
-						if (!lasttask.equals(MCRL2.TAU.toString()) && !mcrl2.containsTask(lasttask)) {
+						if (!checkDeadlock(mcrl2.getEndEvents(), path_tracepp) || !mcrl2.containsTask(lasttask)) {
 							path_tracepp = new ArrayList<Pair<String, Set<String>>>();
 							continue;
 						}
@@ -360,6 +369,18 @@ public class IOTerminal {
 		return jsonfilename;
 	}
 
+	private boolean checkDeadlock(Set<String> endEvents, List<Pair<String,Set<String>>> path) {
+		List<String> hasevent = new ArrayList<String>();
+		for(Pair<String,Set<String>> pair : path) {
+			if(endEvents.contains(pair.getKey()))
+				hasevent.add(pair.getKey());
+		}
+		if(hasevent.containsAll(endEvents))
+			return false;
+		else
+			return true;
+	}
+	
 	/**
 	 * Generate a list of couples <taskname, set<data>>
 	 * 
@@ -371,10 +392,13 @@ public class IOTerminal {
 		List<Pair<String, Set<String>>> list = new ArrayList<Pair<String, Set<String>>>();
 		for (int i = 0; i < path.size(); i++) {
 			String el = path.get(i);
-			if (el.equals(MCRL2.TAU.toString()))
-				continue;
-			// System.out.println(el);
 			Set<String> setdata = new HashSet<String>();
+			if (el.equals(MCRL2.TAU.toString())) {
+				list.add(Pair.of(el, setdata));
+				continue;
+			}
+			// System.out.println(el);
+
 			Pattern ptk = Pattern.compile("\\(\\{(.*)\\}\\)");
 			String nametask = el.replaceAll(ptk.pattern(), "");
 			Matcher m = ptk.matcher(el);
@@ -400,7 +424,6 @@ public class IOTerminal {
 				}
 			} else
 				nametask = el;
-
 			list.add(Pair.of(nametask, setdata));
 		}
 		return list;
@@ -459,7 +482,7 @@ public class IOTerminal {
 
 	private Set<String> scanData() {
 		Set<String> datset = new HashSet<>();
-		System.out.println("Choose data (, in the middle): ");
+		System.out.println("Select data object(use \",\" to select more than one data object): ");
 		scan = new Scanner(System.in);
 		String s = scan.nextLine();
 		String[] split = s.split(",");
@@ -540,19 +563,19 @@ public class IOTerminal {
 	 * @throws JSONException if the file to write the json is not found
 	 */
 	private String fromPathInFSMtoJsonFile(List<Pair<String, Set<String>>> path, String nameFile) throws JSONException {
-		System.out.println("PATH : " + path.toString());
-		File file = new File(nameFile + json);
+		List<Pair<String, Set<String>>> notau = printCounterExamplePath(path);
+		File file = new File(dirname.getPath() + nameFile + json);
 		int i = 0;
 		while (file.exists())
-			file = new File(nameFile + i++ + IOTerminal.dotmcrl2);
+			file = new File(dirname.getPath() + nameFile + i++ + IOTerminal.dotmcrl2);
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
 			JSONObject ob = new JSONObject();
 			JSONObject obtask = new JSONObject();
-			JSONArray arr = new JSONArray(path);
-			for (int j = 0; j < path.size(); j++) {
+			JSONArray arr = new JSONArray(notau);
+			for (int j = 0; j < notau.size(); j++) {
 				JSONObject obdata = new JSONObject();
-				obdata.append("data", path.get(j).getRight());
-				obtask.append(path.get(j).getLeft(), obdata);
+				obdata.append("data", notau.get(j).getRight());
+				obtask.append(notau.get(j).getLeft(), obdata);
 			}
 			ob.put("path", arr);
 			output.write(ob.toString());
@@ -560,6 +583,17 @@ public class IOTerminal {
 			new FileNotFoundException();
 		}
 		return file.getName();
+	}
+
+	private List<Pair<String, Set<String>>> printCounterExamplePath(List<Pair<String, Set<String>>> path) {
+		List<Pair<String, Set<String>>> notau = new ArrayList<Pair<String, Set<String>>>();
+		for (int i = 0; i < path.size(); i++) {
+			if (path.get(i).getKey().equals(MCRL2.TAU.toString()))
+				continue;
+			notau.add(path.get(i));
+		}
+		System.out.println("PATH : " + notau.toString());
+		return notau;
 	}
 
 	private long getCurrentTime() {

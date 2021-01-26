@@ -7,6 +7,12 @@ import spec.mcrl2obj.Operator;
 import spec.mcrl2obj.Processes.AbstractProcess;
 import spec.mcrl2obj.Processes.Process;
 
+/**
+ * This is the ANDBond class
+ * 
+ * @author Sara
+ *
+ */
 public class ANDBond implements ITProcess {
 
 	private Collection<ExtendedNode> successors;
@@ -18,7 +24,6 @@ public class ANDBond implements ITProcess {
 	@Override
 	public AbstractProcess interpreter(ExtendedNode node) {
 		AbstractProcess[] childlist = new AbstractProcess[successors.size()];
-		// This means that remove the bound the polygon is reprenset another element
 		if (childlist.length == 1)
 			return Tmcrl.applyT(successors.stream().findAny().get());
 		int i = 0;

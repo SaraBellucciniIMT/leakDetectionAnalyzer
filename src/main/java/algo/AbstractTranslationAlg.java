@@ -12,8 +12,9 @@ import io.ExploitedRPST;
 import spec.mcrl2obj.Processes.ParticipantProcess;
 
 /**
- * Abstract class that defines how to compute the control flow o a bpmn model
- * for translation algorithms
+ * Abstract class that defines methods for the transformation from BPMN file to specification process.
+ * 
+ * @see #analyzeControlFlow(Bpmn) generates a participant process derived from a bpmn file
  * 
  * @author S. Belluccini
  *

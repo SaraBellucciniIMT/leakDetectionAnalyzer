@@ -17,6 +17,7 @@ public class Data implements ISort {
 	private Name name;
 	private Privacy privacy;
 	private final static String eps = "eps";
+	private final static String NULLVAR = "vnull";
 
 	public Data() {
 		this.name = null;
@@ -33,6 +34,10 @@ public class Data implements ISort {
 
 	public static Data eps() {
 		return new Data(new Name(eps, eps));
+	}
+	
+	public static Data nullvar() {
+		return new Data(new Name(NULLVAR,NULLVAR));
 	}
 
 	/**
@@ -82,6 +87,8 @@ public class Data implements ISort {
 		if (name != null) {
 			if (name.getId().equals(eps))
 				return eps;
+			else if(name.getId().equals(NULLVAR))
+				return NULLVAR;
 			return MCRL2Utils.node + "(" + name.toString() + ")";
 		} else if (privacy != null)
 			return MCRL2Utils.pnode + "(" + privacy.toString() + ")";
@@ -97,10 +104,10 @@ public class Data implements ISort {
 		if (!Privacy.setPname.isEmpty()) {
 			return nameSort() + " = struct " + MCRL2Utils.node + "(" + MCRL2Utils.v + ":" + Name.nameSort() + ")?"
 					+ MCRL2Utils.is_n + "|" + MCRL2Utils.pnode + "(" + MCRL2Utils.pv + ":" + Privacy.nameSort() + ")?"
-					+ MCRL2Utils.is_pn + "|" + eps + ";";
+					+ MCRL2Utils.is_pn + "|" + eps + "|" + NULLVAR+ ";";
 		} else
 			return nameSort() + " = struct " + MCRL2Utils.node + "(" + MCRL2Utils.v + ":" + Name.nameSort() + ")?"
-					+ MCRL2Utils.is_n + "|" + eps + ";";
+					+ MCRL2Utils.is_n + "|" + eps + "|"+ NULLVAR + ";";
 
 	}
 
@@ -114,8 +121,11 @@ public class Data implements ISort {
 	}
 
 	public static Data detectData(String s, Set<Data> mcrl2data) {
+		s= s.replaceAll(" ", "");
 		if (s.equals(eps))
 			return eps();
+		else if(s.equals(NULLVAR))
+			return nullvar();
 		String named = null;
 		Pattern pn = Pattern.compile(MCRL2Utils.pnode + "\\((.*)\\)");
 		Matcher m = pn.matcher(s);

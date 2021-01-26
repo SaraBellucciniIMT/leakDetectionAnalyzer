@@ -5,6 +5,9 @@ import spec.ISpec;
 
 /**
  * Interface for every translation algorithm
+ * 
+ * @see #getSpec() every traslation algorithm should return an ISort object
+ * 
  * @author S. Belluccini
  *
  */

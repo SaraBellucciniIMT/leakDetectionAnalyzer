@@ -12,6 +12,8 @@ import org.apache.commons.io.FilenameUtils;
 
 import java.util.Set;
 import com.google.common.collect.Sets;
+
+import io.DotBPMNKeyW;
 import io.pet.PETLabel;
 import rpstTest.IOTerminal;
 import rpstTest.Utils;
@@ -324,6 +326,15 @@ public class MCRL2 implements ISpec {
 		this.particiantProcess.add(p);
 		for (TaskProcess t : p.getTaskProcesses())
 			this.actions.add(t.getAction());
+	}
+	
+	public Set<String> getEndEvents(){
+		Set<String> endevents = new HashSet<String>();
+		for(TaskProcess t : getTaskProcesses()) {
+			if(t.getBPMNElement()!= null && t.getBPMNElement().equals(DotBPMNKeyW.ENDEVENT))
+				endevents.add(t.getAction().getId());
+		}
+		return endevents;
 	}
 
 	/**
@@ -643,7 +654,7 @@ public class MCRL2 implements ISpec {
 	 *         and name
 	 */
 	public String toStringTasks() {
-		String s = "All task in the model:\n";
+		String s = "All tasks in the model:\n";
 		for (TaskProcess t : getTaskProcesses()) {
 			TaskAction a = t.getAction();
 			s = s + "ID: " + a.getId();
@@ -662,7 +673,7 @@ public class MCRL2 implements ISpec {
 	 *         name
 	 */
 	public String toStringData() {
-		String string = "All data in the model \n";
+		String string = "All data object in the model: \n";
 		for (String s : dataObjectName) {
 			string += s + "\n";
 		}

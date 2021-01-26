@@ -37,6 +37,7 @@ public class Sequence extends AbstractParaout {
 		Process parallelProcess = ((Process)process.getChildAtPosition(indexParBlock));
 		// Generating the left side part of the new parallel block, first remove the
 		// parallel block from the sequence
+		//TODO: CHECK IF IT CREATES A MODIFICATION
 		Process leftSideSequence = p.removeChildAtPosition(indexParBlock);
 
 		// Constructing t and Q

@@ -36,7 +36,7 @@ public class Reconstruction extends AbstractViolation {
 	private Placeholder m = new Placeholder(Memory.nameSort());
 	private Placeholder b = new Placeholder(ISort.BAG_NAT);
 	private Placeholder n = new Placeholder(ISort.NAT);
-
+	private Placeholder th = new Placeholder(ISort.NAT);
 	@Override
 	protected String printMap() {
 		String list2bag = MCRL2Utils.printMap(l2b, ISort.BAG_NAT, Memory.nameSort(), ISort.BAG_NAT);
@@ -70,13 +70,13 @@ public class Reconstruction extends AbstractViolation {
 			String eqn3 = MCRL2Utils.printifeqn(m.toString() + "== []", namef1, b.toString());
 			String eqn4 = MCRL2Utils.printifeqn(
 					MCRL2Utils.exist + " " + n.toString() + ":" + ISort.NAT + ". " + n.toString() + " in " + b.toString()
-							+ "&&" + MCRL2Utils.printf("count", n.toString(), b.toString()) + ">=" + SSViolation.th,
-					MCRL2Utils.printf(is_r, b.toString(), SSViolation.th.toString()), ISort.TRUE.toString());
+							+ "&&" + MCRL2Utils.printf("count", n.toString(), b.toString()) + ">=" + th.toString(),
+					MCRL2Utils.printf(is_r, b.toString(), th.toString()), ISort.TRUE.toString());
 			String eqn5 = MCRL2Utils.printifeqn(
 					"!(" + MCRL2Utils.exist + " " + n.toString() + ":" + ISort.NAT + ". " + n.toString() + " in "
 							+ b.toString() + "&&" + MCRL2Utils.printf("count", n.toString(), b.toString()) + ">="
-							+ SSViolation.th + ")",
-					MCRL2Utils.printf(is_r, b.toString(), SSViolation.th.toString()), ISort.FALSE.toString());
+							+ th.toString() + ")",
+					MCRL2Utils.printf(is_r, b.toString(), th.toString()), ISort.FALSE.toString());
 			rec = eqn1 +  eqn2 + eqn3 + eqn4 + eqn5;
 		}
 		return rec;
@@ -84,7 +84,7 @@ public class Reconstruction extends AbstractViolation {
 
 	@Override
 	protected Placeholder[] getVar() {
-		return new Placeholder[] { m, b, SSViolation.th };
+		return new Placeholder[] { m, b, th };
 	}
 
 	/**

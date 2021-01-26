@@ -7,19 +7,20 @@ import org.javatuples.Pair;
 
 import com.google.common.collect.Sets;
 
+import io.DotBPMNKeyW;
 import io.pet.AbstractTaskPET;
+import io.pet.PETLabel;
 import rpstTest.Utils;
 import sort.ISort;
 import spec.mcrl2obj.Processes.AbstractProcess;
 
 public class Action extends AbstractProcess {
+	
 	private String realName = "";
-
 	/**
 	 * Id that correspond to the field in the .bpmn file Example:
 	 * <bpmn2:task id="Task_07fz7yg" name="A">
 	 */
-
 	private static final String tau = "tau";
 	private boolean istau = false;
 	private AbstractTaskPET pet;
@@ -97,9 +98,9 @@ public class Action extends AbstractProcess {
 	 * Utils.organizeParameterAsString(parameters) + ")"; } return s; }
 	 */
 
-	public boolean isTau() {
+/*	public boolean isTau() {
 		return istau;
-	}
+	}*/
 
 	/*
 	 * public boolean containsParameter(ISort d) { for (int i = 0; i <
@@ -168,5 +169,10 @@ public class Action extends AbstractProcess {
 				s += "(" + Utils.organizeParameterAsString(parameters) + ")";
 		}
 		return s;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return false;
 	}
 }

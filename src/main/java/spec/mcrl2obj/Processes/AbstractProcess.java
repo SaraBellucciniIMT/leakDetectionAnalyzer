@@ -20,6 +20,10 @@ public abstract class AbstractProcess {
 	protected String id;
 	private static final String fiexdName = "P";
 	
+	/**
+	 * Returns the unique name for this abstract process
+	 * @return the unique name for this abstract process
+	 */
 	public String getId() {
 		if (id == null)
 			id = fiexdName + Utils.getId();
@@ -39,6 +43,8 @@ public abstract class AbstractProcess {
 			ArrayUtils.addAll(this.parameters, parameters);
 		}
 	}
+	
+	public abstract boolean isEmpty();
 
 	/**
 	 * Returns the parameters taken in input from this process. Given a process P(a,b,c) it returns [a,b,c]

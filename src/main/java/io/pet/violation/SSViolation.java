@@ -37,7 +37,7 @@ public class SSViolation extends AbstractViolation {
 	private Placeholder id;
 	private Placeholder m;
 	private Placeholder i;
-	protected static Placeholder th;
+	private Placeholder th;
 	private static final String SSSV = "sssharingviolation";
 	private static final String SSL = "sslist";
 	private static final String SSCV = "sscompviolation";
@@ -177,8 +177,11 @@ public class SSViolation extends AbstractViolation {
 				}
 			}
 		}
-		String addToMem = "";
+		
+		Set<Action> newaction = new HashSet<Action>();
+		Set<CommunicationFunction> newf = new HashSet<CommunicationFunction>();
 		for (ParticipantProcess p : mcrl2.getParcipantProcesses()) {
+			String addToMem = "";
 			Placeholder m = new Placeholder(Memory.nameSort());
 			Placeholder e = new Placeholder(Memory.nameSort());
 			String unionme = MCRL2Utils.printf(MCRL2Utils.unionf, m.toString(), e.toString());
@@ -218,12 +221,17 @@ public class SSViolation extends AbstractViolation {
 				mcrl2.addAction(synRes, synMem, MCRL2.VIOLATION);
 				mcrl2.addAllow(synRes, MCRL2.VIOLATION);
 				mcrl2.addHide(synRes);
-				return Triplet.with(Sets.newHashSet(synRes, synMem, MCRL2.VIOLATION), Sets.newHashSet(function),
-						Sets.newHashSet());
+				
+				newaction.add(synRes);
+				newaction.add(synMem);
+				newaction.add(MCRL2.VIOLATION);
+				newf.add(function);
+				//return Triplet.with(Sets.newHashSet(synRes, synMem, MCRL2.VIOLATION), Sets.newHashSet(function),
+					//	Sets.newHashSet());
 			}
 
 		}
-		return Triplet.with(Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
+		return Triplet.with(newaction, newf, Sets.newHashSet());
 	}
 
 	@Override

@@ -40,12 +40,14 @@ public class Tmcrl {
 			}
 		} else if (node.getType().equals(TCType.POLYGON)) {
 			return new Polygon(RPST.getOrderedDirectSuccessors(node)).interpreter(node);
-		} else if (node.getType().equals(TCType.BOND) && (node.equalsDescription(BPMNLabel.XOR)))
+		} else if (node.getType().equals(TCType.BOND) && (node.equalsDescription(BPMNLabel.XOR)) && !(RPST.isLoop(node)))
 			return new XORBond(RPST.getDirectSuccessors(node)).interpreter(node);
-		else if (node.getType().equals(TCType.BOND) && (node.equalsDescription(BPMNLabel.AND)))
+		else if (node.getType().equals(TCType.BOND) && (node.equalsDescription(BPMNLabel.AND))&& !(RPST.isLoop(node)))
 			return new ANDBond(RPST.getDirectSuccessors(node)).interpreter(node);
-		else if(node.getType().equals(TCType.BOND) && node.equalsDescription(BPMNLabel.EVENTBASEDG))
+		else if(node.getType().equals(TCType.BOND) && node.equalsDescription(BPMNLabel.EVENTBASEDG)&& !(RPST.isLoop(node)))
 			return new EVENTBASEDGBond(RPST.getDirectSuccessors(node)).interpreter(node);
+		else if(RPST.isLoop(node))
+			return new LoopBond().interpreter(RPST.theLoop(node));
 		else
 			return null;
 	}

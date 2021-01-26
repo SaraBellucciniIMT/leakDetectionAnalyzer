@@ -15,7 +15,13 @@ import spec.mcrl2obj.Processes.AbstractProcess;
 import spec.mcrl2obj.Processes.Process;
 
 /**
- * @author sara
+ * 
+ * This is the AbstractParaout class. It defines function and variable used while applying the parout function.
+ * 
+ * @see #communicationFunctionUpdateSet(Action, int) it updates the comm,allow and hide sets with the new function
+ * @see #hasParallel(AbstractProcess) it checks if the abstract process contain a parallel process or not
+ * 
+ * @author S. Belluccini
  *
  */
 public abstract class AbstractParaout implements IParout {

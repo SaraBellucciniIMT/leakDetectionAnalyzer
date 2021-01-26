@@ -33,10 +33,12 @@ public class Buffer extends AbstractProcess {
 	private Process buffer;
 	private Action inputAction;
 	private Action outputAction;
+	private String attribute;
 	public static final String BLOCK = "block";
 	public static final String NOBLOCK = "noblock";
 
 	public Buffer(int nlenght, String s) {
+		this.attribute = s;
 		buffer = new Process(Operator.PLUS);
 		ISort[] epsArr = initPParamAndEpsArray(nlenght);
 		addInputAction(nlenght);
@@ -63,8 +65,7 @@ public class Buffer extends AbstractProcess {
 	private void addInputAction(int nlenght) {
 		SUMProcess sumi = new SUMProcess(Data.nameSort(), nlenght);
 		this.inputAction = sumi.getAction();
-		//buffer.addChild(new Process(Operator.DOT, sumi, this.inputAction, new Action(getId(), sumi.getParameters())));
-		buffer.addChild(new Process(Operator.DOT,sumi,new Action(getId(), sumi.getParameters())));
+		buffer.addChild(new Process(Operator.DOT, sumi, new Action(getId(), sumi.getParameters())));
 	}
 
 	private ISort[] initPParamAndEpsArray(int nlenght) {
@@ -72,7 +73,10 @@ public class Buffer extends AbstractProcess {
 		ISort[] epsArr = new ISort[nlenght];
 		for (int i = 0; i < nlenght; i++) {
 			placeholdersOutput[i] = new Placeholder(Data.nameSort());
-			epsArr[i] = Data.eps();
+			if (attribute.equals(NOBLOCK))
+				epsArr[i] = Data.nullvar();
+			else
+				epsArr[i] = Data.eps();
 		}
 		addParameters(placeholdersOutput);
 		return epsArr;
@@ -124,9 +128,17 @@ public class Buffer extends AbstractProcess {
 		for (int i = 0; i < this.getParameters().length; i++) {
 			if (!st.isEmpty())
 				st += ",";
-			st += Data.eps().getId();
+			if (attribute.equals(NOBLOCK))
+				st += Data.nullvar().getId();
+			else
+				st += Data.eps().getId();
 		}
 		return getId() + "(" + st + ")";
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return false;
 	}
 
 }

@@ -110,6 +110,7 @@
       <pleak:SSComputation>{"groupId":"1","inputScript":"","inputs":[{"id":0,"inputs":[{"id":"DataObjectReference_1eir7la"},{"id":"DataObjectReference_1pyg0j6"}]}]}</pleak:SSComputation>
     </bpmn2:task>
     <bpmn2:intermediateCatchEvent id="IntermediateThrowEvent_1q3glmc">
+      <bpmn2:incoming>SequenceFlow_1ygj8v1</bpmn2:incoming>
       <bpmn2:outgoing>SequenceFlow_1km9i2t</bpmn2:outgoing>
       <bpmn2:dataOutputAssociation id="DataOutputAssociation_1dlx2hi">
         <bpmn2:targetRef>DataObjectReference_1eir7la</bpmn2:targetRef>
@@ -184,6 +185,10 @@
     <bpmn2:dataObject id="DataObject_06tihfn" />
     <bpmn2:dataObjectReference id="DataObjectReference_034hkeg" name="info" dataObjectRef="DataObject_12foxjo" />
     <bpmn2:dataObject id="DataObject_12foxjo" />
+    <bpmn2:sequenceFlow id="SequenceFlow_1ygj8v1" sourceRef="StartEvent_1hv7z5j" targetRef="IntermediateThrowEvent_1q3glmc" />
+    <bpmn2:startEvent id="StartEvent_1hv7z5j">
+      <bpmn2:outgoing>SequenceFlow_1ygj8v1</bpmn2:outgoing>
+    </bpmn2:startEvent>
   </bpmn2:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_02dgfzl">
@@ -194,7 +199,7 @@
         <dc:Bounds x="-233" y="151" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Participant_1wus752_di" bpmnElement="Participant_1wus752" isHorizontal="true">
-        <dc:Bounds x="-283" y="326" width="913" height="359" />
+        <dc:Bounds x="-400" y="326" width="1030" height="359" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Task_1r4khlu_di" bpmnElement="Task_1r4khlu">
         <dc:Bounds x="-133" y="129" width="100" height="80" />
@@ -455,6 +460,13 @@
       <bpmndi:BPMNEdge id="DataInputAssociation_08f5cjy_di" bpmnElement="DataInputAssociation_08f5cjy">
         <di:waypoint x="482" y="226" />
         <di:waypoint x="489" y="209" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="StartEvent_1hv7z5j_di" bpmnElement="StartEvent_1hv7z5j">
+        <dc:Bounds x="-308" y="507" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="SequenceFlow_1ygj8v1_di" bpmnElement="SequenceFlow_1ygj8v1">
+        <di:waypoint x="-272" y="525" />
+        <di:waypoint x="-216" y="525" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

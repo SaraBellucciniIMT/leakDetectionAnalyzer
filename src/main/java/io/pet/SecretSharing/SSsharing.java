@@ -22,14 +22,15 @@ import sort.Name;
 /**
  * This class describes the SSsharing/AddSSsharing/FunSSsharing pet stereotypes
  * 
- * @see SSsharing#THRESHOLD a number that describe how many shares are needed to recostruct the secret
+ * @see SSsharing#THRESHOLD a number that describe how many shares are needed to
+ *      recostruct the secret
  * 
  * @author S. Belluccini
  */
 
 public class SSsharing extends AbstractTaskPET {
 
-	protected static String THRESHOLD;
+	protected static String THRESHOLD="";
 
 	@Override
 	public AbstractTaskPET interpreterTask(Element line, Elements lines, Set<DataNode> datanodes) throws JSONException {
@@ -38,10 +39,12 @@ public class SSsharing extends AbstractTaskPET {
 			JSONObject obj = new JSONObject(description);
 			THRESHOLD = String.valueOf(obj.getInt(DotBPMNKeyW.TRESHOLD.getValue()));
 		} else if (line.tagName().equals(DotBPMNKeyW.ADDSSSHARING.getValue())) {
-			THRESHOLD = String.valueOf(0);
-			for (Element e : lines) {
-				if (e.tagName().equals(DotBPMNKeyW.DATAOUTPUTASS.getValue()))
-					THRESHOLD = String.valueOf(Integer.valueOf(THRESHOLD) + 1);
+			if (!THRESHOLD.isEmpty()) {
+				THRESHOLD = String.valueOf(0);
+				for (Element e : lines) {
+					if (e.tagName().equals(DotBPMNKeyW.DATAOUTPUTASS.getValue()))
+						THRESHOLD = String.valueOf(Integer.valueOf(THRESHOLD) + 1);
+				}
 			}
 		} else if (line.tagName().equals(DotBPMNKeyW.FUNSSSHARING.getValue()))
 			THRESHOLD = String.valueOf(2);
@@ -70,7 +73,8 @@ public class SSsharing extends AbstractTaskPET {
 	}
 
 	/**
-	 *	{@inheritDoc} Returns the PETLabel corresponding to this class, i.e. SSSHARING
+	 * {@inheritDoc} Returns the PETLabel corresponding to this class, i.e.
+	 * SSSHARING
 	 */
 	@Override
 	public PETLabel getPETLabel() {

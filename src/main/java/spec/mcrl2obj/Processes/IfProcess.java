@@ -55,6 +55,11 @@ public class IfProcess extends AbstractProcess {
 		}
 		return s;
 	}
+
+	@Override
+	public boolean isEmpty() {
+		return false;
+	}
 	
 	
 }

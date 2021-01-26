@@ -35,10 +35,13 @@ import spec.mcrl2obj.Processes.ParticipantProcess;
 import spec.mcrl2obj.Processes.TaskProcess;
 
 /**
- * This is the Collaborative algorithm class that computes two steps to obtain a
+ * This is the Collaborative algorithm class. It computes through two steps a
  * mCRL2 object from a bpmn collaboration model. The first step is the
  * control-flow transformation. The second step is the data-object and message
- * flow transformation. The results of this process is a mCRL2 object
+ * flow transformation. The results of this process is a mCRL2 object.
+ * 
+ * @see #getSpec() returns the mcrl2 object that is generated from the bpmn
+ *      models
  * 
  * @author S. Belluccini
  *
@@ -52,14 +55,22 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 	private Map<String, Placeholder> mapPNPlaceholders = new HashMap<String, Placeholder>();
 	private MCRL2 mcrl2;
 
+	/**
+	 * Constructor for the Collaborative Algorithm class.
+	 * 
+	 * @param pair of bpmn sets and messages
+	 */
 	public CollaborativeAlg(Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> pair) {
 		this.bpmn = pair.getLeft();
 		this.messages = pair.getRight();
 	}
 
-	protected void analyzeData() {
+	/**
+	 * Computes the data exchanges among the tasks and parties in this collaboration
+	 * model.
+	 */
+	private void analyzeData() {
 		generateInternalCommunicationlist();
-		// assignPlaceholder();
 		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			// If the left side is epsilon than the data are prior knowledge ofthe task
 			// System.out.println(triple.toString());
@@ -121,6 +132,13 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		}
 	}
 
+	/**
+	 * Returns a communication function between the two actions
+	 * 
+	 * @param a an action
+	 * @param b an action
+	 * @return a communication function between the two actions
+	 */
 	private CommunicationFunction createSendReadCommunication(Action a, Action b) {
 		Action sendread = new Action(MCRL2.getComFunResult(), a.getParameters());
 		mcrl2.addAction(a, b, sendread);
@@ -172,6 +190,14 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return false;
 	}
 
+	/**
+	 * Checks if the input node receives the input data from someone else
+	 * 
+	 * @param node the input node
+	 * @param data a data object
+	 * @return true if it exists another node that is sending the data to the input
+	 *         node, false otherwise
+	 */
 	private boolean existsATripleSending(IFlowNode node, DataNode data) {
 		for (Triple<Set<IFlowNode>, Set<DataNode>, IFlowNode> triple : internalCommList) {
 			if (hasSameName(data.getName(), triple.getMiddle()) && triple.getRight().equals(node))
@@ -197,53 +223,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		}
 		return false;
 	}
-	/*
-	 * private void generateCommunicationBufferNonBLocking(Action i, Action o,
-	 * ISort[] parameters) { Buffer b = new B Buffer sumprocess = new
-	 * Buffer(parameters, mcrl2.getSortData()); sumprocess.setBufferName();
-	 * TaskProcess bufferl = new TaskProcess(); // generate i(e1,...,e_n) //
-	 * Generate the sum : e1,...en:Data Process sum = new
-	 * Process(Action.sumAction(parameters), Operator.SUM); Process input = new
-	 * Process(i); Process seqinputsum = new Process(Operator.DOT, sum.getName(),
-	 * input.getName()); bufferl.addInputAction(seqinputsum, input, sum);
-	 * 
-	 * Action a = new Action(o.getName(), sumprocess.getInitialParameters());
-	 * this.mcrl2.addAction(a); Process bufferr = new Process(a);
-	 * 
-	 * sumprocess.setOperant(bufferl, bufferr); this.mcrl2.addProcess(sumprocess);
-	 * String eps = ""; for (int j = 0; j <
-	 * sumprocess.getInitialParameters().length; j++) { eps = eps +
-	 * mCRL2.printf(mCRL2.node, mCRL2.emptyf); if (j !=
-	 * sumprocess.getInitialParameters().length - 1) eps = eps + ","; }
-	 * this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")"); }
-	 */
-
-	/*
-	 * private void generateCommunicationBufferBLocking(Action i, Action o, ISort[]
-	 * parameters) {
-	 * 
-	 * Buffer sumprocess = new Buffer(parameters, mcrl2.getSortData());
-	 * sumprocess.setBufferName(); TaskProcess bufferl = new TaskProcess(); //
-	 * generate i(e1,...,e_n) // Generate the sum : e1,...en:Data Process sum = new
-	 * Process(Action.sumAction(parameters), Operator.SUM); Process input = new
-	 * Process(i); Process seqinputsum = new Process(Operator.DOT, sum.getName(),
-	 * input.getName()); bufferl.addInputAction(seqinputsum, input, sum);
-	 * 
-	 * Action a = new Action(o.getName(), sumprocess.getInitialParameters());
-	 * this.mcrl2.addAction(a); Process outpuprocess = new Process(a); String
-	 * emptyness = "(!empty(" + sumprocess.getInitialParameters()[0].getPlaeholder()
-	 * + ")"; for (int j = 1; j < sumprocess.getInitialParameters().length; j++)
-	 * emptyness = emptyness + "&& !empty(" +
-	 * sumprocess.getInitialParameters()[j].getPlaeholder() + ")"; Action
-	 * actionempty = new Action(emptyness + ")"); Process processempty = new
-	 * Process(actionempty); Process ifp = new Process(Operator.IF,
-	 * processempty.getName(), outpuprocess.getName());
-	 * ifp.addInsideDef(processempty, outpuprocess); sumprocess.setOperant(bufferl,
-	 * ifp); this.mcrl2.addProcess(sumprocess); String eps = ""; for (int j = 0; j <
-	 * sumprocess.getInitialParameters().length; j++) { eps = eps + mCRL2.eps; if (j
-	 * != sumprocess.getInitialParameters().length - 1) eps = eps + ","; }
-	 * this.mcrl2.addInitSet(sumprocess.getName() + "(" + eps + ")"); }
-	 */
 
 	/**
 	 * Returns the set of messages exchanged among participants
@@ -260,7 +239,6 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 				set.add(triple.getMiddle());
 		}
 		return set;
-
 	}
 
 	/**
@@ -277,7 +255,7 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 							if (f1.getName().equals(f2.getName())) {
 								if (f1.getTag() != null && f2.getTag() == null) {
 									f2.setTag(f1.getTag());
-									mcrl2.addPetLabel(((AbstractDataPET)f1.getTag()).getPETLabel());
+									mcrl2.addPetLabel(((AbstractDataPET) f1.getTag()).getPETLabel());
 								}
 							}
 						}
@@ -287,6 +265,10 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		});
 	}
 
+	/**
+	 * Fills the list internalcommlist with the information about sending and
+	 * receiving task a their correspondent data
+	 */
 	private void generateInternalCommunicationlist() {
 		epsilon.setTag("epsilon");
 		epsilon.setName("epsilon");
@@ -373,6 +355,9 @@ public class CollaborativeAlg extends AbstractTranslationAlg {
 		return tmpintermalcommlist;
 	}
 
+	/**
+	 * {@inheritDoc} Returns a mcrl2 object
+	 */
 	@Override
 	public MCRL2 getSpec() {
 		// Set of control-flow

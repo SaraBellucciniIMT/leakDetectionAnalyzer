@@ -7,6 +7,7 @@ import spec.mcrl2obj.Action;
 import spec.mcrl2obj.CommunicationFunction;
 import spec.mcrl2obj.Operator;
 import spec.mcrl2obj.Processes.AbstractProcess;
+import spec.mcrl2obj.Processes.LoopProcess;
 import spec.mcrl2obj.Processes.ParticipantProcess;
 import spec.mcrl2obj.Processes.Process;
 
@@ -24,7 +25,9 @@ public class Parout {
 	}
 
 	protected static AbstractProcess Tp(AbstractProcess ap) {
-		if (!ap.getClass().equals(Process.class))
+		if(ap.getClass().equals(LoopProcess.class))
+			ap = new Loop().interpreter((LoopProcess) ap);
+		else if (!ap.getClass().equals(Process.class))
 			return ap;
 		else if (((Process)ap).getOperator() == Operator.PARALLEL)
 			ap = new Parallel().interpreter((Process)ap);

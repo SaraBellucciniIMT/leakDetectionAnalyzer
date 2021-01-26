@@ -9,6 +9,7 @@ import org.jbpt.pm.DataNode;
 
 import com.google.common.collect.Sets;
 
+import io.DotBPMNKeyW;
 import io.pet.AbstractDataPET;
 import io.pet.AbstractTaskPET;
 import io.pet.PETLabel;
@@ -31,6 +32,7 @@ import spec.mcrl2obj.TaskAction;
  */
 public class TaskProcess extends AbstractProcess {
 
+	private DotBPMNKeyW bpmnelement;
 	private Set<Process> inputAction;
 	private Set<Action> outputAction;
 	private AbstractProcess beforeTA;
@@ -100,6 +102,14 @@ public class TaskProcess extends AbstractProcess {
 	 */
 	public AbstractTaskPET getPET() {
 		return this.action.getPet();
+	}
+	
+	public void setBPMNElement(DotBPMNKeyW element) {
+		this.bpmnelement = element;
+	}
+	
+	public DotBPMNKeyW getBPMNElement() {
+		return this.bpmnelement;
 	}
 
 	/**
@@ -376,6 +386,11 @@ public class TaskProcess extends AbstractProcess {
 
 		}
 		return s;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return false;
 	}
 
 }

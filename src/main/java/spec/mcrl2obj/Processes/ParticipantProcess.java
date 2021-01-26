@@ -33,7 +33,6 @@ public class ParticipantProcess extends AbstractProcess {
 	public ParticipantProcess(AbstractProcess p, String idParty, String nameParty) {
 		this.id = idParty;
 		this.nameParty = nameParty;
-		// generateMemory();
 		this.p =p;
 	}
 
@@ -46,10 +45,10 @@ public class ParticipantProcess extends AbstractProcess {
 		return setOfTaskProcesses(this.p);
 	}
 
-	private Set<TaskProcess> setOfTaskProcesses(AbstractProcess process) {
+	private static Set<TaskProcess> setOfTaskProcesses(AbstractProcess process) {
 		if (process.getClass().equals(TaskProcess.class))
 			return Sets.newHashSet((TaskProcess) process);
-		else if (process.getClass().equals(Process.class)) {
+		else if (process.getClass().equals(Process.class) || process.getClass().equals(LoopProcess.class)) {
 			Set<TaskProcess> s = new HashSet<TaskProcess>();
 			for (int i = 0; i < ((Process) process).getSize(); i++) {
 				s.addAll(setOfTaskProcesses(((Process) process).getChildAtPosition(i)));
@@ -314,6 +313,11 @@ public class ParticipantProcess extends AbstractProcess {
 		for (String s : print.getValue1())
 			st += s + ";\n";
 		return st;
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return false;
 	}
 
 }
