@@ -76,7 +76,6 @@ public class IOTerminal {
 		File f;
 		while ((f = scanFile()) == null) {
 		}
-
 		String bpmnFile = FilenameUtils.getBaseName(f.getPath());
 		// Parse the BPMN file
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> setBpmn;
@@ -198,8 +197,8 @@ public class IOTerminal {
 		System.out.println("Insert file path");
 		scan = new Scanner(System.in);
 		String inputfile = scan.nextLine();
-		if (!FilenameUtils.isExtension(inputfile, "bpmn"))
-			inputfile = inputfile.concat(".bpmn");
+		/*if (!FilenameUtils.isExtension(inputfile, "bpmn"))
+			inputfile = inputfile.concat(".bpmn");*/
 		File f = new File(inputfile);
 		if (!f.exists()) {
 			System.out.println("FILE NOT FOUND, try again...");
