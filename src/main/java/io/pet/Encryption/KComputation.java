@@ -19,6 +19,8 @@ import sort.Name;
 public class KComputation extends AbstractTaskPET {
 
 	public DataNode cipherobj;
+	public Cipher outputCipher;
+	
 
 	public KComputation() {}
 	public KComputation(DataNode id) {
@@ -31,7 +33,10 @@ public class KComputation extends AbstractTaskPET {
 	}
 	
 	public String getGroupId() {
-		return ((Cipher)cipherobj.getTag()).getGroupId();
+		if(outputCipher== null) {
+			outputCipher = new Cipher(((Cipher)cipherobj.getTag()).getGroupId());
+		}
+		return outputCipher.getIdPet();
 	}
 	@Override
 	public ISort defineInputDataSort(DataNode pn) {
@@ -40,6 +45,7 @@ public class KComputation extends AbstractTaskPET {
 
 	@Override
 	public ISort defineOutputDataSort(DataNode pn) {
+		
 		return new Data(new Name(pn.getName()), PETLabel.CIPHER, getGroupId());
 	}
 

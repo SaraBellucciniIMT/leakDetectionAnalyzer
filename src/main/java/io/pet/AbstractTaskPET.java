@@ -21,6 +21,7 @@ import sort.ISort;
  */
 public abstract class AbstractTaskPET implements IPET{
 
+	
 	private String id;
 	
 	/**
@@ -32,7 +33,6 @@ public abstract class AbstractTaskPET implements IPET{
 			this.id = String.valueOf(Utils.getId());
 		return this.id;
 	}
-
 	
 	/**
 	 * Returns the ISort or type that the data in input of this pet object should have

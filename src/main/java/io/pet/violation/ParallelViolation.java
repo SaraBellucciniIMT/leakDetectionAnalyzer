@@ -99,6 +99,7 @@ public class ParallelViolation extends AbstractViolation {
 				Action r = MCRL2.getTemporaryAction();
 				CommunicationFunction f = new CommunicationFunction(r, pair.getValue0(), pair.getValue1());
 				mcrl.addAllow(r);
+				mcrl.addCommunicaitonFunction(f);
 				newaction.add(r);
 				newcf.add(f);
 			}

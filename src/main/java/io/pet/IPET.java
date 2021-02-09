@@ -24,5 +24,9 @@ public interface IPET {
 	 * @return the label that identifies this AbstractTaskPET
 	 */
 	public abstract PETLabel getPETLabel();
+	
+	
+	public String getIdPet();
+	
 
 }

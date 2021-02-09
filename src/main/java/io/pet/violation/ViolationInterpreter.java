@@ -23,23 +23,26 @@ import spec.mcrl2obj.Processes.TaskProcess;
 public class ViolationInterpreter {
 
 	/**
-	 * Used to add a detection violation, in particular the detected violation is added based on the PET that are found in the mcrl2 specification
+	 * Used to add a detection violation, in particular the detected violation is
+	 * added based on the PET that are found in the mcrl2 specification
+	 * 
 	 * @param mcrl2 the specification
-	 * @return  all the action, function, placehodelrs etc.. that are added to the
+	 * @return all the action, function, placehodelrs etc.. that are added to the
 	 *         specification in order to provide this check.
 	 */
 	public static Quintet<Set<Action>, Set<CommunicationFunction>, Set<Placeholder>, Set<String>, Set<TaskProcess>> detectViolation(
 			MCRL2 mcrl2) {
+		Quintet<Set<Action>, Set<CommunicationFunction>, Set<Placeholder>, Set<String>, Set<TaskProcess>> quintet = Quintet
+				.with(Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
 		for (PETLabel label : mcrl2.getPetLabel()) {
 			if (label.equals(PETLabel.SSSHARING) || label.equals(PETLabel.SSCOMPUTATION)
 					|| label.equals(PETLabel.SSRECONTRUCTION))
-				return SSViolation.getInstance().interpreter(mcrl2);
+				quintet.add(SSViolation.getInstance().interpreter(mcrl2));
 			else if (label.equals(PETLabel.CIPHER) || label.equals(PETLabel.DECODINGKEY))
-				return EncryViolation.getInstance().interpreter(mcrl2);
+				quintet.add(EncryViolation.getInstance().interpreter(mcrl2));
 
 		}
-		return Quintet.with(Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet(),
-				Sets.newHashSet());
+		return quintet;
 	}
 
 	/**

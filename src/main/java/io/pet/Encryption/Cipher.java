@@ -1,5 +1,8 @@
 package io.pet.Encryption;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.jbpt.pm.DataNode;
 import org.json.JSONException;
 import org.jsoup.nodes.Element;
@@ -17,12 +20,15 @@ import sort.ISort;
  */
 public class Cipher extends AbstractDataPET{
 	
+	public static Map<String,String> idobj_idkey = new HashMap<String,String>();
+	
 	/**
 	 * Constructor for the Cipher class. It takes the groupId as input, i.e. the id of the pair of key to decrypt this data
 	 * @param groupId the id of the pair of key to decrypt this data
 	 */
-	public Cipher(String groupId) {
-		this.groupId = groupId;
+	public Cipher(String keyPairId) {
+		idobj_idkey.put(getIdPet(), keyPairId);
+		this.groupId= keyPairId;
 	}
 	
 	/**

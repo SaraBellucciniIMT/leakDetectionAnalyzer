@@ -39,13 +39,12 @@ public class SSsharing extends AbstractTaskPET {
 			JSONObject obj = new JSONObject(description);
 			THRESHOLD = String.valueOf(obj.getInt(DotBPMNKeyW.TRESHOLD.getValue()));
 		} else if (line.tagName().equals(DotBPMNKeyW.ADDSSSHARING.getValue())) {
-			if (!THRESHOLD.isEmpty()) {
-				THRESHOLD = String.valueOf(0);
-				for (Element e : lines) {
-					if (e.tagName().equals(DotBPMNKeyW.DATAOUTPUTASS.getValue()))
-						THRESHOLD = String.valueOf(Integer.valueOf(THRESHOLD) + 1);
-				}
-			}
+				int th=0;
+				for (Element e : lines) 
+					if (e.tagName().equals(DotBPMNKeyW.DATAOUTPUTASS.getValue()) && e.hasAttr(DotBPMNKeyW.ID.getValue()))
+						th++;
+				THRESHOLD = String.valueOf(th);
+			
 		} else if (line.tagName().equals(DotBPMNKeyW.FUNSSSHARING.getValue()))
 			THRESHOLD = String.valueOf(2);
 		return new SSsharing();

@@ -82,7 +82,12 @@ public class IOTerminal {
 		while ((setBpmn = parsebpmnfile(f)) == null)
 			continue;
 		// Create the mcrl2 object describing the collaboration
+		long startTime = getCurrentTime();
 		MCRL2 mcrl2 = new CollaborativeAlg(setBpmn).getSpec();
+		//Time to parse the bpmn file and create the mcrl2 object
+		long intermediateTime = computeTimeSpans(startTime);
+		long startTime2;
+		long stver;
 		String nf;
 		while (true) {
 			System.out.println(
@@ -95,7 +100,10 @@ public class IOTerminal {
 				int n = scan.nextInt();
 				switch (n) {
 				case 1:
+					startTime2 = getCurrentTime();
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					stver = getCurrentTime();
 					mcrl22lps(nf);
 					System.out.println(mcrl2.toStringTasks() + "\nSelect task:");
 					scan = new Scanner(System.in);
@@ -125,9 +133,11 @@ public class IOTerminal {
 					System.out.println(mcrl2.toStringData());
 					while ((data = dataexist(mcrl2.getData())) == null) {
 					}
+					startTime2 = getCurrentTime();
 					Quintet<Set<Action>, Set<CommunicationFunction>, Set<Placeholder>, Set<String>, Set<TaskProcess>> toremove = ViolationInterpreter
 							.detectParty(mcrl2, partcipant, data.toArray(dataarray));
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
 					mcrl22lps(nf);
 					String jsonfile = lps2lts(mcrl2, nf, op_action + MCRL2.CONTAIN.toString(), op_trace + 1);
 					if (jsonfile == null)
@@ -135,51 +145,69 @@ public class IOTerminal {
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 3:
+					startTime2 = getCurrentTime();
 					// Add violation function, if needed to the specification
 					toremove = ViolationInterpreter.detectViolation(mcrl2);
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					stver = getCurrentTime();
 					mcrl22lps(nf);
 					jsonfile = lps2lts(mcrl2, nf, op_action + MCRL2.VIOLATION.toString(), op_trace + 1);
 					if (jsonfile == null)
 						System.out.println("NO VIOLATION OCCURED");
+					System.out.println("Verification time: " + computeTimeSpans(stver));
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 4:
+					startTime2 = getCurrentTime();
 					toremove = new Reconstruction().interpreter(mcrl2);
-					if (toremove.getValue0().isEmpty())
+					if (toremove.getValue0().isEmpty()) {
 						System.out.println("NO RECOSTRUCTION TASK");
-					else {
+						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					}else {
 						nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+						stver = getCurrentTime();
 						mcrl22lps(nf);
 						String jsonfilerec = lps2lts(mcrl2, nf, op_action + MCRL2.VIOLATION.toString(), op_trace + 1);
 						if (jsonfilerec == null)
 							System.out.println("Secret ALWAYS reconstructed");
 						else
 							System.out.println("Secret NOT reconstructed");
+						System.out.println("Verification time: " + computeTimeSpans(stver));
 					}
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 5:
+					startTime2 = getCurrentTime();
 					toremove = new ParallelViolation().interpreter(mcrl2);
 					if (toremove.getValue0().isEmpty()) {
 						System.out.println("No MPC task");
+						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
 					} else {
 						nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+						stver = getCurrentTime();
 						mcrl22lps(nf);
 						String jsonfilerec = lps2lts(mcrl2, nf, op_deadlock, op_trace);
 						if (jsonfilerec == null)
 							System.out.println("Parallelism PRESERVED");
 						else
 							System.out.println("Parallelism is NOT preserved");
+						System.out.println("Verification time: " + computeTimeSpans(stver));
 					}
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 6:
+					startTime2 = getCurrentTime();
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
+					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					stver = getCurrentTime();
 					mcrl22lps(nf);
 					String jsonf = lps2lts(mcrl2, nf, op_deadlock, op_trace);
 					if (jsonf == null)
 						System.out.println("NO DEADLOCK");
+					System.out.println("Verification time: " + computeTimeSpans(stver));
 					break;
 				case 7:
 					cleanDirectory();
@@ -598,11 +626,11 @@ public class IOTerminal {
 	}
 
 	private long getCurrentTime() {
-		return System.nanoTime();
+		return System.currentTimeMillis();
 	}
 
-	private long computeTimeSpans(long startTime, long endTime) {
-		return TimeUnit.NANOSECONDS.toSeconds(endTime - startTime);
+	private long computeTimeSpans(long startTime) {
+		return getCurrentTime()-startTime;
 	}
 
 }

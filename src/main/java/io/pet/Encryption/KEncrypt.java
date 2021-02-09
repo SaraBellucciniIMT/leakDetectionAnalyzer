@@ -19,6 +19,7 @@ import sort.Name;
 public class KEncrypt extends AbstractTaskPET {
 
 	private String publickeyId;
+	private Cipher outputcipher;
 
 	public KEncrypt() {
 	}
@@ -38,7 +39,10 @@ public class KEncrypt extends AbstractTaskPET {
 	 * @return
 	 */
 	public String getGroupId() {
-		return this.publickeyId;
+		if(outputcipher== null) {
+			this.outputcipher = new Cipher(this.publickeyId);
+		}
+		return this.outputcipher.getIdPet();
 	}
 
 	/**
