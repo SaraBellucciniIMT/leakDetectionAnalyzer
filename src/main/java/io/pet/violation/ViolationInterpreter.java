@@ -1,5 +1,6 @@
 package io.pet.violation;
 
+import java.util.HashSet;
 import java.util.Set;
 import org.javatuples.Quintet;
 import com.google.common.collect.Sets;
@@ -34,14 +35,14 @@ public class ViolationInterpreter {
 			MCRL2 mcrl2) {
 		Quintet<Set<Action>, Set<CommunicationFunction>, Set<Placeholder>, Set<String>, Set<TaskProcess>> quintet = Quintet
 				.with(Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet(), Sets.newHashSet());
-		for (PETLabel label : mcrl2.getPetLabel()) {
-			if (label.equals(PETLabel.SSSHARING) || label.equals(PETLabel.SSCOMPUTATION)
-					|| label.equals(PETLabel.SSRECONTRUCTION))
-				quintet.add(SSViolation.getInstance().interpreter(mcrl2));
-			else if (label.equals(PETLabel.CIPHER) || label.equals(PETLabel.DECODINGKEY))
-				quintet.add(EncryViolation.getInstance().interpreter(mcrl2));
-
+		Set<PETLabel> petlabels = mcrl2.getPetLabel();
+		if (petlabels.contains(PETLabel.SSSHARING) || petlabels.contains(PETLabel.SSCOMPUTATION)
+				|| petlabels.contains(PETLabel.SSRECONTRUCTION)) {
+			quintet.add(SSViolation.getInstance().interpreter(mcrl2));
 		}
+		if (petlabels.contains(PETLabel.CIPHER) || petlabels.contains(PETLabel.DECODINGKEY))
+			quintet.add(EncryViolation.getInstance().interpreter(mcrl2));
+
 		return quintet;
 	}
 

@@ -45,7 +45,7 @@ public class MCRL2 implements ISpec {
 	private static final String TEMPORARY = "t";
 	public static final Action DELTA = new Action("delta","delta");
 	public static final Action TAU = new Action("tau", "tau");
-	public static final Action VIOLATION = new Action("VIOLATION");
+	public static final Action VIOLATION = new Action("VIOLATION", new Placeholder("", Memory.nameSort()));
 	public static final Action NOVIOLATION = new Action("NOVIOLATION");
 	public static final Action CONTAIN = new Action("CONTAIN");
 	private static int DATA_NAME_INDEX = 0;

@@ -49,6 +49,10 @@ public class Privacy implements ISort {
 		setPname.add(stereotype);
 
 	}
+	
+	public PETLabel getStereotype() {
+		return this.stereotype;
+	}
 
 	/**
 	 * Returns the value of the name type of this privacy data object

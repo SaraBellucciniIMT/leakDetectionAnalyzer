@@ -40,6 +40,12 @@ public class Data implements ISort {
 		return new Data(new Name(NULLVAR,NULLVAR));
 	}
 
+	public PETLabel getStereotype() {
+		if(this.privacy!= null)
+			return this.privacy.getStereotype();
+		else
+			return null;
+	}
 	/**
 	 * Checks if this name data correspond to the name of this data type object
 	 * 

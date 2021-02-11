@@ -20,6 +20,9 @@ import sort.ISort;
  */
 public class Cipher extends AbstractDataPET{
 	
+	/**
+	 * Name of the cipher - key to decrypt
+	 */
 	public static Map<String,String> idobj_idkey = new HashMap<String,String>();
 	
 	/**

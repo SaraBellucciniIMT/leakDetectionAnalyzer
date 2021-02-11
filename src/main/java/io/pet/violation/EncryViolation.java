@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.javatuples.Pair;
 import org.javatuples.Triplet;
 
 import com.google.common.collect.Sets;
@@ -32,18 +33,19 @@ import spec.mcrl2obj.Processes.TaskProcess;
 public class EncryViolation extends AbstractViolation {
 
 	private Placeholder m;
-	private Placeholder c;
-	private Placeholder k;
+	private Placeholder id;
+	private Placeholder d1, d2;
 	private static String hasc = "hascipher";
 	private static String hask = "haskey";
 	private static String encviol = "encryptionviolation";
 	private static EncryViolation instance;
 
 	private EncryViolation() {
-		Placeholder[] plist = getPlaceholders(2,ISort.NAT);
-		this.c = plist[0];
-		this.k =plist[1];
+		this.id = getPlaceholders(1, ISort.NAT)[0];
 		this.m = getPlaceholders(1, Memory.nameSort())[0];
+		Placeholder[] dlist = getPlaceholders(2, Data.nameSort());
+		this.d1 = dlist[0];
+		this.d2 = dlist[1];
 	}
 
 	public static EncryViolation getInstance() {
@@ -55,46 +57,48 @@ public class EncryViolation extends AbstractViolation {
 
 	@Override
 	protected String printMap() {
-		String hascipher = MCRL2Utils.printMap(hasc, ISort.BOOL, Memory.nameSort(), ISort.NAT);
-		String haskey = MCRL2Utils.printMap(hask, ISort.BOOL, Memory.nameSort(), ISort.NAT);
-		String env = MCRL2Utils.printMap(encviol, ISort.BOOL, Memory.nameSort(), ISort.NAT,ISort.NAT);
+		String hascipher = MCRL2Utils.printMap(hasc, Data.nameSort(), Memory.nameSort(), ISort.NAT);
+		String haskey = MCRL2Utils.printMap(hask, Data.nameSort(), Memory.nameSort(), ISort.NAT);
+		String env = MCRL2Utils.printMap(encviol, ISort.BOOL, Data.nameSort(), Data.nameSort());
 		return hascipher + haskey + env;
 	}
 
 	@Override
 	protected String printEqn() {
-		String hascf = MCRL2Utils.printf(hasc, m.toString(), c.toString());
-		String haskf = MCRL2Utils.printf(hask, m.toString(), k.toString());
-		String envf = MCRL2Utils.printf(encviol, m.toString(), c.toString(),k.toString());
+		String hascf = MCRL2Utils.printf(hasc, m.toString(), id.toString());
+		String haskf = MCRL2Utils.printf(hask, m.toString(), id.toString());
+		String envf = MCRL2Utils.printf(encviol,d1.toString(), d2.toString());
 		String candtrue = MCRL2Utils.printAnd(MCRL2Utils.printIsPnH(m.toString()),
 				MCRL2Utils.printFFrtPvH(PETLabel.CIPHER.is_value(), m.toString()),
-				MCRL2Utils.printSndPvH(m.toString()) + "==" + c.toString());
-		String hasctrue = MCRL2Utils.printifeqn(candtrue, hascf, ISort.TRUE.toString());
+				MCRL2Utils.printSndPvH(m.toString()) + "==" + id.toString());
+		String hasctrue = MCRL2Utils.printifeqn(candtrue, hascf, MCRL2Utils.printH(m.toString()));
 		String corfalse = MCRL2Utils.printOr("!" + MCRL2Utils.printIsPnH(m.toString()),
 				"!" + MCRL2Utils.printFFrtPvH(PETLabel.CIPHER.is_value(), m.toString()),
-				MCRL2Utils.printSndPvH(m.toString()) + "!=" + c.toString());
+				MCRL2Utils.printSndPvH(m.toString()) + "!=" + id.toString());
 		String hasctail = MCRL2Utils.printifeqn(corfalse, hascf,
-				MCRL2Utils.printf(hasc, MCRL2Utils.printT(m.toString()), c.toString()));
-		String hascfalse = MCRL2Utils.printifeqn(m.toString() + "== []", hascf, ISort.FALSE.toString());
+				MCRL2Utils.printf(hasc, MCRL2Utils.printT(m.toString()), id.toString()));
+		String hascfalse = MCRL2Utils.printifeqn(m.toString() + "== []", hascf, Data.eps().toString());
 		String kandtrue = MCRL2Utils.printAnd(MCRL2Utils.printIsPnH(m.toString()),
 				MCRL2Utils.printFFrtPvH(PETLabel.DECODINGKEY.is_value(), m.toString()),
-				MCRL2Utils.printSndPvH(m.toString()) + "==" + k.toString());
-		String hasktrue = MCRL2Utils.printifeqn(kandtrue, haskf, ISort.TRUE.toString());
+				MCRL2Utils.printSndPvH(m.toString()) + "==" + id.toString());
+		String hasktrue = MCRL2Utils.printifeqn(kandtrue, haskf, MCRL2Utils.printH(m.toString()));
 		String korfalse = MCRL2Utils.printOr("!" + MCRL2Utils.printIsPnH(m.toString()),
 				"!" + MCRL2Utils.printFFrtPvH(PETLabel.DECODINGKEY.is_value(), m.toString()),
-				MCRL2Utils.printSndPvH(m.toString()) + "!=" + k.toString());
+				MCRL2Utils.printSndPvH(m.toString()) + "!=" + id.toString());
 		String hasktail = MCRL2Utils.printifeqn(korfalse, haskf,
-				MCRL2Utils.printf(hask, MCRL2Utils.printT(m.toString()), k.toString()));
-		String haskfalse = MCRL2Utils.printifeqn(m.toString() + "==[]", haskf, ISort.FALSE.toString());
-		String envtrue = MCRL2Utils.printifeqn(MCRL2Utils.printAnd(hascf, haskf), envf, ISort.TRUE.toString());
-		String envfalse = MCRL2Utils.printifeqn(MCRL2Utils.printOr("!" + hascf, "!" + haskf), envf,
+				MCRL2Utils.printf(hask, MCRL2Utils.printT(m.toString()), id.toString()));
+		String haskfalse = MCRL2Utils.printifeqn(m.toString() + "==[]", haskf, Data.eps().toString());
+		String envtrue = MCRL2Utils.printifeqn(MCRL2Utils.printAnd(d1.toString() + "!=" + Data.eps().toString(),
+				d2.toString() + "!=" + Data.eps().toString()), envf, ISort.TRUE.toString());
+		String envfalse = MCRL2Utils.printifeqn(MCRL2Utils.printOr(d1.toString() + "==" + Data.eps().toString(),
+				d2.toString() + "==" + Data.eps().toString()), envf,
 				ISort.FALSE.toString());
 		return hasctrue + hasctail + hascfalse + hasktrue + hasktail + haskfalse + envtrue + envfalse;
 	}
 
 	@Override
 	protected Placeholder[] getVar() {
-		return new Placeholder[] { m, c,k };
+		return new Placeholder[] { m,id,d1,d2};
 	}
 
 	@Override
@@ -116,7 +120,7 @@ public class EncryViolation extends AbstractViolation {
 			Placeholder m = new Placeholder(Memory.nameSort());
 			Placeholder e = new Placeholder(Memory.nameSort());
 			String unionme = MCRL2Utils.printf(MCRL2Utils.unionf, m.toString(), e.toString());
-			String addToMem = "";
+			List<Pair<String, Process>> addToMem = new ArrayList<Pair<String, Process>>();
 			Set<String> cyphernottocheck = new HashSet<String>();
 			if (!task_decrypt.isEmpty()) {
 				for (TaskProcess decrypt : task_decrypt) {
@@ -135,9 +139,14 @@ public class EncryViolation extends AbstractViolation {
 			}
 			for (Entry<String, String> entry : Cipher.idobj_idkey.entrySet()) {
 				if (!cyphernottocheck.contains(entry.getKey())) {
-					if (!addToMem.isEmpty())
+					/*if (!addToMem.isEmpty())
 						addToMem += Operator.PARALLEL.getValue();
-					addToMem += MCRL2Utils.printf(encviol, unionme, entry.getKey(), entry.getValue());
+					addToMem += MCRL2Utils.printf(encviol, unionme, entry.getKey(), entry.getValue());*/
+					String hk = MCRL2Utils.printf(hask, unionme,entry.getValue());
+					String hc = MCRL2Utils.printf(hasc, unionme,entry.getKey());
+					Process v = new Process(Operator.DOT, new Action(MCRL2.VIOLATION.getId(), new Placeholder("["+hk+"]++["+hc+"]", Memory.nameSort())),
+							MCRL2.DELTA);	
+					addToMem.add(Pair.with(MCRL2Utils.printf(encviol, hk, hc), v));
 				}
 			}
 
@@ -146,9 +155,13 @@ public class EncryViolation extends AbstractViolation {
 				memory.addParameters(m);
 				Action synMem = MCRL2.getTemporaryAction(e);
 				SUMProcess sum = new SUMProcess(synMem);
-				IfProcess ifp = new IfProcess(addToMem, new Process(Operator.DOT, MCRL2.VIOLATION, MCRL2.DELTA),
+				
+				Action endAction = new Action(memory.getId(), memory.getId() + "(" + unionme + ")");
+				IfProcess ifp = concatenateIfProcess(addToMem, endAction);
+				memory.addChild(sum,ifp);
+				/*IfProcess ifp = new IfProcess(addToMem, new Process(Operator.DOT, MCRL2.VIOLATION, MCRL2.DELTA),
 						new Action(memory.getId(), memory.getId() + "(" + unionme + ")"));
-				memory.addChild(sum, ifp);
+				memory.addChild(sum, ifp);*/
 				p.setMemory(memory, synMem);
 				Action synRes = MCRL2.getTemporaryAction(new Placeholder("", Memory.nameSort()));
 				CommunicationFunction function = new CommunicationFunction(synRes, synMem, synMem);
@@ -160,7 +173,7 @@ public class EncryViolation extends AbstractViolation {
 				functions.add(function);
 			}
 		}
-		return Triplet.with(actions	,functions,tasks);
+		return Triplet.with(actions, functions, tasks);
 	}
 	/*
 	 * String groupid = ((KDecrypt) decrypt.getAction().getPet()).getGroupId(); for

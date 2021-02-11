@@ -36,6 +36,7 @@ import algo.CollaborativeAlg;
 import formula.TextInterpreterFormula;
 import io.BpmnParser;
 import io.DotBPMNKeyW;
+import io.pet.PETLabel;
 import io.pet.violation.ParallelViolation;
 import io.pet.violation.Reconstruction;
 import io.pet.violation.ViolationInterpreter;
@@ -76,6 +77,7 @@ public class IOTerminal {
 		File f;
 		while ((f = scanFile()) == null) {
 		}
+		
 		String bpmnFile = FilenameUtils.getBaseName(f.getPath());
 		// Parse the BPMN file
 		Pair<Set<Bpmn<BpmnControlFlow<FlowNode>, FlowNode>>, Set<Pair<FlowNode, FlowNode>>> setBpmn;
@@ -84,7 +86,7 @@ public class IOTerminal {
 		// Create the mcrl2 object describing the collaboration
 		long startTime = getCurrentTime();
 		MCRL2 mcrl2 = new CollaborativeAlg(setBpmn).getSpec();
-		//Time to parse the bpmn file and create the mcrl2 object
+		// Time to parse the bpmn file and create the mcrl2 object
 		long intermediateTime = computeTimeSpans(startTime);
 		long startTime2;
 		long stver;
@@ -102,7 +104,7 @@ public class IOTerminal {
 				case 1:
 					startTime2 = getCurrentTime();
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
-					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					//System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
 					stver = getCurrentTime();
 					mcrl22lps(nf);
 					System.out.println(mcrl2.toStringTasks() + "\nSelect task:");
@@ -137,7 +139,7 @@ public class IOTerminal {
 					Quintet<Set<Action>, Set<CommunicationFunction>, Set<Placeholder>, Set<String>, Set<TaskProcess>> toremove = ViolationInterpreter
 							.detectParty(mcrl2, partcipant, data.toArray(dataarray));
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
-					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					//System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
 					mcrl22lps(nf);
 					String jsonfile = lps2lts(mcrl2, nf, op_action + MCRL2.CONTAIN.toString(), op_trace + 1);
 					if (jsonfile == null)
@@ -149,13 +151,13 @@ public class IOTerminal {
 					// Add violation function, if needed to the specification
 					toremove = ViolationInterpreter.detectViolation(mcrl2);
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
-					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					//System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
 					stver = getCurrentTime();
 					mcrl22lps(nf);
-					jsonfile = lps2lts(mcrl2, nf, op_action + MCRL2.VIOLATION.toString(), op_trace + 1);
+					jsonfile = lps2lts(mcrl2, nf, op_action + MCRL2.VIOLATION.getId(), op_trace + 1);
 					if (jsonfile == null)
 						System.out.println("NO VIOLATION OCCURED");
-					System.out.println("Verification time: " + computeTimeSpans(stver));
+					//System.out.println("Verification time: " + computeTimeSpans(stver));
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 4:
@@ -163,18 +165,18 @@ public class IOTerminal {
 					toremove = new Reconstruction().interpreter(mcrl2);
 					if (toremove.getValue0().isEmpty()) {
 						System.out.println("NO RECOSTRUCTION TASK");
-						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
-					}else {
+						//System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
+					} else {
 						nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
-						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+						//System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
 						stver = getCurrentTime();
 						mcrl22lps(nf);
-						String jsonfilerec = lps2lts(mcrl2, nf, op_action + MCRL2.VIOLATION.toString(), op_trace + 1);
+						String jsonfilerec = lps2lts(mcrl2, nf, op_action + MCRL2.VIOLATION.getId(), op_trace + 1);
 						if (jsonfilerec == null)
 							System.out.println("Secret ALWAYS reconstructed");
 						else
 							System.out.println("Secret NOT reconstructed");
-						System.out.println("Verification time: " + computeTimeSpans(stver));
+						//System.out.println("Verification time: " + computeTimeSpans(stver));
 					}
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
@@ -183,10 +185,10 @@ public class IOTerminal {
 					toremove = new ParallelViolation().interpreter(mcrl2);
 					if (toremove.getValue0().isEmpty()) {
 						System.out.println("No MPC task");
-						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					//	System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
 					} else {
 						nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
-						System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+						//System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
 						stver = getCurrentTime();
 						mcrl22lps(nf);
 						String jsonfilerec = lps2lts(mcrl2, nf, op_deadlock, op_trace);
@@ -194,20 +196,20 @@ public class IOTerminal {
 							System.out.println("Parallelism PRESERVED");
 						else
 							System.out.println("Parallelism is NOT preserved");
-						System.out.println("Verification time: " + computeTimeSpans(stver));
+						//System.out.println("Verification time: " + computeTimeSpans(stver));
 					}
 					ViolationInterpreter.rollback(toremove, mcrl2);
 					break;
 				case 6:
 					startTime2 = getCurrentTime();
 					nf = mcrl2.toFile(dirname.getPath() + bpmnFile);
-					System.out.println("Translation time: " + computeTimeSpans(startTime2)+intermediateTime);
+					//System.out.println("Translation time: " + computeTimeSpans(startTime2) + intermediateTime);
 					stver = getCurrentTime();
 					mcrl22lps(nf);
 					String jsonf = lps2lts(mcrl2, nf, op_deadlock, op_trace);
 					if (jsonf == null)
 						System.out.println("NO DEADLOCK");
-					System.out.println("Verification time: " + computeTimeSpans(stver));
+					//System.out.println("Verification time: " + computeTimeSpans(stver));
 					break;
 				case 7:
 					cleanDirectory();
@@ -225,8 +227,10 @@ public class IOTerminal {
 		System.out.println("Insert file path");
 		scan = new Scanner(System.in);
 		String inputfile = scan.nextLine();
-		/*if (!FilenameUtils.isExtension(inputfile, "bpmn"))
-			inputfile = inputfile.concat(".bpmn");*/
+		/*
+		 * if (!FilenameUtils.isExtension(inputfile, "bpmn")) inputfile =
+		 * inputfile.concat(".bpmn");
+		 */
 		File f = new File(inputfile);
 		if (!f.exists()) {
 			System.out.println("FILE NOT FOUND, try again...");
@@ -305,7 +309,8 @@ public class IOTerminal {
 		boolean resultbool = lps2pbes2solve2convert(nameFile);
 		System.out.println(resultbool);
 		if (resultbool && new File(dirname.getPath() + nameFile + evidencefsm).exists()) {
-			List<Pair<String, Set<String>>> s = scanFSMfile(dirname.getPath() + nameFile + evidencefsm, mcrl2);
+			List<List<Pair<String, Set<String>>>> s = new ArrayList<>(); 
+			s.add(scanFSMfile(dirname.getPath() + nameFile + evidencefsm, mcrl2));
 			try {
 				fromPathInFSMtoJsonFile(s, nameFile);
 			} catch (JSONException e) {
@@ -350,13 +355,15 @@ public class IOTerminal {
 		lps2lts += nameFile + dotlps + Utils.space + nameFile + dotlts;
 		runmcrlcommand(lps2lts);
 
-		List<String> path = new ArrayList<String>();
+		
 		String[] children = dir.list();
-		List<Pair<String, Set<String>>> path_tracepp = new ArrayList<Pair<String, Set<String>>>();
+		List<List<Pair<String, Set<String>>>> alltracepp = new ArrayList<List<Pair<String, Set<String>>>>();
 		if (children != null) {
 			for (int i = 0; i < children.length; i++) {
 				// Get filename of file or directory
+				List<Pair<String, Set<String>>> onetracepp = new ArrayList<Pair<String, Set<String>>>();
 				String filename = children[i];
+				List<String> path = new ArrayList<String>();
 				if (FilenameUtils.getBaseName(filename).contains(nameFile + dotlps)
 						&& FilenameUtils.isExtension(filename, "trc")) {
 					String tracepp = "tracepp " + filename + " " + filename.replace(dottrc, dottxt);
@@ -373,22 +380,27 @@ public class IOTerminal {
 					} catch (IOException e) {
 						e = new IOException("File " + dottrc + "not found");
 					}
-					path_tracepp = generateList(path, mcrl2);
-					if (!path.isEmpty() && deadlock) {
-						String lasttask = path_tracepp.get(path_tracepp.size() - 1).getKey();
-						if (!checkDeadlock(mcrl2.getEndEvents(), path_tracepp) || !mcrl2.containsTask(lasttask)) {
-							path_tracepp = new ArrayList<Pair<String, Set<String>>>();
-							continue;
+					onetracepp = generateList(path, mcrl2);
+					if (!onetracepp.isEmpty()) {
+						if (deadlock) {
+							if (checkDeadlock(mcrl2.getEndEvents(), onetracepp))
+								alltracepp.add(onetracepp);
+							else
+								continue;
+						} else {
+							System.out.println(printViolationType(onetracepp.get(onetracepp.size() - 1).getValue(),
+									mcrl2.getData()));
+							alltracepp.add(onetracepp);
+							break;
 						}
 					}
-					break;
 				}
 			}
 		}
 		String jsonfilename = null;
-		if (!path_tracepp.isEmpty()) {
+		if (!alltracepp.isEmpty()) {
 			try {
-				jsonfilename = fromPathInFSMtoJsonFile(path_tracepp, nameFile);
+				jsonfilename = fromPathInFSMtoJsonFile(alltracepp, nameFile);
 			} catch (JSONException e) {
 				e = new JSONException("Error in writing the path");
 			}
@@ -396,6 +408,30 @@ public class IOTerminal {
 		return jsonfilename;
 	}
 
+	private String printViolationType(Set<String> violationdata, Set<Data> mcrldata) {
+		for (Data d : mcrldata) {
+			for (String s : violationdata) {
+				if (d.getRealName().equals(s) && d.getStereotype() != null) {
+					PETLabel l = d.getStereotype();
+					if (l.equals(PETLabel.SSSHARING) || l.equals(PETLabel.SSCOMPUTATION))
+						return "SECRET SHARING VIOLATED";
+
+					else if (l.equals(PETLabel.CIPHER) || l.equals(PETLabel.DECODINGKEY))
+						return "ENCRYPTION VIOLATED";
+
+				}
+			}
+		}
+		return "";
+	}
+
+	/**
+	 * Returns true if there is a dealdock, otherwise false
+	 * 
+	 * @param endEvents
+	 * @param path
+	 * @return
+	 */
 	private boolean checkDeadlock(Set<String> endEvents, List<Pair<String, Set<String>>> path) {
 		List<String> hasevent = new ArrayList<String>();
 		for (Pair<String, Set<String>> pair : path) {
@@ -425,35 +461,47 @@ public class IOTerminal {
 				continue;
 			}
 			// System.out.println(el);
-
 			Pattern ptk = Pattern.compile("\\(\\{(.*)\\}\\)");
-			String nametask = el.replaceAll(ptk.pattern(), "");
+			String nametask = "";
 			Matcher m = ptk.matcher(el);
 			if (m.find()) {
-				String datas = m.group(1);
-				int brakets = 0;
-				int startindex = 0;
-				for (int j = 0; j < datas.length(); j++) {
-					if ((String.valueOf(datas.charAt(j)).equals(",") && brakets == 0) || (j == datas.length() - 1)) {
-						Data d;
-						if ((j == datas.length() - 1))
-							d = Data.detectData(datas.substring(startindex, j + 1), mcrl2.getData());
-						else
-							d = Data.detectData(datas.substring(startindex, j), mcrl2.getData());
-						// System.out.println(d.getRealName());
-						setdata.add(d.getRealName());
-						startindex = j + 1;
-					} else if (String.valueOf(datas.charAt(j)).equals("(")) {
-						brakets++;
-					} else if (String.valueOf(datas.charAt(j)).equals(")")) {
-						brakets--;
-					}
+				nametask = el.replaceAll(ptk.pattern(), "");
+				setdata.addAll(dataInsideAction(m.group(1), mcrl2.getData()));
+			} else if (nametask.isEmpty()) {
+				Pattern ptm = Pattern.compile("\\(\\[(.*)\\]\\)");
+				Matcher mm = ptm.matcher(el);
+				if (mm.find()) {
+					nametask = el.replaceAll(ptm.pattern(), "");
+					setdata.addAll(dataInsideAction(mm.group(1), mcrl2.getData()));
 				}
 			} else
 				nametask = el;
 			list.add(Pair.of(nametask, setdata));
 		}
 		return list;
+	}
+
+	private Set<String> dataInsideAction(String datas, Set<Data> mcrl2data) {
+		Set<String> setdata = new HashSet<String>();
+		int brakets = 0;
+		int startindex = 0;
+		for (int j = 0; j < datas.length(); j++) {
+			if ((String.valueOf(datas.charAt(j)).equals(",") && brakets == 0) || (j == datas.length() - 1)) {
+				Data d;
+				if ((j == datas.length() - 1))
+					d = Data.detectData(datas.substring(startindex, j + 1), mcrl2data);
+				else
+					d = Data.detectData(datas.substring(startindex, j), mcrl2data);
+				// System.out.println(d.getRealName());
+				setdata.add(d.getRealName());
+				startindex = j + 1;
+			} else if (String.valueOf(datas.charAt(j)).equals("(")) {
+				brakets++;
+			} else if (String.valueOf(datas.charAt(j)).equals(")")) {
+				brakets--;
+			}
+		}
+		return setdata;
 	}
 
 	private boolean lps2pbes2solve2convert(String nameFile) {
@@ -591,38 +639,55 @@ public class IOTerminal {
 	 * @param path the path that we want to transform in a json file
 	 * @throws JSONException if the file to write the json is not found
 	 */
-	private String fromPathInFSMtoJsonFile(List<Pair<String, Set<String>>> path, String nameFile) throws JSONException {
-		List<Pair<String, Set<String>>> notau = printCounterExamplePath(path);
+	private String fromPathInFSMtoJsonFile(List<List<Pair<String, Set<String>>>> allpath, String nameFile)
+			throws JSONException {
+		List<List<Pair<String, Set<String>>>> finallist = printCounterExamplePath(allpath);
 		File file = new File(dirname.getPath() + nameFile + json);
 		int i = 0;
 		while (file.exists())
 			file = new File(dirname.getPath() + nameFile + i++ + IOTerminal.dotmcrl2);
 		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
-			JSONObject ob = new JSONObject();
-			JSONObject obtask = new JSONObject();
-			JSONArray arr = new JSONArray(notau);
-			for (int j = 0; j < notau.size(); j++) {
-				JSONObject obdata = new JSONObject();
-				obdata.append("data", notau.get(j).getRight());
-				obtask.append(notau.get(j).getLeft(), obdata);
+			for (int k = 0; k < finallist.size(); k++) {
+				List<Pair<String, Set<String>>> singlepath = finallist.get(k);
+				JSONObject ob = new JSONObject();
+				JSONObject obtask = new JSONObject();
+				JSONArray arr = new JSONArray(singlepath);
+				for (int j = 0; j < singlepath.size(); j++) {
+					JSONObject obdata = new JSONObject();
+					obdata.append("data", singlepath.get(j).getRight());
+					obtask.append(singlepath.get(j).getLeft(), obdata);
+				}
+				ob.put("path", arr);
+				output.write(ob.toString());
+				if (k != finallist.size() - 1)
+					output.write(" \u0223 ");
 			}
-			ob.put("path", arr);
-			output.write(ob.toString());
+
 		} catch (IOException e) {
 			new FileNotFoundException();
 		}
 		return file.getName();
 	}
 
-	private List<Pair<String, Set<String>>> printCounterExamplePath(List<Pair<String, Set<String>>> path) {
-		List<Pair<String, Set<String>>> notau = new ArrayList<Pair<String, Set<String>>>();
-		for (int i = 0; i < path.size(); i++) {
-			if (path.get(i).getKey().equals(MCRL2.TAU.toString()))
-				continue;
-			notau.add(path.get(i));
+	private List<List<Pair<String, Set<String>>>> printCounterExamplePath(
+			List<List<Pair<String, Set<String>>>> allpath) {
+		List<List<Pair<String, Set<String>>>> finallist = new ArrayList<List<Pair<String, Set<String>>>>();
+		System.out.print("PATH : ");
+		for (int j = 0; j < allpath.size(); j++) {
+			List<Pair<String, Set<String>>> path = allpath.get(j);
+			List<Pair<String, Set<String>>> notau = new ArrayList<Pair<String, Set<String>>>();
+			for (int i = 0; i < path.size(); i++) {
+				if (path.get(i).getKey().equals(MCRL2.TAU.toString()))
+					continue;
+				notau.add(path.get(i));
+			}
+			if (j != allpath.size() - 1)
+				System.out.print(notau.toString()+ "\u0223");
+			else
+				System.out.println(notau.toString());
+			finallist.add(notau);
 		}
-		System.out.println("PATH : " + notau.toString());
-		return notau;
+		return finallist;
 	}
 
 	private long getCurrentTime() {
@@ -630,7 +695,7 @@ public class IOTerminal {
 	}
 
 	private long computeTimeSpans(long startTime) {
-		return getCurrentTime()-startTime;
+		return getCurrentTime() - startTime;
 	}
 
 }

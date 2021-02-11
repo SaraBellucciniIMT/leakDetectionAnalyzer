@@ -1,7 +1,10 @@
 package io.pet.violation;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+
+import org.javatuples.Pair;
 import org.javatuples.Quintet;
 import org.javatuples.Triplet;
 
@@ -10,6 +13,8 @@ import sort.Placeholder;
 import spec.mcrl2obj.Action;
 import spec.mcrl2obj.CommunicationFunction;
 import spec.mcrl2obj.MCRL2;
+import spec.mcrl2obj.Processes.IfProcess;
+import spec.mcrl2obj.Processes.Process;
 import spec.mcrl2obj.Processes.TaskProcess;
 
 public abstract class AbstractViolation implements IViolation {
@@ -92,5 +97,14 @@ public abstract class AbstractViolation implements IViolation {
 	 * @return a new mCRL2 object where the checking functions have been added to the corresponding process or action.
 	 */
 	protected abstract Triplet<Set<Action>,Set<CommunicationFunction>,Set<TaskProcess>> addChecking(MCRL2 mcrl);
+	
+	protected IfProcess concatenateIfProcess(List<Pair<String, Process>> list, Action endAction) {
+		if (list.size() == 1) {
+			return new IfProcess(list.get(0).getValue0(), list.get(0).getValue1(), endAction);
+		} else
+			return new IfProcess(list.get(0).getValue0(), list.get(0).getValue1(),
+					concatenateIfProcess(list.subList(1, list.size()), endAction));
+
+	}
 
 }
