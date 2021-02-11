@@ -7,11 +7,15 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,6 +36,12 @@ import org.jbpt.pm.bpmn.BpmnControlFlow;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.json.JSONString;
+import org.json.JSONStringer;
+import org.json.JSONWriter;
+
+import com.google.common.io.Files;
+
 import algo.CollaborativeAlg;
 import formula.TextInterpreterFormula;
 import io.BpmnParser;
@@ -646,10 +656,11 @@ public class IOTerminal {
 		int i = 0;
 		while (file.exists())
 			file = new File(dirname.getPath() + nameFile + i++ + IOTerminal.dotmcrl2);
-		try (BufferedWriter output = new BufferedWriter(new FileWriter(file))) {
+		
+		try (BufferedWriter output = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+			JSONObject ob = new JSONObject();
 			for (int k = 0; k < finallist.size(); k++) {
 				List<Pair<String, Set<String>>> singlepath = finallist.get(k);
-				JSONObject ob = new JSONObject();
 				JSONObject obtask = new JSONObject();
 				JSONArray arr = new JSONArray(singlepath);
 				for (int j = 0; j < singlepath.size(); j++) {
@@ -657,12 +668,12 @@ public class IOTerminal {
 					obdata.append("data", singlepath.get(j).getRight());
 					obtask.append(singlepath.get(j).getLeft(), obdata);
 				}
-				ob.put("path", arr);
+				ob.append("path", arr);
 				output.write(ob.toString());
 				if (k != finallist.size() - 1)
-					output.write(" \u0223 ");
+					output.write("\u0223");
 			}
-
+			
 		} catch (IOException e) {
 			new FileNotFoundException();
 		}

@@ -1,0 +1,39 @@
+sort
+Name = struct d5|d6;
+Collection = Set(Data);
+Data = struct node(value:Name)?is_node|eps|vnull;
+Memory = List(Data);
+
+map
+union:Memory#Memory->Memory; 
+empty:Data->Bool; 
+var
+d2:Data;
+d0:Memory;
+d1:Memory;
+eqn
+(d2==eps) -> empty(d2) = true;
+(head(d1) in d0) -> union(d0,d1) = union(d0,tail(d1));
+(!(head(d1) in d0)) -> union(d0,d1) = union(d0<|head(d1),tail(d1));
+(d0== []) -> union(d0,d1) = d1;
+(d1== []) -> union(d0,d1) = d0;
+(d2!=eps) -> empty(d2) = false;
+act
+t0,t1;
+StartEvent_0nhaahz,Task_09t9hnd,Task_0x85f9z,IntermediateThrowEvent_1h7spu5,Task_0dsyt1h,EndEvent_1x5ofs9,Task_0fjy333,Task_1iph6it,EndEvent_1wfg752,Task_169si3t,IntermediateThrowEvent_1qwp2js,StartEvent_1v1l5z0: Collection;
+proc
+Process_1=(P1.((tau.(P2.P3))+(tau.(P4.P5))).P6);
+P4 = Task_0dsyt1h({});
+P3 = Task_0fjy333({});
+P1 = StartEvent_1v1l5z0({});
+P5 = t0.Task_169si3t({node(d5),node(d6)});
+P6 = EndEvent_1x5ofs9({});
+P2 = Task_1iph6it({});
+Process_05m7m0s=(P7.((tau.(P8.P9))+(tau.(P10.P11))).P12);
+P10 = IntermediateThrowEvent_1h7spu5({});
+P9 = Task_0x85f9z({});
+P7 = StartEvent_0nhaahz({});
+P11 = t0.Task_09t9hnd({});
+P12 = EndEvent_1wfg752({});
+P8 = IntermediateThrowEvent_1qwp2js({});
+init allow ({Task_1iph6it,IntermediateThrowEvent_1qwp2js,EndEvent_1x5ofs9,Task_169si3t,StartEvent_0nhaahz,Task_0fjy333,StartEvent_1v1l5z0,Task_09t9hnd,Task_0x85f9z,IntermediateThrowEvent_1h7spu5,t1,EndEvent_1wfg752,Task_0dsyt1h},comm ({t0|t0->t1},Process_1||Process_05m7m0s));
