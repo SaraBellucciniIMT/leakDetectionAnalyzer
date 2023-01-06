@@ -1,5 +1,5 @@
 # leakDetectionAnalyzer
-The leak detection analyzer is a tool that provides verfication for BPMN models enhanced with privacy technoilogies (PETs).
+The leak detection analyzer is a tool that provides verfication for BPMN models enhanced with privacy technologies (PETs).
 
 ## Prerequisite
 mCRL2 tool an java version 1.8.0 installed.
